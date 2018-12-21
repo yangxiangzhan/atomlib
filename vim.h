@@ -30,7 +30,7 @@
 /**
 	* @brief    vim_fgets
 	*           编辑器从 fpath 获取文本信息接口
-	* @param    fpath : 文件路径
+	* @param    fpath : 文件路径，命令行所输入的路径
 	* @param    fdata : 从 fpath 文件读取的数据输出
 	* @param    fsize : fpath 文件总大小输出 
 	* @return   VIM_FILE_OK / VIM_FILE_ERROR
@@ -40,7 +40,7 @@ typedef uint32_t (*vim_fgets)(char * fpath, char * fdata,uint16_t * fsize);
 /**
 	* @brief    vim_fputs
 	*           编辑器对 fpath 文件进行数据输出
-	* @param    fpath : 文件路径
+	* @param    fpath : 文件路径，命令行所输入的路径
 	* @param    fdata : 将写入 fpath 文件的数据
 	* @param    fsize : 将写入 fpath 文件的数据大小
 	* @return   void

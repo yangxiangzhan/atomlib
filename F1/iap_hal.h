@@ -13,6 +13,8 @@
 
 #define IAP_ADDR 0x08000000
 #define APP_ADDR 0x08010000
+#define SYSCFG_INFO_SIZE FLASH_PAGE_SIZE
+
 
 // stm32f429bit6 ram起始地址为 0x20000000 ，大小 0x30000
 // stm32f103vet6 ram起始地址为 0x20000000 ，大小 0x10000
@@ -62,6 +64,14 @@ int iap_write_flash(uint32_t flash_addr,uint32_t flash_value);
 int iap_unlock_flash(void);
 
 int iap_lock_flash(void);
+
+
+uint32_t syscfg_addr(void);
+
+void syscfg_erase(void);
+
+void syscfg_write(char * info , uint32_t len);
+
 
 //------------------------------控制台命令------------------------------
 void shell_jump_command(void * arg);

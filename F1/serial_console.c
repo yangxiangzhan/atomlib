@@ -19,6 +19,7 @@
 #include "iap_hal.h"
 
 #include "shell.h"
+#include "vim.h"
 #include "serial_hal.h"
 #include "serial_console.h"
 
@@ -96,8 +97,6 @@ static int iap_check_complete(void * arg)
 
 
 
-
-
 /** 
 	* @brief iap_gets  iap 升级任务，获取数据流并写入flash
 	* @param void
@@ -168,8 +167,6 @@ static void iap_option_gets(struct shell_input * shell ,char * buf , uint32_t le
 }
 
 
-
-
 /** 
 	* @brief serial_console_recv  串口控制台处理任务，不直接调用
 	* @param void
@@ -201,7 +198,6 @@ static int serial_console_recv(void * arg)
 	* @param    
 	* @return   void
 */
-
 void shell_iap_command(void * arg)
 {
 	int argc = 0;
@@ -344,6 +340,56 @@ void shell_kill_protothread(void * arg)
 #endif
 
 
+
+/**
+	* @brief    _syscfg_fgets
+	*          获取 syscfg 信息，由 shell_into_edit 调用
+	* @param
+	* @return   成功 返回VIM_FILE_OK
+*/
+uint32_t _syscfg_fgets(char * fpath, char * fdata,uint16_t * fsize)
+{
+	uint32_t len = 0;
+	uint32_t addr = syscfg_addr();
+	
+	if (0 == addr)
+		return VIM_FILE_ERROR;
+
+	for (char * syscfg = (char*)addr ; *syscfg ; ++len)
+		*fdata++ = *syscfg++ ;
+
+	*fsize = len;
+
+	return VIM_FILE_OK;
+}
+
+/**
+	* @brief    _syscfg_fputs
+	*          更新 syscfg 信息，由 shell_into_edit 调用
+	* @param
+	* @return   void
+*/
+void _syscfg_fputs(char * fpath, char * fdata,uint32_t fsize)
+{
+	syscfg_write(fdata,fsize);
+}
+
+
+
+/**
+	* @brief    _shell_edit_syscfg
+	*           命令行编辑 syscfg 信息
+	* @param
+	* @return   void
+*/
+void _shell_edit_syscfg(void * arg)
+{
+	struct shell_input * shellin = container_of(arg, struct shell_input, buf);
+	shell_into_edit(shellin , _syscfg_fgets , _syscfg_fputs );
+}
+
+
+
 /**
 	* @brief    serial_console_init
 	*           初始化串口控制台
@@ -368,12 +414,13 @@ void serial_console_init(char * info)
 
 	shell_register_command("reboot"  ,shell_reboot_command);
 	shell_register_command("flash-erase",shell_erase_flash);
+	shell_register_command("syscfg",_shell_edit_syscfg);
 
 	#ifdef OS_USE_ID_AND_NAME
 		shell_register_command("top",shell_show_protothread);
 		shell_register_command("kill",shell_kill_protothread);
 	#endif
-
+	
 
 	task_create(&serial_console_task,NULL,serial_console_recv,NULL);
 	

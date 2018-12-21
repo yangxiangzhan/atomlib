@@ -517,8 +517,6 @@ void hal_serial_init(void)
 	serial_tx.pktsize = 0;
 	
 	serial_recv_reset(COMMANDLINE_MAX_LEN);
-	//uint32_t addr = LL_DMA_GetMemoryAddress(DMAx,DMA_RX_STREAM);//得到当前包的长度
-	//printk("%x",addr);
 }
 
 
