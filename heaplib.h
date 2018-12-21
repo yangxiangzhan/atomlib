@@ -3,7 +3,7 @@
 
 
 
-#define configTOTAL_HEAP_SIZE      ((size_t)(14 * 1024))
+#define configTOTAL_HEAP_SIZE      ((size_t)(20 * 1024))
 
 
 

@@ -24,10 +24,12 @@
 
 #include "stm32f429xx.h" //for SCB->VTOR
 
-//--------------------相关宏定义及结构体定义--------------------
 
+/* Private macro ------------------------------------------------------------*/
 
 #define UASRT_IAP_BUF_SIZE  1024
+
+/* Private variables ------------------------------------------------------------*/
 
 const static char iap_logo[]=
 "\r\n\
@@ -52,12 +54,15 @@ static ros_task_t serial_console_task;
 
 static struct shell_input serial_shell;
 
-//------------------------------相关函数声明------------------------------
+/* Global variables ------------------------------------------------------------*/
+
+
+/* Private function prototypes -----------------------------------------------*/
 
 
 
+/* Gorgeous Split-line 华丽的分割线------------------------------------*/
 
-//------------------------------华丽的分割线------------------------------
 
 
 /**
@@ -340,6 +345,12 @@ void shell_kill_protothread(void * arg)
 
 
 
+/**
+	* @brief    serial_console_init
+	*           串口控制台初始化
+	* @param    info:  初始化信息
+	* @return   void
+*/
 void serial_console_init(char * info)
 {
 	hal_serial_init(); //先初始化硬件层

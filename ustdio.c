@@ -114,7 +114,7 @@ int fputc(int ch, FILE *f)
 
 
 
-
+#if 1
 /**
 	* @author   古么宁
 	* @brief    i_itoa 
@@ -137,18 +137,50 @@ int i_itoa(char * strbuf,int value)
 	
 	if (value < 0) 
 		strbuf[len++] = '-'; 
-	
+
 	for (uint8_t index = 1 ; index <= len/2; ++index)
 	{
 		char reverse = strbuf[len  - index];  
 		strbuf[len - index] = strbuf[index -1];   
 		strbuf[index - 1] = reverse; 
 	}
-	
+
 	return len;
 }
 
+#else
 
+/**
+	* @author   古么宁
+	* @brief    i_itoa 
+	*           整型转十进制字符串
+	* @param    strbuf   转字符串所在内存
+	* @param    value  值
+	* @return   转换所得字符串长度
+*/	
+int i_itoa(char * out,int value)		
+{
+	char buf[36];
+	char *strbuf = buf;
+	int value_fix = (value < 0) ? (0-value) : value; 
+	
+	do
+	{
+		*strbuf++ = (char)(value_fix % 10 + '0'); 
+		value_fix = value_fix/10;
+	}
+	while(value_fix);
+	
+	if (value < 0) 
+		*strbuf++ = '-'; 
+
+	for (char * reverse = strbuf-1 ; reverse >= buf ; *out++ = *reverse--);
+	
+	return strbuf - buf;
+}
+
+
+#endif
 
 
 /**

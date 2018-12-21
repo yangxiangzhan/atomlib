@@ -94,7 +94,7 @@ shell_history = {0};
 
 static char printbuf[COMMANDLINE_MAX_LEN]={0};//ÖÐ×ªÄÚ´æ
 
-/* Public variables ------------------------------------------------------------*/
+/* Global variables ------------------------------------------------------------*/
 
 const char DEFAULT_INPUTSIGN[] = "shell >";
 char   shell_input_sign[128] = "shell >";
