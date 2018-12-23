@@ -4,6 +4,11 @@
   * @author         古么宁
   * @brief          shell 命令解释器
   *                 支持  TAB 键命令补全，上下左右箭头 ，BACKSPACE回删
+  * 使用步骤：
+  *    0.初始化硬件部分。
+  *    1.编写硬件对应的void puts(char * buf , uint16_t len) 发送函数。
+  *    2.新建一个  shellinput_t shellx , 初始化输出 SHELL_INPUT_INIT(&shellx,puts);
+  *    3.接收到一包数据后，调用 shell_input(shellx,buf,len)
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -512,9 +517,6 @@ static void shell_backspace(struct shell_input * input)
 
 
 
-
-
-
 /**
 	* @author   古么宁
 	* @brief    shell_record 
@@ -614,16 +616,14 @@ static void shell_parse(struct shell_input * input)
 	uint32_t fcrc8 = 0;
 	uint32_t bcrc8 = 0;
 	union uncmd unCmd ;
-
-	char * str = input->buf;
-	int    strlen = input->buftail ;
-
 	struct shell_cmd * cmdmatch;
 
-	for ( ; *str == ' ' ; ++str,--strlen) ;	// Shave off any leading spaces
+	char * str = input->buf;
 
-	if (0 == str[0] || 0 == strlen)
-		goto parseend;
+	for ( ; *str == ' ' ; ++str) ;	// Shave off any leading spaces
+
+	if (0 == *str)
+		goto PARSE_END;
 
 	for (unCmd.part.FirstChar = *str; (*str) && (*str != ' ') ; ++str ,++len)
 	{
@@ -646,10 +646,10 @@ static void shell_parse(struct shell_input * input)
 	}
 	else
 	{
-		printk("\r\n\r\n\tno reply:%s\r\n",input->buf);
+		printk("\r\n\tno reply:%s\r\n",input->buf);
 	}
 
-parseend:
+PARSE_END:
 	input->buftail = 0;//清空当前命令行输入
 	input->edit = 0;
 	return ;
@@ -810,7 +810,6 @@ void cmdline_gets(struct shell_input * input,char * ptr,uint32_t len)
 		{
 			case KEYCODE_NEWLINE: //忽略 \r
 				break;
-				
 			case KEYCODE_ENTER:
 				printk("\r\n");
 				if (input->buftail) 
@@ -824,6 +823,7 @@ void cmdline_gets(struct shell_input * input,char * ptr,uint32_t len)
 				break;
 			
 			case KEYCODE_BACKSPACE : 
+			case 0x7f: //for putty
 				shell_backspace(input); 
 				break;
 			
@@ -840,8 +840,8 @@ void cmdline_gets(struct shell_input * input,char * ptr,uint32_t len)
 							shell_show_history(input,1);
 							break;
 
-						case 'C'://右箭头
-							if ( input->buftail && input->buftail != input->edit)
+						case 'C'://右箭头input->buftail &&
+							if ( input->buftail != input->edit)
 								printl(&input->buf[input->edit++],1);
 							break;
 
@@ -883,7 +883,7 @@ void cmdline_gets(struct shell_input * input,char * ptr,uint32_t len)
 */
 static void shell_clean_screen(void * arg)
 {
-	printk("\033[2J\033[%d;%dH",0,0);
+	printk("\033[2J\033[%d;%dH%s",0,0,shell_input_sign);
 	return ;
 }
 

@@ -16,27 +16,20 @@
 #include "tasklib.h"
 
 
-#define OS_CONF_NUMEVENTS 8 //事件队列深度
-
-
 // 系统运行一个任务
 #define OS_call(task) \
 		do{if(TASK_EXITED == (task)->func((task)->arg)) list_del_init(&((task)->list_node));}while(0)
 	
 
-struct event_data
-{
-	struct protothread * task;
-};
-
-
 struct list_head       OS_scheduler_list = {&OS_scheduler_list,&OS_scheduler_list};//系统调度链表入口
 struct protothread *   OS_current_task = NULL;//系统当前运行的任务
 volatile unsigned long OS_current_time = 0;     //系统时间，ms
 
-static unsigned char nevents = 0; //未处理事件个数
-static unsigned char fevent = 0;  //事件队列下标
-static struct event_data events[OS_CONF_NUMEVENTS];//事件队列
+
+
+volatile unsigned char nevents = 0; //未处理事件个数
+volatile unsigned char fevent = 0;  //事件队列下标
+struct protothread *events[OS_CONF_NUMEVENTS]; //事件队列
 
 
 /** 
@@ -78,35 +71,6 @@ void OS_task_create(ros_task_t *task,const char * name, int (*start_rtn)(void*),
 
 
 
-
-/** 
-	* @brief OS_task_post : post 一个任务事件；
-	*                     post 的事件优先级比在链表内的任务优先级高
-	* @param task
-	*
-	* @return NULL
-*/
-void OS_task_post(struct protothread * task)
-{
-	unsigned char index;
-	
-	if (nevents == OS_CONF_NUMEVENTS || task->post || 
-		task->init != TASK_IS_INITIALIZED) //队列满或者已在队列或者未初始化的
-	{
-		return ;
-	}
-
-	index = (fevent + nevents) % OS_CONF_NUMEVENTS;
-	++nevents;
-
-	task->post = 1;
-	events[index].task = task;
-}	
-
-
-
-
-
 /** 
 	* @brief run task
 	* @param NULL
@@ -135,13 +99,13 @@ void OS_scheduler(void)
 
 		if (nevents) //处理 post 事件
 		{
-			OS_current_task = events[fevent].task;
-			
-			--nevents;
-			fevent = (fevent + 1) % OS_CONF_NUMEVENTS;
+			OS_current_task = events[fevent];
+			fevent = (fevent + 1) & OS_NUMEVENTS_MASK;
+			nevents--;
 			
 			OS_current_task->post = 0;//清除此事件的 post 标志，如此才可以反复post
-			OS_call(OS_current_task);
+			if (OS_current_task->init == TASK_IS_INITIALIZED)
+				OS_call(OS_current_task);
 		}
 	}
 }

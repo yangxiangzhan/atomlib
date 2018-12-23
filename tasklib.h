@@ -169,7 +169,7 @@ typedef struct{
 do{\
 	(sph)->signal = 1;  \
 	if((sph)->wait)     \
-		OS_task_post((sph)->wait);\
+		TASK_POST((sph)->wait);\
 }while(0)
 
 // 等待一个二值信号量
@@ -183,6 +183,20 @@ do{\
 
 //------------------系统对外声明--------------------
 
+#define OS_CONF_NUMEVENTS 8U //事件队列深度，为 2 的指数
+#define OS_NUMEVENTS_MASK (OS_CONF_NUMEVENTS-1)
+
+extern volatile unsigned char nevents ; //未处理事件个数
+extern volatile unsigned char fevent ;  //事件队列下标
+extern struct protothread  *  events[] ;//事件队列
+
+#define TASK_POST(task)\
+do{\
+	if ((task)->post || nevents == OS_CONF_NUMEVENTS) break;  \
+	events[(fevent + nevents++) & OS_NUMEVENTS_MASK] = (task);\
+}while(0)
+
+
 extern struct list_head       OS_scheduler_list;
 extern struct protothread *   OS_current_task;
 #define task_self()           OS_current_task
@@ -192,7 +206,7 @@ extern volatile unsigned long OS_current_time;
 	
 
 void    OS_task_create(ros_task_t *task,const char * name, int (*start_rtn)(void*), void *arg);
-void    OS_task_post  (ros_task_t * task);
+//void    OS_task_post  (ros_task_t * task);
 void    OS_scheduler(void);
 
 #endif

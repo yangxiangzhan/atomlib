@@ -3,6 +3,11 @@
   * @file           shell.h
   * @author         古么宁
   * @brief          命令解释器头文件
+  * 使用步骤：
+  *    0.初始化硬件部分。
+  *    1.编写硬件对应的void puts(char * buf , uint16_t len) 发送函数
+  *    2.新建 shellinput_t shellx , 初始化输出 SHELL_INPUT_INIT(&shellx,puts);
+  *    3.接收到一包数据后，调用 shell_input(&shellx,buf,len)
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -70,6 +75,15 @@
 #define SHELL_CMD_LEN(pCommand)  (((pCommand)->ID >> 21) & 0x0000001F)
 
 
+//shell 入口对应出口，从哪里输入则从对应的地方输出
+#define shell_input(shell,buf,len) \
+	do{\
+		current_puts = (shell)->puts;      \
+		(shell)->gets((shell),(buf),(len));\
+		current_puts = default_puts;       \
+	}while(0)
+
+
 /* Public types ------------------------------------------------------------*/
 
 enum INPUT_PARAMETER
@@ -125,13 +139,6 @@ typedef struct shell_input
 shellinput_t;
 
 
-//shell 入口对应出口，从哪里输入则从对应的地方输出
-#define shell_input(shell,buf,len) \
-	do{\
-		current_puts = (shell)->puts;      \
-		(shell)->gets((shell),(buf),(len));\
-		current_puts = default_puts;       \
-	}while(0)
 
 
 /* Public variables ---------------------------------------------------------*/
@@ -143,7 +150,7 @@ extern char  shell_input_sign[];
 /* Public function prototypes 对外可用接口 -----------------------------------*/
 
 //注册命令，这个函数一般不直接调用，用宏 shell_register_command() 间接调用
-void _shell_register(char * , cmd_fn_t func,struct shell_cmd * );
+void _shell_register(char * , cmd_fn_t func , struct shell_cmd * );
 
 //默认命令行输入端
 void cmdline_gets(struct shell_input * ,char * ,uint32_t );

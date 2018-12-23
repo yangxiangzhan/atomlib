@@ -3,7 +3,7 @@
   * @file           serial_console.c
   * @author         古么宁
   * @brief          serial_console file
-                    串口控制台文件。文件不直接操作硬件，依赖 serial_hal.c 和 iap_hal.c
+                    串口控制台文件。
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -48,11 +48,9 @@ static struct serial_iap
 }
 iap;
 
-//ros_semaphore_t rosSerialRxSem;
 
 static ros_task_t iap_timeout_task;
 static ros_task_t serial_console_task;
-
 
 static struct shell_input serial_shell;
 //------------------------------相关函数声明------------------------------
@@ -74,11 +72,11 @@ static int iap_check_complete(void * arg)
 	struct shell_input * shell;
 	uint32_t filesize ;
 
-	TASK_BEGIN();//任务开始
+	TASK_BEGIN();     //任务开始
 	
-	printk("loading");
+	printk("loading");//开始接收时打印 loading 进度条
 	
-	task_cond_wait(OS_current_time - iap.timestamp > 1600) ;//超时 1.6 s
+	task_cond_wait(OS_current_time - iap.timestamp > 1000) ;//超时 1 s 无数据包，表示接收结束
 	
 	iap_lock_flash();   //由于要写完最后一包数据才能上锁，所以上锁放在 iap_check_complete 中
 	
@@ -114,7 +112,7 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 	if ((iap.addr & USART_IAP_ADDR_MASK) == 0)//清空下一页
 		iap_erase_flash(iap.addr ,1) ;
 
-	if (task_is_exited(&iap_timeout_task))//开始接收后创建超时携程，判断接收结束
+	if (task_is_exited(&iap_timeout_task))//开始接收后创建超时任务，判断接收结束
 		task_create(&iap_timeout_task,NULL,iap_check_complete,shell);
 	else
 		printl(".",1);//打印一个点以示清白
@@ -225,7 +223,7 @@ void shell_iap_command(void * arg)
 		iap.size = (argc == 1) ? argv[0] : (1) ;
 		
 		printk("\r\nSure to update IAP?[Y/N] "); //需要输入确认
-		this_input->gets = iap_option_gets;          //串口数据流获取至 iap_option_gets
+		this_input->gets = iap_option_gets;      //串口数据流获取至 iap_option_gets
 		this_input->apparg = this_input->buf;
 		this_input->buf[0] = 0;	
  	}	
@@ -379,7 +377,7 @@ void _syscfg_fputs(char * fpath, char * fdata,uint32_t fsize)
 /**
 	* @brief    _shell_edit_syscfg
 	*           命令行编辑 syscfg 信息
-	* @param
+	* @param    arg  命令行内存
 	* @return   void
 */
 void _shell_edit_syscfg(void * arg)

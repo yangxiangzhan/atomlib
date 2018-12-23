@@ -63,6 +63,13 @@ int iap_unlock_flash(void);
 
 int iap_lock_flash(void);
 
+
+uint32_t syscfg_addr(void);
+
+void syscfg_erase(void);
+
+void syscfg_write(char * info , uint32_t len);
+
 //------------------------------¿ØÖÆÌ¨ÃüÁî------------------------------
 void shell_jump_command(void * arg);
 void shell_reboot_command(void * arg);

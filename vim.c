@@ -15,7 +15,6 @@
 #include "shell.h"
 #include "vim.h"
 
-
 /* Private types ------------------------------------------------------------*/
 enum VIM_STATE
 {
@@ -34,7 +33,7 @@ struct vim_edit_buf
 	uint16_t  rows;  //文件光标所在行位置
 	uint16_t  cols;  //文件光标所在列位置
 	uint16_t  tail;  //文件尾部位置
-	char  editbuf[VIM_MAX_EDIT]; //文件编辑内存
+	char  editbuf[VIM_MAX_EDIT]; //文件编辑内存 
 	char  printbuf[VIM_MAX_EDIT];//文件打印中转内存
 	char  option;
 	char  state;
@@ -67,7 +66,6 @@ static const char editing_title[] = "Editing...press ESC to quit";
 
 /* Private function prototypes -----------------------------------------------*/
 
-
 /* Gorgeous Split-line -----------------------------------------------*/
 
 
@@ -86,12 +84,8 @@ static void cursor_up(struct vim_edit_buf * vimedit)
 		
 		if ((--vimedit->rows) > 1)
 		{
-			while(*ptr-- != '\n'); //回到上一行结尾处
-			if (*ptr != '\n')
-			{
-				while(*--ptr != '\n');//当前行的开头
-				++ptr;
-			}
+			for ( ; *  ptr   != '\n' ; --ptr ); //回到上一行结尾处的'\n'
+			for ( ; *(ptr-1) != '\n' ; --ptr ); //上一行开头
 		}
 		else //如果现在是第二行，则回到第一行所在位置
 		{
@@ -128,7 +122,7 @@ static void cursor_down(struct vim_edit_buf * vimedit)
 		
 		while( *ptr++ != '\n'  );//下一行开头处
 		
-		for (cnt = 1; cnt < vimedit->cols ;++cnt)
+		for (cnt = 1; cnt < vimedit->cols ; ++cnt)
 		{
 			if ( *ptr == '\r' || *ptr == '\0' || *ptr == '\n')//比上一行短时，无法移动光标至原来的列位置
 				break;
@@ -189,28 +183,17 @@ static void cursor_move(struct vim_edit_buf * vimedit , char arrow)
 {
 	switch( arrow )
 	{
-		case 'A': //上箭头
-			cursor_up(vimedit);
-			break;
+		case 'A':cursor_up(vimedit);break; //上箭头
 
-		case 'B'://下箭头
-			cursor_down(vimedit);
-			break;
+		case 'B':cursor_down(vimedit);break;//下箭头
 
-		case 'C'://右箭头
-			cursor_right(vimedit);
-			break;
+		case 'C':cursor_right(vimedit);break;//右箭头
 
-		case 'D'://左箭头
-			cursor_left(vimedit);
-			break;
+		case 'D':cursor_left(vimedit);break;//左箭头
 		
-		default : ;
+		default : return ;
 	}
 }
-
-
-
 
 
 /**
@@ -225,7 +208,8 @@ static void vim_backspace(struct vim_edit_buf * vim)
 	char * edit = vim->edit;     //当前编辑位置
 	char * tail = &vim->editbuf[vim->tail];//原编辑区结尾; 
 	
-	if (*(vim->edit-1) != '\n') //如果当前编辑位置不是行开头
+	//if (*(vim->edit-1) != '\n') //如果当前编辑位置不是行开头
+	if (vim->cols != 1)//如果当前编辑位置不是行开头
 	{
 		char * copy = vim->edit;
 		
@@ -246,7 +230,7 @@ static void vim_backspace(struct vim_edit_buf * vim)
 		--vim->tail;
 		vim->editbuf[vim->tail] = 0;//末端添加字符串结束符
 		printl(vim->printbuf,print - vim->printbuf);
-	}/**/
+	}
 	else //当前编辑位置是行开头，回退一行
 	{
 		char * prevlines ; //当前编辑点上一行的开头
@@ -263,14 +247,16 @@ static void vim_backspace(struct vim_edit_buf * vim)
 		//控制台清空编辑点所在行以及后面所有的内容显示
 		for(uint32_t i = vim->rows ; i <= vim->rowmax ; ++i )
 			printl((char*)clearline , sizeof(clearline)-1);
+
+		//把当前编辑点内容考到上一行结尾
+		//memcpy(prevlinee, edit ,tail - edit);
+		for (char * copy = prevlinee ; edit < tail ; *copy++ = *edit++);
 		
-		memcpy(prevlinee, edit ,tail - edit);//把当前编辑点内容考到上一行结尾
-		
-		vim->rows -= 1;
 		vim->rowmax -= 1;
+		vim->rows -= 1;
+		vim->tail -= (vim->edit - prevlinee);//更新编辑尾部，适应 '\r\n'
 		vim->edit  = prevlinee ;             //更新当前编辑位置为上一行结尾
 		vim->cols  = prevlinee-prevlines+1;  //更新当前列位置为上一行结尾
-		vim->tail -= (vim->edit - prevlinee);//更新编辑尾部，适应 '\r\n'
 		vim->editbuf[vim->tail] = 0; //末端添加字符串结束符
 		
 		printk("\033[%d;%dH",vim->rows+1,vim->cols);//光标回到编辑点位置
@@ -374,7 +360,7 @@ static void vim_edit_getchar(struct vim_edit_buf * vim,char data)
 		return ;
 	}
 
-	if (KEYCODE_BACKSPACE == data)
+	if (KEYCODE_BACKSPACE == data || 0x7f == data) //0x7f ,for putty
 	{
 		if (vim->editbuf != vim->edit)
 			vim_backspace(vim);
@@ -510,7 +496,7 @@ void shell_into_edit(struct shell_input * shell,vim_fgets fgets ,vim_fputs fputs
 	
 	shell->apparg = VIM_MALLOC(sizeof(struct vim_edit_buf));
 	if ( NULL ==  shell->apparg )
-	{
+	{
 		printk("not enough memery\r\n");
 		return ;
 	}
