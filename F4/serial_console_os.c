@@ -17,10 +17,13 @@
 
 #include "cmsis_os.h" // 启用 freertos
 
-#include "shell.h"
 #include "serial_hal.h"
 #include "serial_console.h"
 #include "iap_hal.h"
+
+#include "kernel.h"
+#include "shell.h"
+#include "vim.h"
 //--------------------相关宏定义及结构体定乿-------------------
 osThreadId SerialConsoleTaskHandle;
 osSemaphoreId osSerialRxSemHandle;

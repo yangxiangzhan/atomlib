@@ -18,13 +18,13 @@
 #include "tasklib.h"
 #include "iap_hal.h"
 
-#include "shell.h"
 #include "serial_hal.h"
 #include "serial_console.h"
 
 #include "stm32f429xx.h" //for SCB->VTOR
 
-
+#include "shell.h"
+#include "vim.h"
 /* Private macro ------------------------------------------------------------*/
 
 #define UASRT_IAP_BUF_SIZE  1024
@@ -212,7 +212,7 @@ static void shell_iap_command(void * arg)
 	if (SCB->VTOR == FLASH_BASE)//如果目前所在是 iap 模式，擦除 app 区域
 	{
 		iap.addr = APP_ADDR;
-		iap.size = (argc == 1) ? argv[0] : 0x20000 ;
+		iap.size = (argc == 1) ? argv[0] : 0x10000 ;
 		
 		//由于要写完最后一包数据才能上锁，所以上锁放在 iap_check_complete 中
 		iap_unlock_flash();

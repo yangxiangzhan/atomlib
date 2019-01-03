@@ -31,3 +31,5 @@ F1/F4/L1:
 LittleFS:
 	LittleFS 是一个用于 spi flash 的文件系统，先放这。
 	
+appdemo:
+	一些 demo。
