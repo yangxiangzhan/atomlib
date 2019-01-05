@@ -514,7 +514,9 @@ void shell_into_edit(struct shell_input * shell,vim_fgets fgets ,vim_fputs fputs
 	}
 	
 	shell->gets = shell_vim_gets; //重定义数据流输入,编辑文件模式
-
+	if (default_puts == shell->puts)
+		default_puts = NULL;
+	
 	edit->fputs = fputs;
 	edit->editbuf[edit->tail] = 0;
 	edit->edit   = edit->editbuf;
