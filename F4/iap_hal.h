@@ -1,18 +1,32 @@
 #ifndef __IAP_BASE_H__
 #define __IAP_BASE_H__
 
+/*
+ *  把 flash 大致分为四部分
+ *  IAP_ADDR         SYSCFG_ADDR    APP_ADDR  UPDATE_PACKAGE_AT_STM32_ADRR
+ *  |--------------------|--------------|---------------|--------------|
+ *   iap,即bootloader部分    sysconfig信息          app 部分           存储升级包部分
+ *
+ */
+
+
 
 #define UPDATE_PACKAGE_AT_W25X16_ADRR 0x10000
 #define IAP_RX_BUF_SIZE 256  //0x100//  W25X16 一页大小
 
 
+#define UPDPKG_AT_MCU_ADDR           0x08060000
 
 #define UPDATE_PACKAGE_AT_STM32_ADRR 0x08060000 //telnet/串口 升级包存放位置
 
-
-
 #define IAP_ADDR 0x08000000
 #define APP_ADDR 0x08020000
+
+
+#define SYSCFG_INFO_SIZE (0x10000)
+#define SYSCFG_ADDR_MAX  (APP_ADDR-4)
+#define SYSCFG_ADDR_MIN  (APP_ADDR-SYSCFG_INFO_SIZE)
+
 
 // stm32f429bit6 ram起始地址为 0x20000000 ，大小 0x30000
 // stm32f103vet6 ram起始地址为 0x20000000 ，大小 0x10000

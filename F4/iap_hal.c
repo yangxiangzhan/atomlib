@@ -20,9 +20,6 @@
 
 //------------------------------´®¿Ú IAP Ïà¹Ø------------------------------
 
-#define SYSCFG_INFO_SIZE (0x10000)
-#define SYSCFG_ADDR_MAX  (APP_ADDR-4)
-#define SYSCFG_ADDR_MIN  (APP_ADDR-SYSCFG_INFO_SIZE)
 
 
 /**

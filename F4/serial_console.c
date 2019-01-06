@@ -18,13 +18,14 @@
 #include "tasklib.h"
 #include "iap_hal.h"
 
+#include "shell.h"
+#include "vim.h"
 #include "serial_hal.h"
 #include "serial_console.h"
 
 #include "stm32f429xx.h" //for SCB->VTOR
 
-#include "shell.h"
-#include "vim.h"
+
 /* Private macro ------------------------------------------------------------*/
 
 #define UASRT_IAP_BUF_SIZE  1024
