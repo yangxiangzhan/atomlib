@@ -65,7 +65,16 @@ void task_runtime(void * arg)
 	printk("%s%s%s",acTaskInfo,task_list_buf,acTaskInfoDescri);
 }
 
+volatile unsigned long lThreadRuntime = 0;
+void configureTimerForRunTimeStats(void)
+{
+	lThreadRuntime = 0;
+}
 
+unsigned long getRunTimeCounterValue(void)
+{
+	return lThreadRuntime;
+}
 
 
 void shell_erase_flash(void * arg)

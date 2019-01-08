@@ -407,7 +407,7 @@ void serial_puts(char * const buf,uint16_t len)
 
 
 //------------------------------以下为一些中断处理------------------------------
-//#include "cmsis_os.h"//用了freertos 打开
+#include "cmsis_os.h"//用了freertos 打开
 
 #ifdef _CMSIS_OS_H
 	extern osSemaphoreId osSerialRxSemHandle;

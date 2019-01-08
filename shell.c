@@ -791,6 +791,61 @@ void _shell_register(char * cmd_name, cmd_fn_t cmd_func,struct shell_cmd * newcm
 	return ;
 }
 
+/**
+	* @brief    _confirm_gets
+	*           命令行信息确认，如果输入 y/Y 则执行命令
+	* @param
+	* @return   void
+*/
+static void _confirm_gets(struct shell_input * shell ,char * buf , uint32_t len)
+{
+	char * option = shell->buf;
+	cmd_fn_t yestodo = shell->apparg;
+
+	if (0 == *option) //先输入 [Y/y/N/n] ，其他按键无效
+	{
+		if (*buf == 'Y' || *buf == 'y' || *buf == 'N' || *buf == 'n')
+		{
+			*option = *buf;
+			printl(buf,1);
+		}
+	}
+	else
+	if (*buf == KEYCODE_BACKSPACE) //回退键
+	{
+		printl("\b \b",3);
+		*option = 0;
+	}
+	else
+	if (*buf == '\r' || *buf == '\n') //按回车确定
+	{
+		shell->gets = cmdline_gets;//串口数据回归为命令行模式
+		shell->apparg = NULL;
+
+		printl("\r\n",2);
+
+		if ( *option == 'Y' || *option == 'y') //确定更新 iap
+			yestodo(shell);
+		else
+			printk("Cancel this operation\r\n");
+	}
+}
+
+/**
+	* @brief    shell_confirm
+	*           命令行信息确认，如果输入 y/Y 则执行命令
+	* @param    shell  : 输入交互
+	* @param    info   : 选项信息
+	* @param    yestodo: 输入 y/Y 后所需执行的命令
+	* @return   void
+*/
+void shell_confirm(struct shell_input * shell ,char * info ,cmd_fn_t yestodo)
+{
+	printk(info);
+	shell->gets = _confirm_gets;//串口数据流获取至 shell_option
+	shell->apparg = yestodo;
+	shell->buf[0] = 0;
+}
 
 
 
@@ -873,6 +928,8 @@ void cmdline_gets(struct shell_input * input,char * ptr,uint32_t len)
 	}
 	return ;
 }
+
+
 
 
 

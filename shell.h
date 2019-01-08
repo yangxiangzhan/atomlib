@@ -96,6 +96,7 @@ enum INPUT_PARAMETER
 // 命令对应的函数类型，至于为什么输入设计为 void *,我不记得了
 typedef void (*cmd_fn_t)(void * arg);
 
+
 // 单链表节点，用来串命令
 typedef struct shell_list
 {
@@ -161,6 +162,7 @@ int  shell_option_suport(char * str ,char ** argv);
 
 void shell_init(char * sign,fmt_puts_t puts);
 
+void shell_confirm(struct shell_input * shell ,char * info ,cmd_fn_t yestodo);
 
 #endif
 
