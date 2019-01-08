@@ -93,6 +93,28 @@ static int iap_check_complete(void * arg)
 }
 
 
+/** 
+	* @brief serial_console_recv  串口控制台处理任务，不直接调用
+	* @param void
+	* @return int 
+*/
+static int serial_console_recv(void * arg)
+{
+	char  *  packet;
+	uint16_t pktlen ;
+
+	TASK_BEGIN();//任务开始
+	
+	while(1)
+	{
+		task_cond_wait(serial_rxpkt_queue_out(&packet,&pktlen));//等待串口接收
+
+		shell_input(&serial_shell,packet,pktlen);//数据帧传入应用层
+	}
+	
+	TASK_END();
+}
+
 
 
 /** 
@@ -121,71 +143,24 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 
 
 /**
-	* @brief    iap_option_gets
-	*           iap 键盘数据流入,因为擦除 iap 区域有可能会变砖，所以要有信息确认
+	* @brief    shell_iap
+	*           命令行响应函数
 	* @param    
 	* @return   void
 */
-static void iap_option_gets(struct shell_input * shell ,char * buf , uint32_t len)
+static void shell_iap(void * arg)
 {
-	char * option = shell->apparg;
+	struct shell_input * shell = arg;
 	
-	if (0 == *option) //先输入 [Y/y/N/n] ，其他按键无效
-	{
-		if (*buf == 'Y' || *buf == 'y' || *buf == 'N' || *buf == 'n')
-		{
-			*option = *buf;
-			printl(buf,1);
-		}
-	}
-	else
-	if (* buf == KEYCODE_BACKSPACE) //回退键
-	{
-		printk("\b \b");
-		*option = 0;
-	}
-	else
-	if (* buf == '\r' || * buf == '\n') //按回车确定
-	{
-		if ( *option == 'Y' || *option == 'y') //确定更新 iap
-		{
-			//由于要写完最后一包数据才能上锁，所以上锁放在 iap_check_complete 中
-			iap_unlock_flash();
-			iap_erase_flash(iap.addr , iap.size);
-			color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
-			serial_recv_reset(UASRT_IAP_BUF_SIZE); //重置串口缓冲包大小
-			shell->gets = iap_gets;		           //串口数据流获取至 iap_gets
-		}
-		else
-		{
-			printk("\r\ncancel update\r\n%s",shell_input_sign);
-			shell->gets = cmdline_gets;        //串口数据回归为命令行模式
-		}
-	}
+	//由于要写完最后一包数据才能上锁，所以上锁放在 iap_check_complete 中
+	iap_unlock_flash();
+	iap_erase_flash(iap.addr , iap.size);
+	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
+	serial_recv_reset(UASRT_IAP_BUF_SIZE); //重置串口缓冲包大小
+	shell->gets = iap_gets;		           //串口数据流获取至 iap_gets
 }
 
 
-/** 
-	* @brief serial_console_recv  串口控制台处理任务，不直接调用
-	* @param void
-	* @return int 
-*/
-static int serial_console_recv(void * arg)
-{
-	char  *  packet;
-	uint16_t pktlen ;
-
-	TASK_BEGIN();//任务开始
-	
-	while(1)
-	{
-		task_cond_wait(serial_rxpkt_queue_out(&packet,&pktlen));//等待串口接收
-
-		shell_input(&serial_shell,packet,pktlen);//数据帧传入应用层
-	}
-	
-	TASK_END();
-}
 
 
 
@@ -211,21 +186,14 @@ void shell_iap_command(void * arg)
 		iap.size = (argc == 1) ? argv[0] : 1 ;
 		
 		//由于要写完最后一包数据才能上锁，所以上锁放在 iap_check_complete 中
-		iap_unlock_flash();
-		iap_erase_flash(iap.addr , 1);
-		color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
-		serial_recv_reset(UASRT_IAP_BUF_SIZE); //重置串口缓冲包大小
-		this_input->gets = iap_gets;           //串口数据流获取至 iap_gets
+		shell_iap(this_input);
 	}	
  	else //如果目前所在是 app 模式，需要先提示信息
  	{ 
 		iap.addr = IAP_ADDR; //iap 地址在 0x8000000,删除扇区0数据
 		iap.size = (argc == 1) ? argv[0] : (1) ;
 		
-		printk("\r\nSure to update IAP?[Y/N] "); //需要输入确认
-		this_input->gets = iap_option_gets;      //串口数据流获取至 iap_option_gets
-		this_input->apparg = this_input->buf;
-		this_input->buf[0] = 0;	
+		shell_confirm(this_input,"Sure to update IAP?[Y/N] ",shell_iap); //需要输入确认
  	}	
 }
 
