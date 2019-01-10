@@ -353,7 +353,8 @@ static void vim_insert_newline(struct vim_edit_buf * vim)
 	* @return   void
 */
 static void vim_edit_getchar(struct vim_edit_buf * vim,char data)
-{
+{
+
 	if (KEYCODE_CTRL_C == data || KEYCODE_TAB == data ||
 		KEYCODE_END == data || KEYCODE_HOME == data )//一些特别的字符过滤
 	{
@@ -449,7 +450,7 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 			break;
 			
 		case VIM_QIUT:   //等待退出
-			if (*buf == KEYCODE_BACKSPACE) //回退键
+			if (*buf == KEYCODE_BACKSPACE || *buf == 0x7f) //回退键
 			{
 				vimedit->state  = VIM_COMMAND;
 				printk("\b \b");
@@ -491,7 +492,7 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 */
 void shell_into_edit(struct shell_input * shell,vim_fgets fgets ,vim_fputs fputs)
 {
-	char * argv[4] = {NULL};
+	char * argv[2] = {NULL};
 	struct vim_edit_buf * edit;
 	
 	shell->apparg = VIM_MALLOC(sizeof(struct vim_edit_buf));
@@ -501,10 +502,10 @@ void shell_into_edit(struct shell_input * shell,vim_fgets fgets ,vim_fputs fputs
 		return ;
 	}
 
-	shell_option_suport(shell->buf,argv);//提取路径信息
-
+	cmdline_strtok(shell->buf,argv,2);//提取路径信息,路径名称为第二个参数
+	
 	edit = (struct vim_edit_buf *)(shell->apparg);
-	edit->fpath = argv[1];               //路径名称为第二个参数
+	edit->fpath = argv[1]; //路径名称为第二个参数
 
 	//尝试打开，如果失败则返回
 	if (VIM_FILE_OK !=  fgets(edit->fpath,&edit->editbuf[0],&edit->tail))

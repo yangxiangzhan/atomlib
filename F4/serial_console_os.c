@@ -81,11 +81,11 @@ void shell_erase_flash(void * arg)
 {
 	static const char msg[] = "flash-erase (addr) [size]\r\n";
 	int argc ;
-	int argv[5];
+	int argv[2];
 
-	argc = shell_cmdparam((char*)arg,argv);
+	argc = cmdline_param((char*)arg,argv,2);
 
-	printk("erase flash ",argc);
+	printk("erase flash ");
 
 	if (argc < 1)
 	{

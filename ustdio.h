@@ -15,9 +15,6 @@
 
 /* Public macro ------------------------------------------------------------*/
 
-#define print_CurrentOut(fn) do{current_puts = fn;}while(0)
-#define print_DefaultOut(fn) do{default_puts = fn;}while(0)
-
 #define printl(ptr,len)  do{if (current_puts) current_puts(ptr,len);}while(0)
 
 #define color_printk(color,...) \

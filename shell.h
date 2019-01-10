@@ -5,9 +5,10 @@
   * @brief          命令解释器头文件
   * 使用步骤：
   *    0.初始化硬件部分。
-  *    1.编写硬件对应的void puts(char * buf , uint16_t len) 发送函数
-  *    2.新建 shellinput_t shellx , 初始化输出 SHELL_INPUT_INIT(&shellx,puts);
-  *    3.接收到一包数据后，调用 shell_input(&shellx,buf,len)
+  *    1.编写硬件对应的void puts(char * buf , uint16_t len) 发送函数。
+  *    2.shell_init(sign,puts) 初始化输入标志和默认输出。
+  *    3.新建一个  shellinput_t shellx , 初始化输出 SHELL_INPUT_INIT(&shellx,puts);
+  *    4.接收到一包数据后，调用 shell_input(shellx,buf,len)
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -23,29 +24,35 @@
 
 /* Public macro (共有宏)------------------------------------------------------------*/
 
+/* option (配置项) */
+
 //命令数超过30条时可以考虑用平衡二叉树进行查找匹配
 //#define USE_AVL_TREE
+
+//命令带上参数的字符串输入最长记录长度
+#define COMMANDLINE_MAX_LEN       36     
+
+//控制台记录条目数，设为 0 时不记录
+#define COMMANDLINE_MAX_RECORD    4     
+
+
 
 #ifdef USE_AVL_TREE
 	#include "avltree.h"//命令索引用avl树进行查找匹配
 #endif
 
 
-#define     COMMANDLINE_MAX_RECORD    4      //控制台记录条目数
-#define     COMMANDLINE_MAX_LEN       36     //命令带上参数的字符串输入最长记录长度
+#define KEYCODE_END               35
+#define KEYCODE_HOME              36
+#define KEYCODE_CTRL_C            0x03
+#define KEYCODE_BACKSPACE         0x08   //键盘的回退键
+#define KEYCODE_TAB               '\t'   //键盘的tab键
+#define KEYCODE_NEWLINE           0x0A
+#define KEYCODE_ENTER             0x0D   //键盘的回车键
+#define KEYCODE_ESC               0x1b
 
 
-#define     KEYCODE_CTRL_C            0x03
-#define     KEYCODE_NEWLINE           0x0A
-#define     KEYCODE_ENTER             0x0D   //键盘的回车键
-#define     KEYCODE_BACKSPACE         0x08   //键盘的回退键
-#define     KEYCODE_ESC               0x1b
-#define     KEYCODE_END               35
-#define     KEYCODE_HOME              36
-#define     KEYCODE_TAB               '\t'   //键盘的tab键
 
-#define     KEEP_STREAM    0
-#define     RELEASE_STREAM 1
 /*
 -----------------------------------------------------------------------
 	调用宏 shell_register_command(pstr,pfunc) 注册命令
@@ -156,13 +163,15 @@ void _shell_register(char * , cmd_fn_t func , struct shell_cmd * );
 //默认命令行输入端
 void cmdline_gets(struct shell_input * ,char * ,uint32_t );
 
-int  shell_cmdparam(char * str,int * argv);
+//解析命令行
+int  cmdline_param(char * str,int * argv,uint32_t maxread);
 
-int  shell_option_suport(char * str ,char ** argv);
+int  cmdline_strtok(char * str ,char ** argv ,uint32_t maxread);
 
-void shell_init(char * sign,fmt_puts_t puts);
 
 void shell_confirm(struct shell_input * shell ,char * info ,cmd_fn_t yestodo);
+
+void shell_init(char * sign,fmt_puts_t puts);
 
 #endif
 

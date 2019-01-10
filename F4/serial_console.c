@@ -28,6 +28,8 @@
 
 /* Private macro ------------------------------------------------------------*/
 
+#define SYSTEM_CONFIG_FILE 
+
 #define UASRT_IAP_BUF_SIZE  1024
 
 /* Private variables ------------------------------------------------------------*/
@@ -156,15 +158,30 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 */
 static void shell_iap(void * arg)
 {
-	struct shell_input * shell = arg;
+	int argc = 0;
+	int erasesize = 0;
 	
+	struct shell_input * shell = container_of(arg, struct shell_input, buf);
+	shell->gets = iap_gets;//串口数据流获取至 iap_gets
+	
+	argc = cmdline_param((char*)arg,&erasesize,1);
+	if (SCB->VTOR == FLASH_BASE)
+	{
+		iap.addr = APP_ADDR;
+		iap.size = (argc == 1) ? erasesize : 0x10000 ;
+	}
+	else
+	{
+		iap.addr = IAP_ADDR;
+		iap.size = (argc == 1) ? erasesize : (0x4000 * 3) ;
+	}
 	//由于要写完最后一包数据才能上锁，所以上锁放在 iap_check_complete 中
 	iap_unlock_flash();
 	iap_erase_flash(iap.addr , iap.size);
 	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
 	serial_recv_reset(UASRT_IAP_BUF_SIZE); //重置串口缓冲包大小
-	shell->gets = iap_gets;		           //串口数据流获取至 iap_gets
 }
+
 
 
 /**
@@ -175,25 +192,15 @@ static void shell_iap(void * arg)
 */
 static void shell_iap_command(void * arg)
 {
-	int argc = 0;
-	int argv[4];
-	
-	struct shell_input * this_input = container_of(arg, struct shell_input, buf);
-
-	argc = shell_cmdparam((char*)arg,argv);
-
 	if (SCB->VTOR == FLASH_BASE)//如果目前所在是 iap 模式，擦除 app 区域
 	{
-		iap.addr = APP_ADDR;
-		iap.size = (argc == 1) ? argv[0] : 0x10000 ;
-		shell_iap(this_input);
+		shell_iap(arg); //直接进入 iap 模式
 	}	
  	else //如果目前所在是 app 模式，需要先提示信息
- 	{ 
-		iap.addr = IAP_ADDR; //iap 地址在 0x8000000,删除扇区0数据
-		iap.size = (argc == 1) ? argv[0] : (0x4000 * 3) ;
-		shell_confirm(this_input,"Sure to update IAP?[Y/N] ",shell_iap);
- 	}	
+ 	{
+		struct shell_input * shellin = container_of(arg, struct shell_input, buf);
+		shell_confirm(shellin,"Sure to update IAP?",shell_iap); //需要输入确认
+ 	}
 }
 
 
@@ -208,11 +215,11 @@ static void shell_erase_flash(void * arg)
 {
 	static const char tips[] = "flash-erase (addr) [size]\r\n";
 	int argc ;
-	int argv[5];
+	int argv[2];
 
-	argc = shell_cmdparam((char*)arg,argv);
+	argc = cmdline_param((char*)arg,argv,2);
 
-	printk("erase flash ",argc);
+	printk("erase flash ");
 
 	if (argc < 1)
 	{
@@ -278,18 +285,12 @@ void shell_show_protothread(void * arg)
 */
 void shell_kill_protothread(void * arg)
 {
-	int argc;
-	int argv[4];
 	int searchID ;
 
 	struct list_head * search_list;
 	struct protothread * pthread;
 
-	argc = shell_cmdparam((char*)arg,argv);
-
-	if (argc ==  1)
-		searchID = argv[0];
-	else
+	if (1 != cmdline_param((char*)arg,&searchID,1))
 		return ;
 
 	list_for_each(search_list, &OS_scheduler_list)
@@ -306,6 +307,8 @@ void shell_kill_protothread(void * arg)
 
 #endif
 
+
+#ifdef SYSTEM_CONFIG_FILE
 
 /**
 	* @brief    _syscfg_fgets
@@ -366,6 +369,8 @@ void _shell_rm_syscfg(void * arg)
 	syscfg_erase();
 }
 
+#endif //#ifdef SYSTEM_CONFIG_FILE
+
 
 /**
 	* @brief    serial_console_init
@@ -392,7 +397,10 @@ void serial_console_init(char * info)
 
 	shell_register_command("reboot"  ,shell_reboot_command);
 	shell_register_command("flash-erase",shell_erase_flash);
-	shell_register_command("syscfg",_shell_edit_syscfg);
+	
+	#ifdef SYSTEM_CONFIG_FILE
+		shell_register_command("syscfg",_shell_edit_syscfg);
+	#endif
 
 	#ifdef OS_USE_ID_AND_NAME
 		shell_register_command("top",shell_show_protothread);
