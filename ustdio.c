@@ -138,7 +138,7 @@ int i_itoa(char * strbuf,int value)
 	if (value < 0) 
 		strbuf[len++] = '-'; 
 
-	for (uint8_t index = 1 ; index <= len/2; ++index)
+	for (int index = 1 ; index <= len/2; ++index)
 	{
 		char reverse = strbuf[len  - index];  
 		strbuf[len - index] = strbuf[index -1];   
@@ -213,11 +213,10 @@ int i_ftoa(char * strbuf,float value)
 	}
 	while(int_part);            
 	
-	
 	if (value < 0.0f) 
 		strbuf[len++] = '-'; 
 	
-	for (uint8_t index = 1 ; index <= len/2; ++index)
+	for (int index = 1 ; index <= len/2; ++index)
 	{
 		char reverse = strbuf[len  - index];  
 		strbuf[len - index] = strbuf[index -1];   
@@ -247,7 +246,7 @@ int i_xtoa(char * strbuf,uint32_t value)
 	}
 	while(value);
 	
-	for (uint8_t index = 1 ; index <= len/2; ++index)
+	for (int index = 1 ; index <= len/2; ++index)
 	{
 		char reverse = strbuf[len  - index];  
 		strbuf[len - index] = strbuf[index -1];   
@@ -314,6 +313,9 @@ void printk(char* fmt, ...)
 					buf[len++] = (char)va_arg(ap, int);
 					break;
 
+				case '\0' :
+					goto print_end ;
+
 				default:continue; 
 			}
 			
@@ -326,6 +328,7 @@ void printk(char* fmt, ...)
 		}
 	}
 
+print_end:
 	va_end(ap);
 	
 	if (buf_tail != buf_head) 
@@ -382,6 +385,10 @@ int sprintk(char * buffer ,const char * fmt , ...)
 					buf[len++] = (char)va_arg(ap, int);
 					break;
 
+				case '\0' :
+					*buffer++  = '%';
+					goto sprint_end;
+
 				default://ÆÕÍ¨×Ö·û
 					*buffer++ = *copy++;
 					continue; 
@@ -395,8 +402,11 @@ int sprintk(char * buffer ,const char * fmt , ...)
 		}
 	}
 
+sprint_end:
+
 	va_end(ap);
 
+	*buffer++  = '\0';
 	return (buffer - bufs);// buffer
 }
 
