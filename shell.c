@@ -927,7 +927,7 @@ void cmdline_gets(struct shell_input * input,char * ptr,uint32_t len)
 */
 static void _confirm_gets(struct shell_input * shell ,char * buf , uint32_t len)
 {
-	char * option = shell->buf + COMMANDLINE_MAX_LEN;
+	char * option = shell->buf[COMMANDLINE_MAX_LEN-1];
 
 	if (0 == *option) //先输入 [Y/y/N/n] ，其他按键无效
 	{
