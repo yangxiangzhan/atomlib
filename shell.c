@@ -42,7 +42,7 @@ union uncmd
 
 /* Private macro ------------------------------------------------------------*/
 
-/* Private variables ------------------------------------------------------------*/
+/* Private variables --------------------------------------------------------*/
 
 static const  uint8_t F_CRC8_Table[256] = {//正序,高位先行 x^8+x^5+x^4+1
 	0x00, 0x31, 0x62, 0x53, 0xc4, 0xf5, 0xa6, 0x97, 0xb9, 0x88, 0xdb, 0xea, 0x7d, 0x4c, 0x1f, 0x2e,
@@ -105,20 +105,19 @@ char   shell_input_sign[128] = "shell >";
 
 /* Private function prototypes -----------------------------------------------*/
 
-static void   shell_getchar     (struct shell_input * input , char ch);
-static void   shell_backspace   (struct shell_input * input) ;
-static void   shell_tab         (struct shell_input * input) ;
+static void   shell_getchar     (struct shell_input * shellin , char ch);
+static void   shell_backspace   (struct shell_input * shellin) ;
+static void   shell_tab         (struct shell_input * shellin) ;
 
 #if (COMMANDLINE_MAX_RECORD)//如果定义了历史纪录
-	static char * shell_record(struct shell_input * input);
-	static void   shell_show_history(struct shell_input * input,uint8_t LastOrNext);
+	static char * shell_record(struct shell_input * shellin);
+	static void   shell_show_history(struct shell_input * shellin,uint8_t LastOrNext);
 #else
 #	define shell_record(x)
 #	define shell_show_history(x,y)
 #endif //#if (COMMANDLINE_MAX_RECORD)//如果定义了历史纪录
 
 /* Gorgeous Split-line -----------------------------------------------*/
-
 
 #ifdef USE_AVL_TREE //avl tree 建立查询系统
 
@@ -134,7 +133,7 @@ static struct shell_cmd *shell_search_cmd(int cmdindex)
 
     while (node) 
 	{
-		struct shell_cmd * command = container_of(node, struct shell_cmd, cmd_node);
+		struct shell_cmd * command = container_of(node, struct shell_cmd, node);
 
 		if (cmdindex < command->ID)
 		    node = node->avl_left;
@@ -164,7 +163,7 @@ static int shell_insert_cmd(struct shell_cmd * newcmd)
 	/* Figure out where to put new node */
 	while (*tmp)
 	{
-		struct shell_cmd *this = container_of(*tmp, struct shell_cmd, cmd_node);
+		struct shell_cmd *this = container_of(*tmp, struct shell_cmd, node);
 
 		parent = *tmp;
 		if (newcmd->ID < this->ID)
@@ -177,7 +176,7 @@ static int shell_insert_cmd(struct shell_cmd * newcmd)
 	}
 
 	/* Add new node and rebalance tree. */
-	avl_insert(&shell_root,&newcmd->cmd_node,parent,tmp);
+	avl_insert(&shell_root,&newcmd->node,parent,tmp);
 	return 0;
 }
 
@@ -189,12 +188,11 @@ static int shell_insert_cmd(struct shell_cmd * newcmd)
 	*
 	* @return NULL
 */
-static void shell_tab(struct shell_input * input)
+static void shell_tab(struct shell_input * shellin)
 {
-	char  *  str = input->buf;
-	uint32_t strlen = input->buftail;
-	uint32_t index;
-	uint32_t end;
+	char  *  str = shellin->cmdline;
+	uint32_t strlen = shellin->tail;
+	uint32_t index , end;
 	
 	struct avl_node  * node = shell_root.avl_node;	
 	struct shell_cmd * shellcmd ;
@@ -211,14 +209,14 @@ static void shell_tab(struct shell_input * input)
 
 	while ( node )//index 一定不存在，查找结束后的 shell_cmd 最靠近 index ，用此作为起始匹配点
 	{	
-		shellcmd = avl_entry(node,struct shell_cmd, cmd_node);	
+		shellcmd = avl_entry(node,struct shell_cmd, node);	
 		node = (index < shellcmd->ID) ? node->avl_left : node->avl_right;
 	}
 
 	//首字母的大小决定命令索引的大小，超过首字母的点不需要继续匹配
-    for (node = &shellcmd->cmd_node ; shellcmd->ID < end && node; node = avl_next(node))
+    for (node = &shellcmd->node ; shellcmd->ID < end && node; node = avl_next(node))
 	{
-		shellcmd = avl_entry(node,struct shell_cmd, cmd_node);
+		shellcmd = avl_entry(node,struct shell_cmd, node);
 		
 		if (memcmp(shellcmd->name, str, strlen) == 0) //对比输入的字符串，如果匹配到相同的
 		{
@@ -231,23 +229,23 @@ static void shell_tab(struct shell_input * input)
 	if (!match_cnt) //如果没有命令包含输入的字符串，返回
 		return ; 
 	
-	if (input->edit != input->buftail) //如果编辑位置不是末端，先把光标移到末端
+	if (shellin->edit != shellin->tail) //如果编辑位置不是末端，先把光标移到末端
 	{
-		printl(&input->buf[input->edit],input->buftail - input->edit);
-		input->edit = input->buftail;
+		printl(&shellin->cmdline[shellin->edit],shellin->tail - shellin->edit);
+		shellin->edit = shellin->tail;
 	}
 
 	if (1 == match_cnt)  //如果只找到了一条命令包含当前输入的字符串，直接补全命令，并打印
 	{
 		for(char * ptr = match[0]->name + strlen ; *ptr ;++ptr) //打印剩余的字符
-			shell_getchar(input,*ptr);
+			shell_getchar(shellin,*ptr);
 	}
 	else   //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
 	{
 		for(uint32_t i = 0;i < match_cnt; ++i) //把所有含有输入字符串的命令列表打印出来
 			printk("\r\n\t%s",match[i]->name); 
 		
-		printk("\r\n%s%s",shell_input_sign,input->buf); //重新打印输入标志和已输入的字符串
+		printk("\r\n%s%s",shell_input_sign,shellin->cmdline); //重新打印输入标志和已输入的字符串
 		
 		while(1)  //补全命令，把每条命令都包含的字符补全并打印
 		{
@@ -256,7 +254,7 @@ static void shell_tab(struct shell_input * input)
 				if (match[0]->name[strlen] != match[i]->name[strlen])
 					return  ; //字符不一样，返回
 			}
-			shell_getchar(input,match[0]->name[strlen++]);  //把相同的字符补全到输入缓冲中
+			shell_getchar(shellin,match[0]->name[strlen++]);  //把相同的字符补全到输入缓冲中
 		}
 	}
 }
@@ -277,7 +275,7 @@ static void shell_list_cmd(void * arg)
 	
 	for (node = avl_first(&shell_root); node; node = avl_next(node))//遍历红黑树
 	{
-		cmd = avl_entry(node,struct shell_cmd, cmd_node);
+		cmd = avl_entry(node,struct shell_cmd, node);
 		if (firstchar != (cmd->ID & 0xfc000000))
 		{
 			firstchar = cmd->ID & 0xfc000000;
@@ -302,7 +300,7 @@ static struct shell_cmd *shell_search_cmd(int cmdindex)
 {
 	for (struct shell_list * node = shell_cmd_list.next; node ; node = node->next )
 	{
-		struct shell_cmd  * cmd = container_of(node, struct shell_cmd, cmd_node);
+		struct shell_cmd  * cmd = container_of(node, struct shell_cmd, node);
 		if (cmd->ID > cmdindex)
 			return NULL;
 		else
@@ -326,7 +324,7 @@ static int shell_insert_cmd(struct shell_cmd * newcmd)
 
 	for (node = prev->next; node ; prev = node,node = node->next)
 	{
-		struct shell_cmd * cmd = container_of(node, struct shell_cmd, cmd_node);
+		struct shell_cmd * cmd = container_of(node, struct shell_cmd, node);
 		if ( cmd->ID > newcmd->ID )
 			break;
 		else
@@ -334,31 +332,30 @@ static int shell_insert_cmd(struct shell_cmd * newcmd)
 			return 1;
 	}
 
-	prev->next = &newcmd->cmd_node ;
+	prev->next = &newcmd->node ;
 	prev = prev->next;
 	prev->next = node;
 
 	return 0;
 }
 
-
+	
 /** 
 	* @brief shell_tab 输入 table 键处理
 	* @param input
 	*
 	* @return NULL
 */
-static void shell_tab(struct shell_input * input)
+static void shell_tab(struct shell_input * shellin)
 {
-	char  *  str = input->buf;
-	uint32_t strlen = input->buftail;
-	uint32_t index;
-	uint32_t end;
+	char  *  str = shellin->cmdline;
+	uint32_t strlen = shellin->tail;
 	
 	struct shell_list * node = shell_cmd_list.next;
 	struct shell_cmd * shellcmd ;
 	struct shell_cmd * match[10];    //匹配到的命令行
-	uint32_t           match_cnt = 0;//匹配到的命令号个数
+	uint32_t match_cnt = 0;//匹配到的命令号个数
+	uint32_t index, end;
 	
 	for ( ; *str == ' ' ; ++str,--strlen) ; //有时候会输入空格，需要跳过
 	
@@ -370,7 +367,7 @@ static void shell_tab(struct shell_input * input)
 	
 	for ( ; node ; node = node->next )//找到比 index 大的点，用此作为起始匹配点
 	{
-		shellcmd = container_of(node, struct shell_cmd, cmd_node);
+		shellcmd = container_of(node, struct shell_cmd, node);
 		if ( shellcmd->ID > index )
 			break;
 	}
@@ -378,7 +375,7 @@ static void shell_tab(struct shell_input * input)
 	//首字母的大小决定命令索引的大小，超过首字母的点不需要继续匹配
 	for ( ; node && shellcmd->ID < end ; node = node->next )
 	{
-		shellcmd = container_of(node,struct shell_cmd, cmd_node);
+		shellcmd = container_of(node,struct shell_cmd, node);
 		
 		if (memcmp(shellcmd->name, str, strlen) == 0) //对比输入的字符串，如果匹配到相同的
 		{
@@ -391,23 +388,23 @@ static void shell_tab(struct shell_input * input)
 	if (!match_cnt) //如果没有命令包含输入的字符串，返回
 		return ; 
 	
-	if (input->edit != input->buftail) //如果编辑位置不是末端，先把光标移到末端
+	if (shellin->edit != shellin->tail) //如果编辑位置不是末端，先把光标移到末端
 	{
-		printl(&input->buf[input->edit],input->buftail - input->edit);
-		input->edit = input->buftail;
+		printl(&shellin->cmdline[shellin->edit],shellin->tail - shellin->edit);
+		shellin->edit = shellin->tail;
 	}
 
 	if (1 == match_cnt)  //如果只找到了一条命令包含当前输入的字符串，直接补全命令，并打印
 	{
 		for(char * ptr = match[0]->name + strlen ; *ptr ;++ptr) //打印剩余的字符
-			shell_getchar(input,*ptr);
+			shell_getchar(shellin,*ptr);
 	}
 	else   //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
 	{
 		for(uint32_t i = 0;i < match_cnt; ++i) //把所有含有输入字符串的命令列表打印出来
 			printk("\r\n\t%s",match[i]->name); 
 		
-		printk("\r\n%s%s",shell_input_sign,input->buf); //重新打印输入标志和已输入的字符串
+		printk("\r\n%s%s",shell_input_sign,shellin->cmdline); //重新打印输入标志和已输入的字符串
 		
 		while(1)  //补全命令，把每条命令都包含的字符补全并打印
 		{
@@ -416,7 +413,7 @@ static void shell_tab(struct shell_input * input)
 				if (match[0]->name[strlen] != match[i]->name[strlen])
 					return  ; //字符不一样，返回
 			}
-			shell_getchar(input,match[0]->name[strlen++]);  //把相同的字符补全到输入缓冲中
+			shell_getchar(shellin,match[0]->name[strlen++]);  //把相同的字符补全到输入缓冲中
 		}
 	}
 }
@@ -437,7 +434,7 @@ static void shell_list_cmd(void * arg)
 	
 	for ( ; node; node = node->next)//遍历红黑树
 	{
-		cmd = container_of(node,struct shell_cmd, cmd_node);
+		cmd = container_of(node,struct shell_cmd, node);
 		if (firstchar != (cmd->ID & 0xfc000000))
 		{
 			firstchar = cmd->ID & 0xfc000000;
@@ -452,44 +449,6 @@ static void shell_list_cmd(void * arg)
 #endif //#ifdef USE_AVL_TREE
 
 
-
-
-/**
-	* @author   古么宁
-	* @brief    shell_backspace 
-	*           控制台输入 回退 键处理
-	* @param    void
-	* @return   void
-*/
-static void shell_backspace(struct shell_input * input)
-{
-	char printbuf[COMMANDLINE_MAX_LEN*2]={0};//中转内存
-	
-	if (input->edit)//如果当前打印行有输入内容，回退一个键位
-	{
-		char * print = &printbuf[1];
-		char * printend = print + (input->buftail - input->edit) + 1;
-		char * edit = &input->buf[input->edit--] ;
-		char * tail = &input->buf[input->buftail--];
-		
-		//当输入过左右箭头时，需要作字符串插入左移处理，并作反馈回显
-		//如 abUcd 中删除U，需要左移cd，并打印两个 '\b' 使光标回到 ab 处
-		for (char * cp = edit - 1 ; edit < tail ; *cp++ = *edit++)
-		{
-			*print++ = *edit;
-			*printend++ = '\b';
-		}
-
-		printbuf[0] = '\b';
-		*print = ' ';       //覆盖最后一个字符显示
-		*printend++ = '\b'; //光标回显
-
-		input->buf[input->buftail] = 0;  //末端添加字符串结束符
-		printl(printbuf,printend-printbuf);
-	}
-}
-
-
 #if (COMMANDLINE_MAX_RECORD) //如果定义了历史纪录
 /**
 	* @author   古么宁
@@ -498,15 +457,15 @@ static void shell_backspace(struct shell_input * input)
 	* @param    
 	* @return   返回记录地址
 */
-static char * shell_record(struct shell_input * input)
+static char * shell_record(struct shell_input * shellin)
 {	
 	char *  history = &shell_history.buf[shell_history.write][0];
 	
 	shell_history.write = (shell_history.write + 1) % COMMANDLINE_MAX_RECORD;
 	shell_history.read = shell_history.write;
-	
-	memcpy(history,input->buf,input->buftail);
-	history[input->buftail] = 0;
+
+	memcpy(history,shellin->cmdline,shellin->tail);
+	history[shellin->tail] = 0;
 	
 	return history;
 }
@@ -519,61 +478,108 @@ static char * shell_record(struct shell_input * input)
 	* @param    void
 	* @return   void
 */
-static void shell_show_history(struct shell_input * input,uint8_t LastOrNext)
+static void shell_show_history(struct shell_input * shellin,uint8_t LastOrNext)
 {
-	uint32_t len;
-	char *history;
+	uint32_t len = 0;
 	
 	printk("\33[2K\r%s",shell_input_sign);//"\33[2K\r" 表示清除当前行
 
 	if (!LastOrNext) //上箭头，上一条命令
-	{
-		uint32_t next = (!shell_history.read) ? (COMMANDLINE_MAX_RECORD - 1) : (shell_history.read - 1);
-		if (next == shell_history.write)
-		{
-			input->buf[0] = 0;
-			input->buftail = 0 ;
-			input->edit = 0 ;
-			shell_history.read = shell_history.write;
-			return ;
-		}
-		else
-			shell_history.read = next;
-	}
-	else //下箭头
-	{	
-		uint32_t next = (shell_history.read + 1) % COMMANDLINE_MAX_RECORD;
+		shell_history.read = (!shell_history.read) ? (COMMANDLINE_MAX_RECORD - 1) : (shell_history.read - 1);
+	else       //下箭头
+	if (shell_history.read != shell_history.write)
+		shell_history.read = (shell_history.read + 1) % COMMANDLINE_MAX_RECORD;
 
-		if (shell_history.read == shell_history.write || next == shell_history.write)
-		{
-			input->buf[0] = 0;
-			input->buftail = 0 ;
-			input->edit = 0 ;
-			shell_history.read = shell_history.write;
-			return ;
-		}
-		else
-			shell_history.read = next;
+	if (shell_history.read != shell_history.write) //把历史记录考到命令行内存
+	{
+		for (char * history = &shell_history.buf[shell_history.read][0]; *history ; ++len)
+			shellin->cmdline[len] = *history++;
 	}
 	
-	history = &shell_history.buf[shell_history.read][0];
-	len = strlen(history);
+	shellin->cmdline[len] = 0; //添加结束符
+	shellin->tail = len ;
+	shellin->edit = len ;
+
 	if (len)
+		printl(shellin->cmdline,len); //打印命令行内容
+}
+
+#endif //#if (COMMANDLINE_MAX_RECORD) //如果定义了历史纪录
+
+/**
+	* @author   古么宁
+	* @brief    shell_backspace 
+	*           控制台输入 回退 键处理
+	* @param    void
+	* @return   void
+*/
+static void shell_backspace(struct shell_input * shellin)
+{
+	if (!shellin->edit)//如果当前打印行有输入内容，回退一个键位
+		return ;
+
+	char   printbuf[COMMANDLINE_MAX_LEN*2]={0};//中转内存
+	char * print = &printbuf[1];//这里的 printbuf 定义为全局变量，有可重入性等问题，但是为了速度
+	char * printend = print + (shellin->tail - shellin->edit) + 1;
+	char * edit = &shellin->cmdline[shellin->edit--] ;
+	char * tail = &shellin->cmdline[shellin->tail--];
+
+	//当输入过左右箭头时，需要作字符串插入左移处理，并作反馈回显
+	//如 abUcd 中删除U，需要左移cd，并打印两个 '\b' 使光标回到 ab 处
+	for (char * cp = edit - 1 ; edit < tail ; *cp++ = *edit++)
 	{
-		printl(history,len);
-		memcpy(input->buf,history,len);
-		input->buf[len] = 0;
-		input->buftail = len ;
-		input->edit = len ;
+		*print++ = *edit;
+		*printend++ = '\b';
 	}
-	else
+
+	printbuf[0] = '\b';
+	*print = ' ';       //覆盖最后一个字符显示
+	*printend++ = '\b'; //光标回显
+
+	shellin->cmdline[shellin->tail] = 0;  //末端添加字符串结束符
+	printl(printbuf,printend-printbuf);
+}
+
+/**
+	* @author   古么宁
+	* @brief    shell_getchar 
+	*           命令行记录输入一个字符
+	* @param    
+	* @return   
+*/
+static void shell_getchar(struct shell_input * shellin , char ascii)
+{
+	if (shellin->tail + 1 >= COMMANDLINE_MAX_LEN)
+		return ;
+
+	if (shellin->tail == shellin->edit)
 	{
-		input->buf[0] = 0;
-		input->buftail = 0 ;
-		input->edit = 0 ;
+		shellin->cmdline[shellin->edit++] = ascii;
+		shellin->cmdline[++shellin->tail] = 0;
+		printl(&ascii,1);
+	}
+	else //其实 else 分支完全可以处理 tail == edit 的情况，但是 printbuf 压栈太久
+	{
+		char  printbuf[COMMANDLINE_MAX_LEN*2]={0};//中转内存
+		char *tail = &shellin->cmdline[shellin->tail++];
+		char *edit = &shellin->cmdline[shellin->edit++];
+		char *print = printbuf + (tail - edit);
+		char *printend = print + 1;
+
+		//当输入过左右箭头时，需要作字符串插入右移处理，并作反馈回显
+		//如 abcd 中在bc插入U，需要右移cd，并打印两个 '\b' 使光标回到 abU 处
+		for (char *cp = tail - 1; cp >= edit ; *tail-- = *cp--)
+		{
+			*print-- = *cp;
+			*printend++ = '\b';
+		}
+
+		*print = ascii; 
+		*edit = ascii;  //插入字符
+		shellin->cmdline[shellin->tail] = 0; //末端添加字符串结束符
+		printl(printbuf,printend - printbuf);//回显打印
 	}
 }
-#endif //#if (COMMANDLINE_MAX_RECORD) //如果定义了历史纪录
 
 
 /**
@@ -583,7 +589,7 @@ static void shell_show_history(struct shell_input * input,uint8_t LastOrNext)
 	* @param
 	* @return
 */
-static void shell_parse(struct shell_input * input)
+static void shell_parse(struct shell_input * shellin)
 {
 	uint32_t len = 0;
 	uint32_t sum = 0;
@@ -592,7 +598,7 @@ static void shell_parse(struct shell_input * input)
 	union uncmd unCmd ;
 	struct shell_cmd * cmdmatch;
 
-	char * str = input->buf;
+	char * str = shellin->cmdline;
 
 	for ( ; ' ' == *str ; ++str) ;	// Shave off any leading spaces
 
@@ -613,48 +619,14 @@ static void shell_parse(struct shell_input * input)
 
 	cmdmatch = shell_search_cmd(unCmd.ID);//匹配命令号
 	if (cmdmatch != NULL)
-		cmdmatch->Func(input->buf);
+		cmdmatch->Func(shellin->cmdline);
 	else
-		printk("\r\n\tno reply:%s\r\n",input->buf);
+		printk("\r\n\tno reply:%s\r\n",shellin->cmdline);
 
 PARSE_END:
-	input->buftail = 0;//清空当前命令行输入
-	input->edit = 0;
+	shellin->tail = 0;//清空当前命令行输入
+	shellin->edit = 0;
 	return ;
-}
-
-
-/**
-	* @author   古么宁
-	* @brief    shell_getchar 
-	*           命令行记录输入一个字符
-	* @param    
-	* @return   
-*/
-static void shell_getchar(struct shell_input * input , char ascii)
-{
-	char printbuf[COMMANDLINE_MAX_LEN*2]={0};//中转内存
-	
-	if (input->buftail + 1 >= COMMANDLINE_MAX_LEN)
-		return ;
-
-	char *tail = &input->buf[input->buftail++];
-	char *edit = &input->buf[input->edit++];
-	char *print = printbuf + (tail - edit);
-	char *printend = print + 1;
-
-	//当输入过左右箭头时，需要作字符串插入右移处理，并作反馈回显
-	//如 abcd 中在bc插入U，需要右移cd，并打印两个 '\b' 使光标回到 abU 处
-	for (char *cp = tail - 1; cp >= edit ; *tail-- = *cp--)
-	{
-		*print-- = *cp;
-		*printend++ = '\b';
-	}
-
-	*print = ascii; 
-	*edit = ascii;  //插入字符
-	input->buf[input->buftail] = 0;      //末端添加字符串结束符
-	printl(printbuf,printend - printbuf);//回显打印
 }
 
 /**
@@ -676,31 +648,21 @@ static void shell_clean_screen(void * arg)
 */
 static void shell_debug_stream(void * arg)
 {
-	static const char openmsg[]  = "\r\n\tget debug information\r\n\r\n";
-	static const char closemsg[] = "\r\n\tclose debug information stream\r\n\r\n";
-
-	char * msg ;
-	uint32_t len;
-	
 	int option;
-	int argc ;
-
-	argc = cmdline_param(arg,&option,1);
+	int argc = cmdline_param(arg,&option,1);
 	
 	if ((argc > 0) && (option == 0))  //关闭调试信息打印流，仅显示交互信息
 	{
+		static const char closemsg[] = "\r\n\tclose debug information stream\r\n\r\n";
+		current_puts((char*)closemsg,sizeof(closemsg) - 1);
 		default_puts = NULL;       //默认信息流输出为空，将不打印调试信息
-		msg = (char*)closemsg;
-		len = sizeof(closemsg) - 1;
 	}
 	else
 	{
+		static const char openmsg[]  = "\r\n\tget debug information\r\n\r\n";
+		current_puts((char*)openmsg,sizeof(openmsg) - 1);
 		default_puts = current_puts; //设置当前交互为信息流输出
-		msg = (char*)openmsg;
-		len = sizeof(openmsg) - 1;
 	}
-
-	current_puts(msg,len);
 }
 
 /**
@@ -712,7 +674,7 @@ static void shell_debug_stream(void * arg)
 	* @param    newcmd      命令控制块对应的指针
 	* @return   void
 */
-void _shell_register(char * cmd_name, cmd_fn_t cmd_func,struct shell_cmd * newcmd)
+void _shell_register(struct shell_cmd * newcmd,char * cmd_name, cmd_fn_t cmd_func)
 {
 	char * str = cmd_name;
 	union uncmd unCmd ;
@@ -751,7 +713,7 @@ void _shell_register(char * cmd_name, cmd_fn_t cmd_func,struct shell_cmd * newcm
 	* @param    str     命令字符串后面所跟参数缓冲区指针
 	* @param    argv    数据转换后缓存地址
 	* @param    maxread 最大读取数
-	* @return   argc    参数个数输出
+	* @return   argc    最终读取参数个数输出
 */
 int cmdline_strtok(char * str ,char ** argv ,uint32_t maxread)
 {
@@ -761,7 +723,7 @@ int cmdline_strtok(char * str ,char ** argv ,uint32_t maxread)
 	
 	for ( ; *str && argc < maxread; ++argc,++argv )//字符不为 ‘\0' 的时候
 	{
-		for (*argv = str ; ' ' != *str && *str ; ++str);//跳过非空字符
+		for (*argv = str ; ' ' != *str && *str ; ++str);//记录这个参数，然后跳过非空字符
 		
 		for ( ; ' ' == *str; *str++ = '\0');//每个参数加字符串结束符，跳过空格		
 	}
@@ -778,21 +740,17 @@ int cmdline_strtok(char * str ,char ** argv ,uint32_t maxread)
 	* @param    argv    数据转换后缓存地址
 	* @param    maxread 最大读取数
 	* @return   数据个数
-		* @retval   >= 0         命令后面所跟参数个数
+		* @retval   >= 0         读取命令后面所跟参数个数
 		* @retval   PARAMETER_ERROR(-2)  命令后面所跟参数有误
 		* @retval   PARAMETER_HELP(-1)   命令后面跟了 ? 号
 */
 int cmdline_param(char * str,int * argv,uint32_t maxread)
 {
-	uint32_t argc;
-	uint32_t value;
+	uint32_t argc , value;
 
 	for ( ; ' ' == *str        ; ++str);//跳过空格
 	for ( ; ' ' != *str && *str; ++str);//跳过第一个参数
 	for ( ; ' ' == *str        ; ++str);//跳过空格
-
-	if (*str == 0)
-		return 0;//如果命令后面没有跟参数字符输入，返回0
 
 	if (*str == '?')
 		return PARAMETER_HELP;//如果命令后面的是问号，返回help
@@ -801,7 +759,7 @@ int cmdline_param(char * str,int * argv,uint32_t maxread)
 	{
 		*argv = 0;
 		
-		if ('0' == str[0] && 'x' == str[1]) //十六进制转换
+		if ('0' == str[0] && 'x' == str[1]) //"0x" 开头，十六进制转换
 		{
 			for ( str += 2; ; ++str ) 
 			{
@@ -841,83 +799,86 @@ int cmdline_param(char * str,int * argv,uint32_t maxread)
 	* @author   古么宁
 	* @brief    shell_input 
 	*           硬件上接收到的数据到命令行的传输
-	* @param    ptr     硬件层所接收到的数据缓冲区地址
+	* @param    recv  硬件层所接收到的数据缓冲区地址
 	* @param    len     硬件层所接收到的数据长度
 	* @return   void
 */
-void cmdline_gets(struct shell_input * input,char * ptr,uint32_t len)
+void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 {
-	for ( ; len && *ptr; --len,++ptr)
+	for ( ; len && *recv; --len,++recv)
 	{
-		switch (*ptr) //判断字符是否为特殊字符
+		switch (*recv) //判断字符是否为特殊字符
 		{
 			case KEYCODE_NEWLINE: //忽略 \r
 				break;
 			case KEYCODE_ENTER:
-				printk("\r\n");
-				if (input->buftail)
+				if (shellin->tail)
 				{
-					shell_record(input);//记录当前输入的命令和命令参数
-					shell_parse(input);
+					printk("\r\n");
+					shell_record(shellin);//记录当前输入的命令和命令参数
+					shell_parse(shellin);
 				}
 				else
-					printk("%s",shell_input_sign);
+				{
+					printk("\r\n%s",shell_input_sign);
+				}
 				break;
 			
 			case KEYCODE_ESC :
-				if (ptr[1] == '[')
+				if (recv[1] == '[')
 				{
-					switch(ptr[2])
+					switch(recv[2])
 					{
 						case 'A'://上箭头
-							shell_show_history(input,0);
+							shell_show_history(shellin,0);
 							break;
 
 						case 'B'://下箭头
-							shell_show_history(input,1);
+							shell_show_history(shellin,1);
 							break;
 
-						case 'C'://右箭头input->buftail &&
-							if ( input->buftail != input->edit)
-								printl(&input->buf[input->edit++],1);
+						case 'C'://右箭头input->tail &&
+							if ( shellin->tail != shellin->edit)
+								printl(&shellin->cmdline[shellin->edit++],1);
 							break;
 
 						case 'D'://左箭头
-							if (input->edit)
+							if (shellin->edit)
 							{
-								--input->edit;
+								--shellin->edit;
 								printl("\b",1);
 							}
 							break;
 						default:;
 					}
 					
-					len -= 2;
-					ptr += 2;//箭头有3个字节字符
+					len  -= 2;
+					recv += 2;//箭头有3个字节字符
 				}
 				break;
 
 			case KEYCODE_CTRL_C:
-				input->edit = 0;
-				input->buftail = 0;
-				printk("^C");
+				shellin->edit = 0;
+				shellin->tail = 0;
+				printk("^C\r\n%s",shell_input_sign);
 				break;
 		
 			case KEYCODE_BACKSPACE : 
 			case 0x7f: //for putty
-				shell_backspace(input); 
+				shell_backspace(shellin); 
 				break;
 		
 			case KEYCODE_TAB: 
-				shell_tab(input); 
+				shell_tab(shellin); 
 				break;
 		
 			default: // 普通字符
-				shell_getchar(input,*ptr); //当前命令行输入;
+				shell_getchar(shellin,*recv); //当前命令行输入;
 		}
 	}
 	return ;
 }
+
 
 /**
 	* @brief    _confirm_gets
@@ -925,9 +886,9 @@ void cmdline_gets(struct shell_input * input,char * ptr,uint32_t len)
 	* @param
 	* @return   void
 */
-static void _confirm_gets(struct shell_input * shell ,char * buf , uint32_t len)
+static void _confirm_gets(struct shell_input * shellin ,char * buf , uint32_t len)
 {
-	char * option = &shell->buf[COMMANDLINE_MAX_LEN-1];
+	char * option = &shellin->cmdline[COMMANDLINE_MAX_LEN-1];
 
 	if (0 == *option) //先输入 [Y/y/N/n] ，其他按键无效
 	{
@@ -938,7 +899,7 @@ static void _confirm_gets(struct shell_input * shell ,char * buf , uint32_t len)
 		}
 	}
 	else
-	if (*buf == KEYCODE_BACKSPACE) //回退键
+	if (KEYCODE_BACKSPACE == *buf) //回退键
 	{
 		printl("\b \b",3);
 		*option = 0;
@@ -946,21 +907,22 @@ static void _confirm_gets(struct shell_input * shell ,char * buf , uint32_t len)
 	else
 	if ('\r' == *buf || '\n' == *buf) //按回车确定
 	{
-		cmd_fn_t yestodo = (cmd_fn_t)shell->apparg;
+		cmd_fn_t yestodo = (cmd_fn_t)shellin->apparg;
  		char opt = *option ; 
 		
-		*option = 0 ;  //shell->buf[COMMANDLINE_MAX_LEN-1] = 0;
-		shell->gets   = cmdline_gets;//数据回归为命令行模式
-		shell->apparg = NULL;
+		*option = 0 ;  //shellin->cmdline[COMMANDLINE_MAX_LEN-1] = 0;
+		shellin->gets   = cmdline_gets;//数据回归为命令行模式
+		shellin->apparg = NULL;
 
 		printl("\r\n",2);
 
 		if ( 'Y' == opt || 'y' == opt) //确定更新 iap
-			yestodo(shell->buf);
+			yestodo(shellin->cmdline);
 		else
 			printk("cancel this operation\r\n");
 	}
 }
+
 
 /**
 	* @brief    shell_confirm
@@ -970,13 +932,12 @@ static void _confirm_gets(struct shell_input * shell ,char * buf , uint32_t len)
 	* @param    yestodo: 输入 y/Y 后所需执行的命令
 	* @return   void
 */
-void shell_confirm(struct shell_input * shell ,char * info ,cmd_fn_t yestodo)
+void shell_confirm(struct shell_input * shellin ,char * info ,cmd_fn_t yestodo)
 {
-	printk(info);
-	printk(" [Y/N] ");
-	shell->gets = _confirm_gets;//串口数据流获取至 shell_option
-	shell->apparg = yestodo;
-	shell->buf[COMMANDLINE_MAX_LEN-1] = 0;
+	printk("%s [Y/N] ",info);
+	shellin->gets = _confirm_gets;//串口数据流获取至 shell_option
+	shellin->apparg = yestodo;
+	shellin->cmdline[COMMANDLINE_MAX_LEN-1] = 0;
 }
 
 
@@ -991,7 +952,6 @@ void shell_confirm(struct shell_input * shell ,char * info ,cmd_fn_t yestodo)
 */
 void shell_init(char * sign,fmt_puts_t puts)
 {
-//	SHELL_INPUT_SIHN(sign);
 	strcpy(shell_input_sign,sign);
 	current_puts = puts ;
 	default_puts = puts ;
@@ -1001,5 +961,3 @@ void shell_init(char * sign,fmt_puts_t puts)
 	shell_register_command("clear",shell_clean_screen);
 	shell_register_command("debug-info",shell_debug_stream);//
 }
-
-

@@ -64,17 +64,17 @@
 #define shell_register_command(pstr,pfunc)\
 	do{\
 		static struct shell_cmd newcmd = {0};\
-		_shell_register(pstr,pfunc,&newcmd); \
+		_shell_register(&newcmd,pstr,pfunc); \
 	}while(0)
 
 
 //初始化一个 shell 交互，默认输入为 cmdline_gets
-#define SHELL_INPUT_INIT(shellinput,shellputs) \
+#define SHELL_INPUT_INIT(shellin,shellputs) \
 	do{\
-		(shellinput)->gets    = cmdline_gets;\
-		(shellinput)->puts	  = shellputs;\
-		(shellinput)->buftail = 0;		  \
-		(shellinput)->edit	  = 0;		  \
+		(shellin)->gets = cmdline_gets;\
+		(shellin)->puts = shellputs;   \
+		(shellin)->tail = 0;		  \
+		(shellin)->edit = 0;		  \
 	}while(0)
 
 
@@ -83,11 +83,11 @@
 
 
 //shell 入口对应出口，从哪里输入则从对应的地方输出
-#define shell_input(shell,buf,len) \
+#define shell_input(shellin,buf,len) \
 	do{\
-		current_puts = (shell)->puts;      \
-		(shell)->gets((shell),(buf),(len));\
-		current_puts = default_puts;       \
+		current_puts = (shellin)->puts;        \
+		(shellin)->gets((shellin),(buf),(len));\
+		current_puts = default_puts;           \
 	}while(0)
 
 
@@ -114,15 +114,16 @@ shell_list_t ;
 //命令结构体，用于注册匹配命令
 typedef struct shell_cmd
 {
+	#ifdef USE_AVL_TREE
+		struct avl_node node;//avl树节点
+	#else
+		struct shell_list node;//链表节点
+	#endif
+
 	uint32_t	  ID;	//命令标识码
 	char *		  name; //记录每条命令字符串的内存地址
 	cmd_fn_t	  Func; //记录命令函数指针
-	
-	#ifdef USE_AVL_TREE
-		struct avl_node cmd_node;//avl树节点
-	#else
-		struct shell_list cmd_node;//链表节点
-	#endif
+
 }
 shellcmd_t;
 
@@ -140,9 +141,9 @@ typedef struct shell_input
 	void *  apparg;       
 
 	//命令行相关的参数
-	uint8_t edit;       //当前命令行编辑位置
-	uint8_t buftail;    //当前命令行输入结尾
-	char    buf[COMMANDLINE_MAX_LEN]; //命令行内存
+	uint8_t edit;    //当前命令行编辑位置
+	uint8_t tail;    //当前命令行输入结尾 tail
+	char    cmdline[COMMANDLINE_MAX_LEN]; //命令行内存 
 }
 shellinput_t;
 
@@ -158,7 +159,7 @@ extern char  shell_input_sign[];
 /* Public function prototypes 对外可用接口 -----------------------------------*/
 
 //注册命令，这个函数一般不直接调用，用宏 shell_register_command() 间接调用
-void _shell_register(char * , cmd_fn_t func , struct shell_cmd * );
+void _shell_register(struct shell_cmd * newcmd,char * cmd_name, cmd_fn_t cmd_func);
 
 //默认命令行输入端
 void cmdline_gets(struct shell_input * ,char * ,uint32_t );

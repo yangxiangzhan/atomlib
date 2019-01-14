@@ -35,7 +35,7 @@
 	* @param    fsize : fpath 文件总大小输出 
 	* @return   VIM_FILE_OK / VIM_FILE_ERROR
 */
-typedef uint32_t (*vim_fgets)(char * fpath, char * fdata,uint16_t * fsize);
+typedef uint32_t (*vim_fgets_t)(char * fpath, char * fdata,uint16_t * fsize);
 
 /**
 	* @brief    vim_fputs
@@ -45,7 +45,7 @@ typedef uint32_t (*vim_fgets)(char * fpath, char * fdata,uint16_t * fsize);
 	* @param    fsize : 将写入 fpath 文件的数据大小
 	* @return   void
 */
-typedef void	 (*vim_fputs)(char * fpath, char * fdata,uint32_t fsize);
+typedef void	 (*vim_fputs_t)(char * fpath, char * fdata,uint32_t fsize);
 
 
 
@@ -60,7 +60,7 @@ typedef void	 (*vim_fputs)(char * fpath, char * fdata,uint32_t fsize);
 	* @param    fputs : 文本编辑结束的输出
 	* @return   void
 */
-void shell_into_edit(struct shell_input  * shell,vim_fgets fgets ,vim_fputs fputs);
+void shell_into_edit(struct shell_input  * shell,vim_fgets_t fgets ,vim_fputs_t fputs);
 
 
 #endif

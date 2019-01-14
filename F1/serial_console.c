@@ -147,15 +147,14 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 /**
 	* @brief    shell_iap
 	*           命令行响应函数
-	* @param    
+	* @param    arg  : 命令行内存指针
 	* @return   void
 */
 static void serial_iap(void * arg)
 {
-	int argc = 0;
-	int erasesize = 0;
+	int argc , erasesize ;
 	
-	struct shell_input * shell = container_of(arg, struct shell_input, buf);
+	struct shell_input * shell = container_of(arg, struct shell_input, cmdline);
 	shell->gets = iap_gets;//串口数据流获取至 iap_gets
 	
 	argc = cmdline_param((char*)arg,&erasesize,1);
@@ -178,7 +177,7 @@ static void serial_iap(void * arg)
 /**
 	* @brief    shell_iap_command
 	*           命令行响应函数
-	* @param    
+	* @param    arg  : 命令行内存指针
 	* @return   void
 */
 void shell_iap_command(void * arg)
@@ -189,7 +188,7 @@ void shell_iap_command(void * arg)
 	}	
  	else //如果目前所在是 app 模式，需要先提示信息
  	{
-		struct shell_input * shellin = container_of(arg, struct shell_input, buf);
+		struct shell_input * shellin = container_of(arg, struct shell_input, cmdline);
 		shell_confirm(shellin,"Sure to update IAP?",serial_iap); //需要输入确认
  	}	
 }
@@ -344,7 +343,7 @@ void _syscfg_fputs(char * fpath, char * fdata,uint32_t fsize)
 */
 void _shell_edit_syscfg(void * arg)
 {
-	struct shell_input * shellin = container_of(arg, struct shell_input, buf);
+	struct shell_input * shellin = container_of(arg, struct shell_input, cmdline);
 	shell_into_edit(shellin , _syscfg_fgets , _syscfg_fputs );
 }
 

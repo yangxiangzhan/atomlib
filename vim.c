@@ -26,13 +26,13 @@ enum VIM_STATE
 
 struct vim_edit_buf
 {
-	vim_fputs fputs; //文件输出
-	char *    fpath; //命令行输入的编辑文件名
-	char *    edit;  //当前编辑位置
-	uint16_t  rowmax;//文件共有几行
-	uint16_t  rows;  //文件光标所在行位置
-	uint16_t  cols;  //文件光标所在列位置
-	uint16_t  tail;  //文件尾部位置
+	vim_fputs_t fputs; //文件输出
+	char *      fpath; //命令行输入的编辑文件名
+	char *      edit;  //当前编辑位置
+	uint16_t    rowmax;//文件共有几行
+	uint16_t    rows;  //文件光标所在行位置
+	uint16_t    cols;  //文件光标所在列位置
+	uint16_t    tail;  //文件尾部位置
 	char  editbuf[VIM_MAX_EDIT]; //文件编辑内存 
 	char  printbuf[VIM_MAX_EDIT];//文件打印中转内存
 	char  option;
@@ -392,8 +392,8 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 			if (*buf == 'i')//键盘输入 'i'
 			{
 				vimedit->state = VIM_EDITING;//进入编辑模式
-				printk("\033[%d;%dH\033[2K\r",1,1);//光标回到第一行并清空第一行
-				printk("\t%s",editing_title);      //打印提示信息
+				printk("\033[%d;%dH\033[2K\r\t",1,1);//光标回到第一行并清空第一行
+				printl((char*)editing_title,sizeof(editing_title)-1); //打印提示信息
 				printk("\033[%d;%dH",vimedit->rows + 1,vimedit->cols);//恢复光标位置
 			}
 			else
@@ -453,7 +453,7 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 			if (*buf == KEYCODE_BACKSPACE || *buf == 0x7f) //回退键
 			{
 				vimedit->state  = VIM_COMMAND;
-				printk("\b \b");
+				printl("\b \b",3);
 			}
 			else
 			if (*buf == '\r' || *buf == '\n') //回车确认
@@ -490,7 +490,7 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 	* @param    fputs  更新文本数据源的接口
 	* @return   void
 */
-void shell_into_edit(struct shell_input * shell,vim_fgets fgets ,vim_fputs fputs)
+void shell_into_edit(struct shell_input * shell,vim_fgets_t fgets ,vim_fputs_t fputs)
 {
 	char * argv[2] = {NULL};
 	struct vim_edit_buf * edit;
@@ -502,7 +502,7 @@ void shell_into_edit(struct shell_input * shell,vim_fgets fgets ,vim_fputs fputs
 		return ;
 	}
 
-	cmdline_strtok(shell->buf,argv,2);//提取路径信息,路径名称为第二个参数
+	cmdline_strtok(shell->cmdline,argv,2);//提取路径信息,路径名称为第二个参数
 	
 	edit = (struct vim_edit_buf *)(shell->apparg);
 	edit->fpath = argv[1]; //路径名称为第二个参数
