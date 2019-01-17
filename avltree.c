@@ -121,16 +121,17 @@ static void __avl_rotate_left(struct avl_node *node, struct avl_root *root)
 static int __avl_balance_left(struct avl_node *node, struct avl_root *root)
 {
 	int retl = 0;
-	int left_right_child_scale;
     struct avl_node * left_child = node->avl_left;
-    struct avl_node * left_left_child ;
     struct avl_node * left_right_child;
-	
+
     if(left_child)
 	{
-		left_left_child = left_child->avl_left;
+		#ifdef USE_DELETE_NODE
+    		int left_right_child_scale ;
+			struct avl_node * left_left_child = left_child->avl_left;
+		#endif
+
 		left_right_child = left_child->avl_right;
-		
 		
 		switch(avl_scale(left_child))
 		{
@@ -210,10 +211,13 @@ static int __avl_balance_left(struct avl_node *node, struct avl_root *root)
 static int __avl_balance_right(struct avl_node *node, struct avl_root *root)
 {
 	int ret = 0;
-	int right_left_child_scale;
     struct avl_node * right_child = node->avl_right;
     struct avl_node * right_left_child = right_child->avl_left;
-	struct avl_node * right_right_child = right_child->avl_right;
+
+	#ifdef USE_DELETE_NODE
+		struct avl_node * right_right_child = right_child->avl_right;
+		int right_left_child_scale;
+	#endif
 	
     if(right_child)
 	{

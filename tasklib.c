@@ -42,7 +42,7 @@ struct protothread *events[OS_CONF_NUMEVENTS]; //事件队列
 */
 void OS_task_create(ros_task_t *task,const char * name, int (*start_rtn)(void*), void *arg)
 {
-	static unsigned short IDcnt = 1;
+	static unsigned short IDcnt = 1U;
 	
 	if ( task->init != TASK_IS_INITIALIZED)
 	{

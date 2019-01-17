@@ -8,7 +8,7 @@
   *    0.初始化硬件部分。
   *    1.编写硬件对应的void puts(char * buf , uint16_t len) 发送函数。
   *    2.shell_init(sign,puts) 初始化输入标志和默认输出。
-  *    3.新建一个  shellinput_t shellx , 初始化输出 SHELL_INPUT_INIT(&shellx,puts);
+  *    3.新建一个  shellinput_t shellx , 初始化输出 shell_input_init(&shellx,puts,...);
   *    4.接收到一包数据后，调用 shell_input(shellx,buf,len)
   ******************************************************************************
   *
@@ -82,26 +82,13 @@ static const  uint8_t B_CRC8_Table[256] = {//反序,低位先行 x^8+x^5+x^4+1
 	0x74, 0x2a, 0xc8, 0x96, 0x15, 0x4b, 0xa9, 0xf7, 0xb6, 0xe8, 0x0a, 0x54, 0xd7, 0x89, 0x6b, 0x35
 };
 
-#if (COMMANDLINE_MAX_RECORD) //如果定义了历史纪录
-	static struct _shell_record
-	{
-		char  buf[COMMANDLINE_MAX_RECORD][COMMANDLINE_MAX_LEN];
-		uint8_t read;
-		uint8_t write;
-	}
-	shell_history = {0};
-#endif //#if (COMMANDLINE_MAX_RECORD) //如果定义了历史纪录
 
-#ifdef USE_AVL_TREE
-	static struct avl_root shell_root = {.avl_node = NULL};//命令匹配的平衡二叉树树根 
-#else
-	static struct shell_list shell_cmd_list = {.next = NULL};
-#endif
+static cmd_root_t shellcmdroot = {0};
+
 
 /* Global variables ------------------------------------------------------------*/
 
-const char DEFAULT_INPUTSIGN[] = "shell >";
-char   shell_input_sign[128] = "shell >";
+char DEFAULT_INPUTSIGN[COMMANDLINE_MAX_LEN] = "minishell >";
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -124,12 +111,13 @@ static void   shell_tab         (struct shell_input * shellin) ;
 /**
 	* @brief    shell_search_cmd 
 	*           命令树查找，根据 id 号找到对应的控制块
-	* @param    cmdindex        命令号
+	* @param    cmdindex  命令号
+	* @param    root      命令二叉树根
 	* @return   成功 id 号对应的控制块
 */
-static struct shell_cmd *shell_search_cmd(int cmdindex)
+static struct shell_cmd *shell_search_cmd(cmd_root_t * root , int cmdindex)
 {
-    struct avl_node *node = shell_root.avl_node;
+    cmd_entry_t *node = root->avl_node;
 
     while (node) 
 	{
@@ -155,10 +143,10 @@ static struct shell_cmd *shell_search_cmd(int cmdindex)
 	* @param    newcmd   新命令控制块
 	* @return   成功返回 0
 */
-static int shell_insert_cmd(struct shell_cmd * newcmd)
+static int shell_insert_cmd(cmd_root_t * root , struct shell_cmd * newcmd)
 {
-	struct avl_node **tmp = &shell_root.avl_node;
- 	struct avl_node *parent = NULL;
+	cmd_entry_t **tmp = &root->avl_node;
+ 	cmd_entry_t *parent = NULL;
 	
 	/* Figure out where to put new node */
 	while (*tmp)
@@ -176,7 +164,7 @@ static int shell_insert_cmd(struct shell_cmd * newcmd)
 	}
 
 	/* Add new node and rebalance tree. */
-	avl_insert(&shell_root,&newcmd->node,parent,tmp);
+	avl_insert(root,&newcmd->node,parent,tmp);
 	return 0;
 }
 
@@ -194,7 +182,7 @@ static void shell_tab(struct shell_input * shellin)
 	uint32_t strlen = shellin->tail;
 	uint32_t index , end;
 	
-	struct avl_node  * node = shell_root.avl_node;	
+	cmd_entry_t  * node = shellcmdroot.avl_node;	
 	struct shell_cmd * shellcmd ;
 	struct shell_cmd * match[10];    //匹配到的命令行
 	uint32_t           match_cnt = 0;//匹配到的命令号个数
@@ -245,7 +233,7 @@ static void shell_tab(struct shell_input * shellin)
 		for(uint32_t i = 0;i < match_cnt; ++i) //把所有含有输入字符串的命令列表打印出来
 			printk("\r\n\t%s",match[i]->name); 
 		
-		printk("\r\n%s%s",shell_input_sign,shellin->cmdline); //重新打印输入标志和已输入的字符串
+		printk("\r\n%s%s",shellin->sign,shellin->cmdline); //重新打印输入标志和已输入的字符串
 		
 		while(1)  //补全命令，把每条命令都包含的字符补全并打印
 		{
@@ -269,11 +257,12 @@ static void shell_tab(struct shell_input * shellin)
 */
 static void shell_list_cmd(void * arg)
 {
-	uint32_t firstchar = 0;
+	struct shell_input * shellin = container_of(arg, struct shell_input, cmdline);
 	struct shell_cmd * cmd;
-	struct avl_node  * node ;
+	uint32_t firstchar = 0;
+	cmd_entry_t  * node ;
 	
-	for (node = avl_first(&shell_root); node; node = avl_next(node))//遍历红黑树
+	for (node = avl_first(&shellcmdroot); node; node = avl_next(node))//遍历红黑树
 	{
 		cmd = avl_entry(node,struct shell_cmd, node);
 		if (firstchar != (cmd->ID & 0xfc000000))
@@ -284,7 +273,7 @@ static void shell_list_cmd(void * arg)
 		printk("\r\n\t%s", cmd->name);
 	}
 	
-	printk("\r\n\r\n%s",shell_input_sign);
+	printk("\r\n\r\n%s",shellin->sign);
 }
 
 
@@ -296,9 +285,9 @@ static void shell_list_cmd(void * arg)
 	* @param    cmdindex        命令号
 	* @return   成功 id 号对应的控制块
 */
-static struct shell_cmd *shell_search_cmd(int cmdindex)
+static struct shell_cmd *shell_search_cmd(cmd_root_t * root , int cmdindex)
 {
-	for (struct shell_list * node = shell_cmd_list.next; node ; node = node->next )
+	for (cmd_entry_t * node = root->next; node ; node = node->next )
 	{
 		struct shell_cmd  * cmd = container_of(node, struct shell_cmd, node);
 		if (cmd->ID > cmdindex)
@@ -317,10 +306,10 @@ static struct shell_cmd *shell_search_cmd(int cmdindex)
 	* @param    newcmd   新命令控制块
 	* @return   成功返回 0
 */
-static int shell_insert_cmd(struct shell_cmd * newcmd)
+static int shell_insert_cmd(cmd_root_t * root , struct shell_cmd * newcmd)
 {
-	struct shell_list * prev = &shell_cmd_list;
-	struct shell_list * node ;
+	cmd_entry_t * prev = root;
+	cmd_entry_t * node ;
 
 	for (node = prev->next; node ; prev = node,node = node->next)
 	{
@@ -351,7 +340,7 @@ static void shell_tab(struct shell_input * shellin)
 	char  *  str = shellin->cmdline;
 	uint32_t strlen = shellin->tail;
 	
-	struct shell_list * node = shell_cmd_list.next;
+	cmd_entry_t * node = shellcmdroot.next;
 	struct shell_cmd * shellcmd ;
 	struct shell_cmd * match[10];    //匹配到的命令行
 	uint32_t match_cnt = 0;//匹配到的命令号个数
@@ -404,7 +393,7 @@ static void shell_tab(struct shell_input * shellin)
 		for(uint32_t i = 0;i < match_cnt; ++i) //把所有含有输入字符串的命令列表打印出来
 			printk("\r\n\t%s",match[i]->name); 
 		
-		printk("\r\n%s%s",shell_input_sign,shellin->cmdline); //重新打印输入标志和已输入的字符串
+		printk("\r\n%s%s",shellin->sign,shellin->cmdline); //重新打印输入标志和已输入的字符串
 		
 		while(1)  //补全命令，把每条命令都包含的字符补全并打印
 		{
@@ -430,7 +419,8 @@ static void shell_list_cmd(void * arg)
 {
 	uint32_t firstchar = 0;
 	struct shell_cmd * cmd;
-	struct shell_list * node = shell_cmd_list.next;
+	cmd_entry_t * node = shellcmdroot.next;
+	struct shell_input * shellin = container_of(arg, struct shell_input, cmdline);
 	
 	for ( ; node; node = node->next)//遍历红黑树
 	{
@@ -443,7 +433,7 @@ static void shell_list_cmd(void * arg)
 		printk("\r\n\t%s", cmd->name);
 	}
 	
-	printk("\r\n\r\n%s",shell_input_sign);
+	printk("\r\n\r\n%s",shellin->sign);
 }
 
 #endif //#ifdef USE_AVL_TREE
@@ -459,10 +449,10 @@ static void shell_list_cmd(void * arg)
 */
 static char * shell_record(struct shell_input * shellin)
 {	
-	char *  history = &shell_history.buf[shell_history.write][0];
+	char *  history = &shellin->history[shellin->htywrt][0];
 	
-	shell_history.write = (shell_history.write + 1) % COMMANDLINE_MAX_RECORD;
-	shell_history.read = shell_history.write;
+	shellin->htywrt  = (shellin->htywrt + 1) % COMMANDLINE_MAX_RECORD;
+	shellin->htyread = shellin->htywrt;
 
 	memcpy(history,shellin->cmdline,shellin->tail);
 	history[shellin->tail] = 0;
@@ -482,17 +472,17 @@ static void shell_show_history(struct shell_input * shellin,uint8_t LastOrNext)
 {
 	uint32_t len = 0;
 	
-	printk("\33[2K\r%s",shell_input_sign);//"\33[2K\r" 表示清除当前行
+	printk("\33[2K\r%s",shellin->sign);//"\33[2K\r" 表示清除当前行
 
 	if (!LastOrNext) //上箭头，上一条命令
-		shell_history.read = (!shell_history.read) ? (COMMANDLINE_MAX_RECORD - 1) : (shell_history.read - 1);
+		shellin->htyread = (!shellin->htyread) ? (COMMANDLINE_MAX_RECORD - 1) : (shellin->htyread - 1);
 	else       //下箭头
-	if (shell_history.read != shell_history.write)
-		shell_history.read = (shell_history.read + 1) % COMMANDLINE_MAX_RECORD;
+	if (shellin->htyread != shellin->htywrt)
+		shellin->htyread = (shellin->htyread + 1) % COMMANDLINE_MAX_RECORD;
 
-	if (shell_history.read != shell_history.write) //把历史记录考到命令行内存
+	if (shellin->htyread != shellin->htywrt) //把历史记录考到命令行内存
 	{
-		for (char * history = &shell_history.buf[shell_history.read][0]; *history ; ++len)
+		for (char * history = &shellin->history[shellin->htyread][0]; *history ; ++len)
 			shellin->cmdline[len] = *history++;
 	}
 	
@@ -589,7 +579,7 @@ static void shell_getchar(struct shell_input * shellin , char ascii)
 	* @param
 	* @return
 */
-static void shell_parse(struct shell_input * shellin)
+static void shell_parse(cmd_root_t * cmdroot , struct shell_input * shellin)
 {
 	uint32_t len = 0;
 	uint32_t sum = 0;
@@ -617,7 +607,7 @@ static void shell_parse(struct shell_input * shellin)
 	unCmd.part.CRC1 = fcrc8;
 	unCmd.part.CRC2 = bcrc8;
 
-	cmdmatch = shell_search_cmd(unCmd.ID);//匹配命令号
+	cmdmatch = shell_search_cmd(cmdroot,unCmd.ID);//匹配命令号
 	if (cmdmatch != NULL)
 		cmdmatch->Func(shellin->cmdline);
 	else
@@ -636,7 +626,8 @@ PARSE_END:
 */
 static void shell_clean_screen(void * arg)
 {
-	printk("\033[2J\033[%d;%dH%s",0,0,shell_input_sign);
+	struct shell_input * shellin = container_of(arg, struct shell_input, cmdline);
+	printk("\033[2J\033[%d;%dH%s",0,0,shellin->sign);
 	return ;
 }
 
@@ -701,7 +692,7 @@ void _shell_register(struct shell_cmd * newcmd,char * cmd_name, cmd_fn_t cmd_fun
 	newcmd->name = cmd_name;
 	newcmd->Func = cmd_func;
 
-	shell_insert_cmd(newcmd);//命令二叉树插入此节点
+	shell_insert_cmd(&shellcmdroot,newcmd);//命令二叉树插入此节点
 
 	return ;
 }
@@ -807,6 +798,9 @@ void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 {
 	for ( ; len && *recv; --len,++recv)
 	{
+		if (*recv > 0x1F && *recv < 0x7f)//普通字符,当前命令行输入;
+			shell_getchar(shellin,*recv); 
+		else
 		switch (*recv) //判断字符是否为特殊字符
 		{
 			case KEYCODE_NEWLINE: //忽略 \r
@@ -816,11 +810,11 @@ void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 				{
 					printk("\r\n");
 					shell_record(shellin);//记录当前输入的命令和命令参数
-					shell_parse(shellin);
+					shell_parse(&shellcmdroot ,shellin);
 				}
 				else
 				{
-					printk("\r\n%s",shell_input_sign);
+					printk("\r\n%s",shellin->sign);
 				}
 				break;
 			
@@ -860,7 +854,7 @@ void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 			case KEYCODE_CTRL_C:
 				shellin->edit = 0;
 				shellin->tail = 0;
-				printk("^C\r\n%s",shell_input_sign);
+				printk("^C\r\n%s",shellin->sign);
 				break;
 		
 			case KEYCODE_BACKSPACE : 
@@ -872,8 +866,8 @@ void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 				shell_tab(shellin); 
 				break;
 		
-			default: // 普通字符
-				shell_getchar(shellin,*recv); //当前命令行输入;
+			default:
+				;//shell_getchar(shellin,*recv); //当前命令行输入;
 		}
 	}
 	return ;
@@ -941,23 +935,64 @@ void shell_confirm(struct shell_input * shellin ,char * info ,cmd_fn_t yestodo)
 }
 
 
+/**
+	* @author   古么宁
+	* @brief    shell_input_init
+	*           初始化一个 shell 交互，默认输入为 cmdline_gets
+	* @param    shellin   : 需要初始化的 shell 交互 
+	* @param    shellputs : shell 对应输出，如从串口输出。
+	* @param    ...       : 对 gets 和 sign 重定义，如追加 MODIFY_SIGN,"shell>>"
+	* @return   NULL
+*/
+void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...)
+{
+	char * shellsign = DEFAULT_INPUTSIGN;
+	void (*shellgets)(struct shell_input * , char * ,uint32_t ) = cmdline_gets;//输入向
+
+	va_list ap;
+	va_start(ap, shellputs); //检测有无新定义 
+
+	for (uint32_t arg = va_arg(ap, uint32_t) ; MODIFY_MASK == (arg & (~0x0f)) ; arg = va_arg(ap, uint32_t) )
+	{
+		switch (arg)
+		{
+			case MODIFY_SIGN:shellsign = va_arg(ap, char*); break;
+			case MODIFY_GETS:shellgets = va_arg(ap, void*); break;
+			default: ;
+		}
+	}
+
+	va_end(ap);
+
+	shellin->tail = 0;
+	shellin->edit = 0;
+	shellin->htywrt  = 0;
+	shellin->htyread = 0;
+	shellin->puts = shellputs;
+	shellin->gets = shellgets;
+	strcpy(shellin->sign, shellsign);
+}
+
 
 /**
 	* @author   古么宁
 	* @brief    shell_init 
-	*           shell 初始化
-	* @param    sign : shell 输入标志，如 shell >
-	* @param    puts : shell 默认输出，如从串口输出。
-	* @return   NULL
+	*           shell 初始化,注册几条基本的命令。允许不初始化。
+	* @param    puts : printf,printk,printl 的默认输出，如从串口输出。
+	* @return   void
 */
-void shell_init(char * sign,fmt_puts_t puts)
+void shell_init(char * defaultsign ,fmt_puts_t puts)
 {
-	strcpy(shell_input_sign,sign);
+	strcpy(DEFAULT_INPUTSIGN,defaultsign);
+
 	current_puts = puts ;
 	default_puts = puts ;
 	
-	//注册基本命令
+	//注册一些基本命令
 	shell_register_command("cmd-list",shell_list_cmd);
 	shell_register_command("clear",shell_clean_screen);
-	shell_register_command("debug-info",shell_debug_stream);//
+	shell_register_command("debug-info",shell_debug_stream);
 }
+
+
+

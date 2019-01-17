@@ -7,7 +7,7 @@
   *    0.初始化硬件部分。
   *    1.编写硬件对应的void puts(char * buf , uint16_t len) 发送函数。
   *    2.shell_init(sign,puts) 初始化输入标志和默认输出。
-  *    3.新建一个  shellinput_t shellx , 初始化输出 SHELL_INPUT_INIT(&shellx,puts);
+  *    3.新建一个  shellinput_t shellx , 初始化输出 shell_input_init(&shellx,puts,...);
   *    4.接收到一包数据后，调用 shell_input(shellx,buf,len)
   ******************************************************************************
   *
@@ -24,24 +24,21 @@
 
 /* Public macro (共有宏)------------------------------------------------------------*/
 
-/* option (配置项) */
+/* ---- option (配置项) ---- */
 
 //命令数超过30条时可以考虑用平衡二叉树进行查找匹配
 //#define USE_AVL_TREE
 
 //命令带上参数的字符串输入最长记录长度
-#define COMMANDLINE_MAX_LEN       36     
+#define COMMANDLINE_MAX_LEN     36     
 
 //控制台记录条目数，设为 0 时不记录
-#define COMMANDLINE_MAX_RECORD    4     
+#define COMMANDLINE_MAX_RECORD  4
+
+/* ---- option end ---- */
 
 
-
-#ifdef USE_AVL_TREE
-	#include "avltree.h"//命令索引用avl树进行查找匹配
-#endif
-
-
+// 一些键值：
 #define KEYCODE_END               35
 #define KEYCODE_HOME              36
 #define KEYCODE_CTRL_C            0x03
@@ -68,14 +65,13 @@
 	}while(0)
 
 
-//初始化一个 shell 交互，默认输入为 cmdline_gets
-#define SHELL_INPUT_INIT(shellin,shellputs) \
-	do{\
-		(shellin)->gets = cmdline_gets;\
-		(shellin)->puts = shellputs;   \
-		(shellin)->tail = 0;		  \
-		(shellin)->edit = 0;		  \
-	}while(0)
+// 以下为 shell_input_init() 所用宏
+#define MODIFY_MASK 0xABCD4320
+#define MODIFY_SIGN (MODIFY_MASK|0x1)
+#define MODIFY_GETS (MODIFY_MASK|0x2)
+
+//历史遗留问题，兼容旧版本代码
+#define SHELL_INPUT_INIT(...) shell_input_init(__VA_ARGS__)
 
 
 //获取一个命令的长度
@@ -104,22 +100,23 @@ enum INPUT_PARAMETER
 typedef void (*cmd_fn_t)(void * arg);
 
 
-// 单链表节点，用来串命令
-typedef struct shell_list
-{
-	struct shell_list * next;
-}
-shell_list_t ;
+
+#ifdef USE_AVL_TREE     // 命令索引用avl树进行查找匹配
+	#include "avltree.h"
+	typedef struct avl_node cmd_entry_t ;
+	typedef struct avl_root cmd_root_t ;
+#else                   // 单链表节点，用来串命令
+	struct slist{struct slist * next;} ;
+	typedef struct slist cmd_entry_t ;
+	typedef struct slist cmd_root_t ;
+#endif
+
+
 
 //命令结构体，用于注册匹配命令
 typedef struct shell_cmd
 {
-	#ifdef USE_AVL_TREE
-		struct avl_node node;//avl树节点
-	#else
-		struct shell_list node;//链表节点
-	#endif
-
+	cmd_entry_t   node; //命令索引接入点，用链表或二叉树对命令作集合
 	uint32_t	  ID;	//命令标识码
 	char *		  name; //记录每条命令字符串的内存地址
 	cmd_fn_t	  Func; //记录命令函数指针
@@ -138,12 +135,21 @@ typedef struct shell_input
 	fmt_puts_t puts;
 
 	//app可用参数，爱怎么用就怎么用
-	void *  apparg;       
+	void *  apparg;
+
+	//命令行输入符号
+	char    sign[COMMANDLINE_MAX_LEN];
 
 	//命令行相关的参数
+	char    cmdline[COMMANDLINE_MAX_LEN]; //命令行内存
 	uint8_t edit;    //当前命令行编辑位置
 	uint8_t tail;    //当前命令行输入结尾 tail
-	char    cmdline[COMMANDLINE_MAX_LEN]; //命令行内存 
+
+	#if (COMMANDLINE_MAX_RECORD) //如果定义了历史纪录
+		uint8_t htywrt;  //历史记录写
+		uint8_t htyread; //历史记录读
+		char    history[COMMANDLINE_MAX_RECORD][COMMANDLINE_MAX_LEN]; //历史记录内存
+	#endif
 }
 shellinput_t;
 
@@ -152,8 +158,7 @@ shellinput_t;
 
 /* Public variables ---------------------------------------------------------*/
 
-extern const char DEFAULT_INPUTSIGN[];
-extern char  shell_input_sign[];
+extern char DEFAULT_INPUTSIGN[]; // 默认交互标志
 
 
 /* Public function prototypes 对外可用接口 -----------------------------------*/
@@ -172,7 +177,9 @@ int  cmdline_strtok(char * str ,char ** argv ,uint32_t maxread);
 
 void shell_confirm(struct shell_input * shell ,char * info ,cmd_fn_t yestodo);
 
-void shell_init(char * sign,fmt_puts_t puts);
+void shell_init(char * defaultsign ,fmt_puts_t puts);
+
+void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...);
 
 #endif
 

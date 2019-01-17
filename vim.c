@@ -463,7 +463,7 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 				VIM_FREE(vimedit);
 				shell->apparg = NULL;
 				shell->gets   = cmdline_gets;
-				printk("\033[2J\033[%d;%dH%s",1,1,shell_input_sign);
+				printk("\033[2J\033[%d;%dH%s",1,1,shell->sign);
 			}
 			else
 			if (*buf == '\033' )//&& len == 1)
