@@ -183,7 +183,7 @@ void _syscfg_fputs(char * fpath, char * fdata,uint32_t fsize)
 */
 void _shell_edit_syscfg(void * arg)
 {
-	struct shell_input * shellin = container_of(arg, struct shell_input, buf);
+	struct shell_input * shellin = container_of(arg, struct shell_input, cmdline);
 	shell_into_edit(shellin , _syscfg_fgets , _syscfg_fputs );
 }
 
