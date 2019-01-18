@@ -132,7 +132,7 @@ typedef struct shellcommand
 	cmd_entry_t   node; //命令索引接入点，用链表或二叉树对命令作集合
 	char *		  name; //记录每条命令字符串的内存地址
 	uint32_t	  ID;	//命令标识码
-	uint32_t	  fnaddr; //记录命令函数地址
+	uint32_t	  fnaddr; //记录命令函数 cmd_fn_t 对应的内存地址
 }
 shellcmd_t;
 
@@ -140,8 +140,8 @@ shellcmd_t;
 //带确认选项的命令结构体
 typedef struct shellconfirm
 {
-	char * prompt ;
-	struct shellcommand  cmd;
+	char * prompt ; //确认提示信息
+	struct shellcommand  cmd;//对应的命令号内存
 }
 shellcfm_t ;
 
@@ -191,16 +191,12 @@ void _shell_register(struct shellcommand * newcmd,char * cmd_name, cmd_fn_t cmd_
 //默认命令行输入端
 void cmdline_gets(struct shell_input * ,char * ,uint32_t );
 
-//解析命令行
+//解析命令行参数相关功能函数
 int  cmdline_param(char * str,int * argv,uint32_t maxread);
-
 int  cmdline_strtok(char * str ,char ** argv ,uint32_t maxread);
 
-
-void shell_confirm(struct shell_input * shell ,char * info ,cmd_fn_t yestodo);
-
+// 初始化相关函数
 void shell_init(char * defaultsign ,fmt_puts_t puts);
-
 void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...);
 
 #endif

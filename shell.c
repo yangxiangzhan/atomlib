@@ -82,19 +82,17 @@ static const  uint8_t B_CRC8_Table[256] = {//反序,低位先行 x^8+x^5+x^4+1
 	0x74, 0x2a, 0xc8, 0x96, 0x15, 0x4b, 0xa9, 0xf7, 0xb6, 0xe8, 0x0a, 0x54, 0xd7, 0x89, 0x6b, 0x35
 };
 
-
 static cmd_root_t shellcmdroot = {0};
-
 
 /* Global variables ------------------------------------------------------------*/
 
 char DEFAULT_INPUTSIGN[COMMANDLINE_MAX_LEN] = "minishell >";
 
 /* Private function prototypes -----------------------------------------------*/
-
 static void   shell_getchar     (struct shell_input * shellin , char ch);
 static void   shell_backspace   (struct shell_input * shellin) ;
 static void   shell_tab         (struct shell_input * shellin) ;
+       void   shell_confirm     (struct shell_input * shellin ,char * info ,cmd_fn_t yestodo);
 
 #if (COMMANDLINE_MAX_RECORD)//如果定义了历史纪录
 	static char * shell_record(struct shell_input * shellin);
@@ -135,8 +133,6 @@ static struct shellcommand *shell_search_cmd(cmd_root_t * root , int cmdindex)
     return NULL;
 }
 
-
-
 /**
 	* @brief    shell_insert_cmd 
 	*           命令树插入
@@ -167,7 +163,6 @@ static int shell_insert_cmd(cmd_root_t * root , struct shellcommand * newcmd)
 	avl_insert(root,&newcmd->node,parent,tmp);
 	return 0;
 }
-
 
 
 /** 
@@ -324,7 +319,6 @@ static int shell_insert_cmd(cmd_root_t * root , struct shellcommand * newcmd)
 	prev->next = &newcmd->node ;
 	prev = prev->next;
 	prev->next = node;
-
 	return 0;
 }
 
@@ -406,7 +400,6 @@ static void shell_tab(struct shell_input * shellin)
 		}
 	}
 }
-
 
 /********************************************************************
 	* @author   古么宁
@@ -609,13 +602,13 @@ static void shell_parse(cmd_root_t * cmdroot , struct shell_input * shellin)
 	cmdmatch = shell_search_cmd(cmdroot,unCmd.ID);//匹配命令号
 	if (cmdmatch != NULL)
 	{
-		if (cmdmatch->fnaddr & FUNC_CONFIRM)
+		if (cmdmatch->fnaddr & FUNC_CONFIRM) // 如果是需要确认的命令
 		{
-			cmd_fn_t func = (cmd_fn_t)(cmdmatch->fnaddr & (~FUNC_CONFIRM)) ;
-			shellcfm_t * confirm = container_of(cmdmatch, struct shellconfirm, cmd);
-			shell_confirm(shellin,confirm->prompt,func);
+			cmd_fn_t func = (cmd_fn_t)(cmdmatch->fnaddr & (~FUNC_CONFIRM)) ;//提取函数指针
+			shellcfm_t * confirm = container_of(cmdmatch, struct shellconfirm, cmd);//提取确认信息
+			shell_confirm(shellin,confirm->prompt,func);//进入确认命令行
 		}
-		else
+		else //普通命令
 		{
 			cmd_fn_t func = (cmd_fn_t)cmdmatch->fnaddr ;
 			func(shellin->cmdline);
@@ -707,7 +700,7 @@ void _shell_register(struct shellcommand * newcmd,char * cmd_name, cmd_fn_t cmd_
 
 	shell_insert_cmd(&shellcmdroot,newcmd);//命令二叉树插入此节点
 	
-	if (NEED_CONFIRM == comfirm)
+	if (NEED_CONFIRM == comfirm) //如果是带确认选项的命令
 		newcmd->fnaddr |= FUNC_CONFIRM ;
 	return ;
 }
@@ -736,7 +729,6 @@ int cmdline_strtok(char * str ,char ** argv ,uint32_t maxread)
 	
 	return argc;
 }
-
 
 
 /**
@@ -888,7 +880,6 @@ void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 	return ;
 }
 
-
 /**
 	* @brief    _confirm_gets
 	*           命令行信息确认，如果输入 y/Y 则执行命令
@@ -932,7 +923,6 @@ static void _confirm_gets(struct shell_input * shellin ,char * buf , uint32_t le
 	}
 }
 
-
 /**
 	* @brief    shell_confirm
 	*           命令行信息确认，如果输入 y/Y 则执行命令
@@ -948,7 +938,6 @@ void shell_confirm(struct shell_input * shellin ,char * info ,cmd_fn_t yestodo)
 	shellin->apparg = yestodo;
 	shellin->cmdline[COMMANDLINE_MAX_LEN-1] = 0;
 }
-
 
 /**
 	* @author   古么宁
@@ -969,12 +958,11 @@ void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...)
 
 	for (uint32_t arg = va_arg(ap, uint32_t) ; MODIFY_MASK == (arg & (~0x0f)) ; arg = va_arg(ap, uint32_t) )
 	{
-		switch (arg)
-		{
-			case MODIFY_SIGN:shellsign = va_arg(ap, char*); break;
-			case MODIFY_GETS:shellgets = va_arg(ap, void*); break;
-			default: ;
-		}
+		if (MODIFY_SIGN == arg) //如果重定义当前交互的输入标志
+			shellsign = va_arg(ap, char*);
+		else
+		if (MODIFY_GETS == arg) //如果重定义当前交互的输入流向
+			shellgets = va_arg(ap, void*);
 	}
 
 	va_end(ap);
@@ -1009,6 +997,3 @@ void shell_init(char * defaultsign ,fmt_puts_t puts)
 	shell_register_command("clear",shell_clean_screen);
 	shell_register_command("debug-info",shell_debug_stream);
 }
-
-
-

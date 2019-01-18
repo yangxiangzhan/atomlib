@@ -15,6 +15,8 @@
 #include <stdarg.h>
 #include <stdint.h> //定义了很多数据类垿
 
+#include "stm32f4xx_hal.h" //for SCB->VTOR,FLASH_PAGE_SIZE
+
 #include "cmsis_os.h" // 启用 freertos
 
 #include "serial_hal.h"
@@ -28,6 +30,20 @@
 osThreadId SerialConsoleTaskHandle;
 osSemaphoreId osSerialRxSemHandle;
 static char task_list_buf[512];
+static struct serial_iap
+{
+	uint32_t addr;
+	uint32_t size;
+}
+iap;
+
+const static char iap_logo[]=
+"\r\n\
+ ____   ___   ____\r\n\
+|_  _| / _ \\ |  _ \\\r\n\
+ _||_ |  _  ||  __/don't press any key now\r\n\
+|____||_| |_||_|   ";
+
 //------------------------------相关函数声明------------------------------
 
 
@@ -135,10 +151,7 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 	for (iap.size = iap.addr + len ; iap.addr < iap.size ; iap.addr += 4)// f4 可以以 word 写入
 		iap_write_flash(iap.addr,*value++); 
 	
-	if ((iap.addr & (FLASH_PAGE_SIZE-1)) == 0)//清空下一页
-		iap_erase_flash(iap.addr ,1) ;
-	else
-		printl(".",1);//打印一个点以示清白
+	printl(".",1);//打印一个点以示清白
 }
 
 
