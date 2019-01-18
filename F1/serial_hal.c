@@ -95,8 +95,8 @@
 //---------------------------------------------------------
 
 #define HAL_RX_PACKET_SIZE 4     //硬件接收到的缓冲队列，以数据包为单位
-#define HAL_RX_BUF_SIZE    (1024*2+1)  //硬件接收缓冲区
-#define HAL_TX_BUF_SIZE    1024  //硬件发送缓冲区
+#define HAL_RX_BUF_SIZE    (1024+1)  //硬件接收缓冲区
+#define HAL_TX_BUF_SIZE    512  //硬件发送缓冲区
 
 static struct _serial_tx
 {
@@ -419,7 +419,7 @@ void serial_puts(char * const buf,uint16_t len)
 
 
 //------------------------------以下为一些中断处理------------------------------
-//#include "cmsis_os.h"//用了freertos 打开
+#include "cmsis_os.h"//用了freertos 打开
 
 #ifdef _CMSIS_OS_H
 	extern osSemaphoreId osSerialRxSemHandle;
@@ -516,7 +516,7 @@ void hal_serial_init(void)
 	serial_tx.pkttail = 0;
 	serial_tx.pktsize = 0;
 	
-	serial_recv_reset(COMMANDLINE_MAX_LEN);
+	serial_recv_reset(HAL_RX_BUF_SIZE/2);
 }
 
 

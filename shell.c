@@ -115,13 +115,13 @@ static void   shell_tab         (struct shell_input * shellin) ;
 	* @param    root      命令二叉树根
 	* @return   成功 id 号对应的控制块
 */
-static struct shell_cmd *shell_search_cmd(cmd_root_t * root , int cmdindex)
+static struct shellcommand *shell_search_cmd(cmd_root_t * root , int cmdindex)
 {
     cmd_entry_t *node = root->avl_node;
 
     while (node) 
 	{
-		struct shell_cmd * command = container_of(node, struct shell_cmd, node);
+		struct shellcommand * command = container_of(node, struct shellcommand, node);
 
 		if (cmdindex < command->ID)
 		    node = node->avl_left;
@@ -143,7 +143,7 @@ static struct shell_cmd *shell_search_cmd(cmd_root_t * root , int cmdindex)
 	* @param    newcmd   新命令控制块
 	* @return   成功返回 0
 */
-static int shell_insert_cmd(cmd_root_t * root , struct shell_cmd * newcmd)
+static int shell_insert_cmd(cmd_root_t * root , struct shellcommand * newcmd)
 {
 	cmd_entry_t **tmp = &root->avl_node;
  	cmd_entry_t *parent = NULL;
@@ -151,7 +151,7 @@ static int shell_insert_cmd(cmd_root_t * root , struct shell_cmd * newcmd)
 	/* Figure out where to put new node */
 	while (*tmp)
 	{
-		struct shell_cmd *this = container_of(*tmp, struct shell_cmd, node);
+		struct shellcommand *this = container_of(*tmp, struct shellcommand, node);
 
 		parent = *tmp;
 		if (newcmd->ID < this->ID)
@@ -183,8 +183,8 @@ static void shell_tab(struct shell_input * shellin)
 	uint32_t index , end;
 	
 	cmd_entry_t  * node = shellcmdroot.avl_node;	
-	struct shell_cmd * shellcmd ;
-	struct shell_cmd * match[10];    //匹配到的命令行
+	struct shellcommand * shellcmd ;
+	struct shellcommand * match[10];    //匹配到的命令行
 	uint32_t           match_cnt = 0;//匹配到的命令号个数
 	
 	for ( ; *str == ' ' ; ++str,--strlen) ; //有时候会输入空格，需要跳过
@@ -197,14 +197,14 @@ static void shell_tab(struct shell_input * shellin)
 
 	while ( node )//index 一定不存在，查找结束后的 shell_cmd 最靠近 index ，用此作为起始匹配点
 	{	
-		shellcmd = avl_entry(node,struct shell_cmd, node);	
+		shellcmd = avl_entry(node,struct shellcommand, node);	
 		node = (index < shellcmd->ID) ? node->avl_left : node->avl_right;
 	}
 
 	//首字母的大小决定命令索引的大小，超过首字母的点不需要继续匹配
     for (node = &shellcmd->node ; shellcmd->ID < end && node; node = avl_next(node))
 	{
-		shellcmd = avl_entry(node,struct shell_cmd, node);
+		shellcmd = avl_entry(node,struct shellcommand, node);
 		
 		if (memcmp(shellcmd->name, str, strlen) == 0) //对比输入的字符串，如果匹配到相同的
 		{
@@ -258,13 +258,13 @@ static void shell_tab(struct shell_input * shellin)
 static void shell_list_cmd(void * arg)
 {
 	struct shell_input * shellin = container_of(arg, struct shell_input, cmdline);
-	struct shell_cmd * cmd;
+	struct shellcommand * cmd;
 	uint32_t firstchar = 0;
 	cmd_entry_t  * node ;
 	
 	for (node = avl_first(&shellcmdroot); node; node = avl_next(node))//遍历红黑树
 	{
-		cmd = avl_entry(node,struct shell_cmd, node);
+		cmd = avl_entry(node,struct shellcommand, node);
 		if (firstchar != (cmd->ID & 0xfc000000))
 		{
 			firstchar = cmd->ID & 0xfc000000;
@@ -285,11 +285,11 @@ static void shell_list_cmd(void * arg)
 	* @param    cmdindex        命令号
 	* @return   成功 id 号对应的控制块
 */
-static struct shell_cmd *shell_search_cmd(cmd_root_t * root , int cmdindex)
+static struct shellcommand *shell_search_cmd(cmd_root_t * root , int cmdindex)
 {
 	for (cmd_entry_t * node = root->next; node ; node = node->next )
 	{
-		struct shell_cmd  * cmd = container_of(node, struct shell_cmd, node);
+		struct shellcommand  * cmd = container_of(node, struct shellcommand, node);
 		if (cmd->ID > cmdindex)
 			return NULL;
 		else
@@ -306,14 +306,14 @@ static struct shell_cmd *shell_search_cmd(cmd_root_t * root , int cmdindex)
 	* @param    newcmd   新命令控制块
 	* @return   成功返回 0
 */
-static int shell_insert_cmd(cmd_root_t * root , struct shell_cmd * newcmd)
+static int shell_insert_cmd(cmd_root_t * root , struct shellcommand * newcmd)
 {
 	cmd_entry_t * prev = root;
 	cmd_entry_t * node ;
 
 	for (node = prev->next; node ; prev = node,node = node->next)
 	{
-		struct shell_cmd * cmd = container_of(node, struct shell_cmd, node);
+		struct shellcommand * cmd = container_of(node, struct shellcommand, node);
 		if ( cmd->ID > newcmd->ID )
 			break;
 		else
@@ -341,8 +341,8 @@ static void shell_tab(struct shell_input * shellin)
 	uint32_t strlen = shellin->tail;
 	
 	cmd_entry_t * node = shellcmdroot.next;
-	struct shell_cmd * shellcmd ;
-	struct shell_cmd * match[10];    //匹配到的命令行
+	struct shellcommand * shellcmd ;
+	struct shellcommand * match[10];    //匹配到的命令行
 	uint32_t match_cnt = 0;//匹配到的命令号个数
 	uint32_t index, end;
 	
@@ -356,7 +356,7 @@ static void shell_tab(struct shell_input * shellin)
 	
 	for ( ; node ; node = node->next )//找到比 index 大的点，用此作为起始匹配点
 	{
-		shellcmd = container_of(node, struct shell_cmd, node);
+		shellcmd = container_of(node, struct shellcommand, node);
 		if ( shellcmd->ID > index )
 			break;
 	}
@@ -364,7 +364,7 @@ static void shell_tab(struct shell_input * shellin)
 	//首字母的大小决定命令索引的大小，超过首字母的点不需要继续匹配
 	for ( ; node && shellcmd->ID < end ; node = node->next )
 	{
-		shellcmd = container_of(node,struct shell_cmd, node);
+		shellcmd = container_of(node,struct shellcommand, node);
 		
 		if (memcmp(shellcmd->name, str, strlen) == 0) //对比输入的字符串，如果匹配到相同的
 		{
@@ -418,13 +418,13 @@ static void shell_tab(struct shell_input * shellin)
 static void shell_list_cmd(void * arg)
 {
 	uint32_t firstchar = 0;
-	struct shell_cmd * cmd;
+	struct shellcommand * cmd;
 	cmd_entry_t * node = shellcmdroot.next;
 	struct shell_input * shellin = container_of(arg, struct shell_input, cmdline);
 	
 	for ( ; node; node = node->next)//遍历红黑树
 	{
-		cmd = container_of(node,struct shell_cmd, node);
+		cmd = container_of(node,struct shellcommand, node);
 		if (firstchar != (cmd->ID & 0xfc000000))
 		{
 			firstchar = cmd->ID & 0xfc000000;
@@ -581,14 +581,13 @@ static void shell_getchar(struct shell_input * shellin , char ascii)
 */
 static void shell_parse(cmd_root_t * cmdroot , struct shell_input * shellin)
 {
+	union uncmd unCmd ;
 	uint32_t len = 0;
 	uint32_t sum = 0;
 	uint32_t fcrc8 = 0;
 	uint32_t bcrc8 = 0;
-	union uncmd unCmd ;
-	struct shell_cmd * cmdmatch;
-
-	char * str = shellin->cmdline;
+	char  *  str = shellin->cmdline;
+	struct shellcommand * cmdmatch;
 
 	for ( ; ' ' == *str ; ++str) ;	// Shave off any leading spaces
 
@@ -609,10 +608,24 @@ static void shell_parse(cmd_root_t * cmdroot , struct shell_input * shellin)
 
 	cmdmatch = shell_search_cmd(cmdroot,unCmd.ID);//匹配命令号
 	if (cmdmatch != NULL)
-		cmdmatch->Func(shellin->cmdline);
+	{
+		if (cmdmatch->fnaddr & FUNC_CONFIRM)
+		{
+			cmd_fn_t func = (cmd_fn_t)(cmdmatch->fnaddr & (~FUNC_CONFIRM)) ;
+			shellcfm_t * confirm = container_of(cmdmatch, struct shellconfirm, cmd);
+			shell_confirm(shellin,confirm->prompt,func);
+		}
+		else
+		{
+			cmd_fn_t func = (cmd_fn_t)cmdmatch->fnaddr ;
+			func(shellin->cmdline);
+		}
+	}
 	else
+	{
 		printk("\r\n\tno reply:%s\r\n",shellin->cmdline);
-
+	}
+	
 PARSE_END:
 	shellin->tail = 0;//清空当前命令行输入
 	shellin->edit = 0;
@@ -665,7 +678,7 @@ static void shell_debug_stream(void * arg)
 	* @param    newcmd      命令控制块对应的指针
 	* @return   void
 */
-void _shell_register(struct shell_cmd * newcmd,char * cmd_name, cmd_fn_t cmd_func)
+void _shell_register(struct shellcommand * newcmd,char * cmd_name, cmd_fn_t cmd_func,uint32_t comfirm)
 {
 	char * str = cmd_name;
 	union uncmd unCmd ;
@@ -690,10 +703,12 @@ void _shell_register(struct shell_cmd * newcmd,char * cmd_name, cmd_fn_t cmd_fun
 	
 	newcmd->ID = unCmd.ID;   //生成命令码
 	newcmd->name = cmd_name;
-	newcmd->Func = cmd_func;
+	newcmd->fnaddr = (uint32_t)cmd_func;
 
 	shell_insert_cmd(&shellcmdroot,newcmd);//命令二叉树插入此节点
-
+	
+	if (NEED_CONFIRM == comfirm)
+		newcmd->fnaddr |= FUNC_CONFIRM ;
 	return ;
 }
 
@@ -947,8 +962,8 @@ void shell_confirm(struct shell_input * shellin ,char * info ,cmd_fn_t yestodo)
 void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...)
 {
 	char * shellsign = DEFAULT_INPUTSIGN;
-	void (*shellgets)(struct shell_input * , char * ,uint32_t ) = cmdline_gets;//输入向
-
+	void * shellgets = cmdline_gets;
+	
 	va_list ap;
 	va_start(ap, shellputs); //检测有无新定义 
 
@@ -966,10 +981,11 @@ void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...)
 
 	shellin->tail = 0;
 	shellin->edit = 0;
-	shellin->htywrt  = 0;
-	shellin->htyread = 0;
 	shellin->puts = shellputs;
 	shellin->gets = shellgets;
+	shellin->htywrt  = 0;
+	shellin->htyread = 0;
+	shellin->apparg  = NULL;
 	strcpy(shellin->sign, shellsign);
 }
 

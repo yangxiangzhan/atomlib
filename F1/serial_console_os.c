@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file           serial_console.c
-  * @author         杨翔湿
+  * @author         古么宁
   * @brief          serial_console file
                     串口控制台文件。文件不直接操作硬件，依赿serial_hal
   ******************************************************************************
@@ -15,6 +15,8 @@
 #include <stdarg.h>
 #include <stdint.h> //定义了很多数据类垿
 
+#include "stm32f1xx_hal.h" //for SCB->VTOR,FLASH_PAGE_SIZE
+
 #include "cmsis_os.h" // 启用 freertos
 
 #include "serial_hal.h"
@@ -27,7 +29,22 @@
 //--------------------相关宏定义及结构体定乿-------------------
 osThreadId SerialConsoleTaskHandle;
 osSemaphoreId osSerialRxSemHandle;
-static char task_list_buf[512];
+static char task_list_buf[600];
+
+static struct serial_iap
+{
+	uint32_t addr;
+	uint32_t size;
+}
+iap;
+
+const static char iap_logo[]=
+"\r\n\
+ ____   ___   ____\r\n\
+|_  _| / _ \\ |  _ \\\r\n\
+ _||_ |  _  ||  __/don't press any key now\r\n\
+|____||_| |_||_|   ";
+
 //------------------------------相关函数声明------------------------------
 
 
@@ -40,6 +57,8 @@ static char task_list_buf[512];
 	portCONFIGURE_TIMER_FOR_RUN_TIME_STATS  1
 	configUSE_TRACE_FACILITY 1
 	
+	STM32CUBEMX : RUN_TIME_STATS
+
 	#ifndef portCONFIGURE_TIMER_FOR_RUN_TIME_STATS
 		extern uint32_t iThreadRuntime;
 		#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() (iThreadRuntime = 0)
@@ -120,7 +139,6 @@ void shell_erase_flash(void * arg)
 
 
 
-
 /** 
 	* @brief iap_gets  iap 升级任务，获取数据流并写入flash
 	* @param void
@@ -166,6 +184,7 @@ void shell_iap_command(void * arg)
 	iap_erase_flash(iap.addr , iap.size);
 	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
 }
+
 
 
 void task_SerialConsole(void const * argument)

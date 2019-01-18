@@ -49,24 +49,37 @@
 #define KEYCODE_ESC               0x1b
 
 
+#define MODIFY_MASK  0xABCD4320
 
+
+#define NEED_CONFIRM MODIFY_MASK
+#define DONT_CONFIRM 0
+#define FUNC_CONFIRM (1<<31) // stm32 flash 地址范围最高位
 /*
 -----------------------------------------------------------------------
 	调用宏 shell_register_command(pstr,pfunc) 注册命令
 	注册一个命令号的同时会新建一个与命令对应的控制块
-	在 shell 注册的函数类型统一为 void(*CmdFuncDef)(void * arg); 
+	在 shell 注册的函数类型统一为 void(*cmd_fn_t)(void * arg); 
 	arg 为控制台输入命令后所跟的参数输入
 -----------------------------------------------------------------------
 */
-#define shell_register_command(pstr,pfunc)\
+#define shell_register_command(name,func)\
 	do{\
-		static struct shell_cmd newcmd = {0};\
-		_shell_register(&newcmd,pstr,pfunc); \
+		static struct shellcommand newcmd = {0};\
+		_shell_register(&newcmd,name,func,DONT_CONFIRM); \
 	}while(0)
 
 
+//注册一个带选项命令，需要输入 [Y/N/y/n] 才执行对应的命令
+#define shell_register_confirm(name,func,info)\
+	do{\
+		static struct shellconfirm confirm = {.prompt = info}; \
+		_shell_register(&confirm.cmd,name,func,NEED_CONFIRM);\
+	}while(0)
+
+
+
 // 以下为 shell_input_init() 所用宏
-#define MODIFY_MASK 0xABCD4320
 #define MODIFY_SIGN (MODIFY_MASK|0x1)
 #define MODIFY_GETS (MODIFY_MASK|0x2)
 
@@ -114,15 +127,24 @@ typedef void (*cmd_fn_t)(void * arg);
 
 
 //命令结构体，用于注册匹配命令
-typedef struct shell_cmd
+typedef struct shellcommand
 {
 	cmd_entry_t   node; //命令索引接入点，用链表或二叉树对命令作集合
-	uint32_t	  ID;	//命令标识码
 	char *		  name; //记录每条命令字符串的内存地址
-	cmd_fn_t	  Func; //记录命令函数指针
-
+	uint32_t	  ID;	//命令标识码
+	uint32_t	  fnaddr; //记录命令函数地址
 }
 shellcmd_t;
+
+
+//带确认选项的命令结构体
+typedef struct shellconfirm
+{
+	char * prompt ;
+	struct shellcommand  cmd;
+}
+shellcfm_t ;
+
 
 
 // 交互结构体，数据的输入输出不一定
@@ -164,7 +186,7 @@ extern char DEFAULT_INPUTSIGN[]; // 默认交互标志
 /* Public function prototypes 对外可用接口 -----------------------------------*/
 
 //注册命令，这个函数一般不直接调用，用宏 shell_register_command() 间接调用
-void _shell_register(struct shell_cmd * newcmd,char * cmd_name, cmd_fn_t cmd_func);
+void _shell_register(struct shellcommand * newcmd,char * cmd_name, cmd_fn_t cmd_func,uint32_t comfirm);
 
 //默认命令行输入端
 void cmdline_gets(struct shell_input * ,char * ,uint32_t );

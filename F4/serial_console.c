@@ -149,60 +149,29 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 
 
 
-
 /**
-	* @brief    shell_iap
+	* @brief    shell_iap_command
 	*           命令行响应函数
-	* @param    
+	* @param    arg  : 命令行内存指针
 	* @return   void
 */
-static void shell_iap(void * arg)
+void shell_iap_command(void * arg)
 {
-	int argc = 0;
-	int erasesize = 0;
+	int argc , erasesize ;
 	
-	struct shell_input * shell = container_of(arg, struct shell_input, buf);
+	struct shell_input * shell = container_of(arg, struct shell_input, cmdline);
 	shell->gets = iap_gets;//串口数据流获取至 iap_gets
 	
 	argc = cmdline_param((char*)arg,&erasesize,1);
-	if (SCB->VTOR == FLASH_BASE)
-	{
-		iap.addr = APP_ADDR;
-		iap.size = (argc == 1) ? erasesize : 0x10000 ;
-	}
-	else
-	{
-		iap.addr = IAP_ADDR;
-		iap.size = (argc == 1) ? erasesize : (0x4000 * 3) ;
-	}
+	
+	iap.addr = (SCB->VTOR == FLASH_BASE) ? APP_ADDR : IAP_ADDR;
+	iap.size = (argc == 1) ? erasesize : 1 ;
+
 	//由于要写完最后一包数据才能上锁，所以上锁放在 iap_check_complete 中
 	iap_unlock_flash();
 	iap_erase_flash(iap.addr , iap.size);
 	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
-	serial_recv_reset(UASRT_IAP_BUF_SIZE); //重置串口缓冲包大小
 }
-
-
-
-/**
-	* @brief    shell_iap_command
-	*           命令行响应函数
-	* @param    
-	* @return   void
-*/
-static void shell_iap_command(void * arg)
-{
-	if (SCB->VTOR == FLASH_BASE)//如果目前所在是 iap 模式，擦除 app 区域
-	{
-		shell_iap(arg); //直接进入 iap 模式
-	}	
- 	else //如果目前所在是 app 模式，需要先提示信息
- 	{
-		struct shell_input * shellin = container_of(arg, struct shell_input, buf);
-		shell_confirm(shellin,"Sure to update IAP?",shell_iap); //需要输入确认
- 	}
-}
-
 
 
 
@@ -384,19 +353,14 @@ void serial_console_init(char * info)
 	
 	SHELL_INPUT_INIT(&serial_shell,serial_puts);//新建交互，输出为串口输出
 
-	//根据 SCB->VTOR 判断当前所运行的代码为 app 还是 iap.不同区域注册不一样的命令
-	if (SCB->VTOR != FLASH_BASE)
-	{
-		shell_register_command("update-iap",shell_iap_command);
-	}
-	else
-	{
-		shell_register_command("update-app",shell_iap_command);	
-		shell_register_command("jump-app",shell_jump_command);
-	}
-
 	shell_register_command("reboot"  ,shell_reboot_command);
 	shell_register_command("flash-erase",shell_erase_flash);
+
+	//根据 SCB->VTOR 判断当前所运行的代码为 app 还是 iap.不同区域注册不一样的命令
+	if (SCB->VTOR == FLASH_BASE)
+		shell_register_command("update-app",shell_iap_command);
+	else
+		shell_register_confirm("update-iap",shell_iap_command,"sure to update iap?");
 	
 	#ifdef SYSTEM_CONFIG_FILE
 		shell_register_command("syscfg",_shell_edit_syscfg);

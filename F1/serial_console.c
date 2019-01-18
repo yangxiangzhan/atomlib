@@ -30,8 +30,7 @@
 #define SYSTEM_CONFIG_FILE 
 
 
-#define UASRT_IAP_BUF_SIZE  1024
-#define USART_IAP_ADDR_MASK (FLASH_PAGE_SIZE -1)
+
 
 const static char iap_logo[]=
 "\r\n\
@@ -82,8 +81,6 @@ static int iap_check_complete(void * arg)
 	
 	iap_lock_flash();   //由于要写完最后一包数据才能上锁，所以上锁放在 iap_check_complete 中
 	
-	serial_recv_reset(COMMANDLINE_MAX_LEN); //重置串口接收包长
-	
 	filesize = (SCB->VTOR == FLASH_BASE) ? (iap.addr-APP_ADDR):(iap.addr-IAP_ADDR);
 	
 	printk("\r\nupdate completed!\r\nupdate package size:%d byte\r\n",filesize);
@@ -133,9 +130,9 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 
 	iap.timestamp = OS_current_time;//更新时间戳
 	
-	if ((iap.addr & USART_IAP_ADDR_MASK) == 0)//清空下一页
+	if ((iap.addr & (FLASH_PAGE_SIZE-1)) == 0)//清空下一页
 		iap_erase_flash(iap.addr ,1) ;
-
+	else
 	if (task_is_exited(&iap_timeout_task))//开始接收后创建超时任务，判断接收结束
 		task_create(&iap_timeout_task,NULL,iap_check_complete,shell);
 	else
@@ -145,12 +142,12 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 
 
 /**
-	* @brief    shell_iap
+	* @brief    shell_iap_command
 	*           命令行响应函数
 	* @param    arg  : 命令行内存指针
 	* @return   void
 */
-static void serial_iap(void * arg)
+void shell_iap_command(void * arg)
 {
 	int argc , erasesize ;
 	
@@ -166,31 +163,6 @@ static void serial_iap(void * arg)
 	iap_unlock_flash();
 	iap_erase_flash(iap.addr , iap.size);
 	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
-	serial_recv_reset(UASRT_IAP_BUF_SIZE); //重置串口缓冲包大小
-}
-
-
-
-
-
-
-/**
-	* @brief    shell_iap_command
-	*           命令行响应函数
-	* @param    arg  : 命令行内存指针
-	* @return   void
-*/
-void shell_iap_command(void * arg)
-{
-	if (SCB->VTOR == FLASH_BASE)//如果目前所在是 iap 模式，擦除 app 区域
-	{
-		serial_iap(arg); //直接进入 iap 模式
-	}	
- 	else //如果目前所在是 app 模式，需要先提示信息
- 	{
-		struct shell_input * shellin = container_of(arg, struct shell_input, cmdline);
-		shell_confirm(shellin,"Sure to update IAP?",serial_iap); //需要输入确认
- 	}	
 }
 
 
@@ -363,20 +335,14 @@ void serial_console_init(char * info)
 	
 	SHELL_INPUT_INIT(&serial_shell,serial_puts);
 
-	if (SCB->VTOR != FLASH_BASE)
-	{
-		shell_register_command("update-iap",shell_iap_command);	
-	}
-	else
-	{
-		shell_register_command("update-app",shell_iap_command);	
-		shell_register_command("jump-app",shell_jump_command);
-	}
-
 	shell_register_command("reboot"  ,shell_reboot_command);
 	shell_register_command("flash-erase",shell_erase_flash);
-
 	
+	if (SCB->VTOR == FLASH_BASE)
+		shell_register_command("update-app",shell_iap_command);
+	else
+		shell_register_confirm("update-iap",shell_iap_command,"sure to update iap?");
+
 	#ifdef SYSTEM_CONFIG_FILE
 		shell_register_command("syscfg",_shell_edit_syscfg);
 	#endif
