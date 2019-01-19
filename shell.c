@@ -951,7 +951,7 @@ void shell_confirm(struct shell_input * shellin ,char * info ,cmd_fn_t yestodo)
 void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...)
 {
 	char * shellsign = DEFAULT_INPUTSIGN;
-	void * shellgets = cmdline_gets;
+	shellgets_t shellgets = cmdline_gets;
 	
 	va_list ap;
 	va_start(ap, shellputs); //检测有无新定义 
@@ -962,7 +962,7 @@ void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...)
 			shellsign = va_arg(ap, char*);
 		else
 		if (MODIFY_GETS == arg) //如果重定义当前交互的输入流向
-			shellgets = va_arg(ap, void*);
+			shellgets = (shellgets_t)va_arg(ap, void*);
 	}
 
 	va_end(ap);

@@ -54,7 +54,7 @@
 
 #define NEED_CONFIRM MODIFY_MASK
 #define DONT_CONFIRM 0
-#define FUNC_CONFIRM (1<<31) // stm32 flash 地址范围最高位
+#define FUNC_CONFIRM (1U<<31) // stm32 flash 地址范围最高位
 /*
 -----------------------------------------------------------------------
 	调用宏 shell_register_command(pstr,pfunc) 注册命令
@@ -176,7 +176,7 @@ typedef struct shell_input
 shellinput_t;
 
 
-
+typedef	void (*shellgets_t)(struct shell_input * , char * ,uint32_t );
 
 /* Public variables ---------------------------------------------------------*/
 
