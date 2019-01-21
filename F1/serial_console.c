@@ -77,7 +77,7 @@ static int iap_check_complete(void * arg)
 	
 	printk("loading");//开始接收时打印 loading 进度条
 	
-	task_cond_wait(OS_current_time - iap.timestamp > 1000) ;//超时 1 s 无数据包，表示接收结束
+	task_cond_wait(OS_current_time - iap.timestamp > 1600) ;//超时 1.6 s 无数据包，表示接收结束
 	
 	iap_lock_flash();   //由于要写完最后一包数据才能上锁，所以上锁放在 iap_check_complete 中
 	

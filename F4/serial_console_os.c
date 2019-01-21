@@ -193,7 +193,7 @@ void task_SerialConsole(void const * argument)
 	for(;;)
 	{
 		// 等待信号量时间，在 iap 模式中等待超过 1s 的时间视为 iap 接收结束
-		wait = serial_shell.apparg == (void*)MODIFY_MASK ? 1000 : osWaitForever;
+		wait = serial_shell.apparg == (void*)MODIFY_MASK ? 1600 : osWaitForever;
 		
 		if (osOK == osSemaphoreWait(osSerialRxSemHandle,wait))
 		{
