@@ -1,3 +1,15 @@
+/**
+  ******************************************************************************
+  * @file           iap_hal.h
+  * @author         古么宁
+  * @brief          serial_console file
+                    串口控制台文件。文件不直接操作硬件，依赖 serial_hal.c 和 iap_hal.c
+  ******************************************************************************
+  *
+  * COPYRIGHT(c) 2018 GoodMorning
+  *
+  ******************************************************************************
+  */
 #ifndef __IAP_BASE_H__
 #define __IAP_BASE_H__
 
@@ -11,13 +23,9 @@
 
 
 
-#define UPDATE_PACKAGE_AT_W25X16_ADRR 0x10000
-#define IAP_RX_BUF_SIZE 256  //0x100//  W25X16 一页大小
-
-
 #define UPDPKG_AT_MCU_ADDR           0x08060000
 
-#define UPDATE_PACKAGE_AT_STM32_ADRR 0x08060000 //telnet/串口 升级包存放位置
+#define UPDATE_PACKAGE_AT_STM32_ADRR UPDPKG_AT_MCU_ADDR //telnet/串口 升级包存放位置
 
 #define IAP_ADDR 0x08000000
 #define APP_ADDR 0x08020000
@@ -48,23 +56,8 @@
 
 #define IAP_CLEAR_UPDATE_FLAG() (*(__IO uint32_t *) IAP_FLAG_ADDR = 0)
 
+#define APP_CORRECT()     (SRAM_BASE == ((*(uint32_t *)(APP_ADDR))&0x2FFC0000))
 
-
-
-
-#define vJumpTo(where)\
-do{\
-	uint32_t SpInitVal = *(uint32_t *)(where##_ADDR);    \
-	uint32_t JumpAddr = *(uint32_t *)(where##_ADDR + 4); \
-	void (*pAppFun)(void) = (void (*)(void))JumpAddr;    \
-	__set_BASEPRI(0); 	      \
-	__set_FAULTMASK(0);       \
-	__disable_irq();          \
-	__set_MSP(SpInitVal);     \
-	__set_PSP(SpInitVal);     \
-	__set_CONTROL(0);         \
-	(*pAppFun) ();            \
-}while(0)
 
 
 //------------------------------串口 IAP 相关------------------------------
@@ -85,7 +78,7 @@ void syscfg_erase(void);
 void syscfg_write(char * info , uint32_t len);
 
 //------------------------------控制台命令------------------------------
-void shell_jump_command(void * arg);
+
 void shell_reboot_command(void * arg);
 
 

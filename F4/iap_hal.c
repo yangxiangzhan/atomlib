@@ -142,37 +142,7 @@ int iap_unlock_flash(void)
 
 
 
-/**
-	* @brief    vSystemReboot 硬件重启
-	* @param    空
-	* @return  
-*/
-void shell_reboot_command(void * arg)
-{
-	NVIC_SystemReset();
-}
 
-
-
-/**
-	* @brief    vShell_JumpToAppCmd console 串口发送一包数据完成中断
-	* @param    空
-	* @return   空
-*/
-void shell_jump_command(void * arg)
-{
-	uint32_t UPDATE_ADDR = (SCB->VTOR == FLASH_BASE) ? (APP_ADDR):(IAP_ADDR);
-	uint32_t SpInitVal = *(uint32_t *)(UPDATE_ADDR);    
-	uint32_t JumpAddr = *(uint32_t *)(UPDATE_ADDR + 4); 
-	void (*pAppFun)(void) = (void (*)(void))JumpAddr;    
-	__set_BASEPRI(0); 	      
-	__set_FAULTMASK(0);       
-	__disable_irq();          
-	__set_MSP(SpInitVal);     
-	__set_PSP(SpInitVal);     
-	__set_CONTROL(0);         
-	(*pAppFun) ();            
-}
 
 
 

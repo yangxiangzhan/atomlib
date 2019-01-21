@@ -398,8 +398,7 @@ void serial_puts(char * const buf,uint16_t len)
 		serial_tx.pkttail = pkttail;  //更新尾部
 		serial_tx.pktsize += pktsize;//设置当前包大小
 
-		//开始发送
-		if (!LL_DMA_IsEnabledStream(DMAx,DMA_TX_STREAM))//
+		if (!LL_DMA_IsEnabledStream(DMAx,DMA_TX_STREAM))//开始发送
 			serial_send_pkt();
 	}
 }
@@ -407,7 +406,7 @@ void serial_puts(char * const buf,uint16_t len)
 
 
 //------------------------------以下为一些中断处理------------------------------
-#include "cmsis_os.h"//用了freertos 打开
+//#include "cmsis_os.h"//用了freertos 打开
 
 #ifdef _CMSIS_OS_H
 	extern osSemaphoreId osSerialRxSemHandle;
@@ -421,7 +420,6 @@ void serial_puts(char * const buf,uint16_t len)
 */
 void DMA_TX_IRQ_HANDLER(void) 
 {
-//	LL_USART_ClearFlag_TC(USARTx); //清除空闲中断
 	LL_DMA_DisableStream(DMAx,DMA_TX_STREAM);
 	DMA_TX_CLEAR_FLAG();
 
@@ -505,8 +503,6 @@ void hal_serial_init(void)
 	serial_tx.pktsize = 0;
 	
 	serial_recv_reset(COMMANDLINE_MAX_LEN);
-	//uint32_t addr = LL_DMA_GetMemoryAddress(DMAx,DMA_RX_STREAM);//得到当前包的长度
-	//printk("%x",addr);
 }
 
 

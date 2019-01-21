@@ -2,10 +2,6 @@
 #define __IAP_BASE_H__
 
 
-#define UPDATE_PACKAGE_AT_W25X16_ADRR 0x10000
-#define IAP_RX_BUF_SIZE 256  //0x100//  W25X16 一页大小
-
-
 
 #define UPDATE_PACKAGE_AT_STM32_ADRR 0x08060000 //telnet/串口 升级包存放位置
 
@@ -36,23 +32,7 @@
 
 #define IAP_CLEAR_UPDATE_FLAG() (*(__IO uint32_t *) IAP_FLAG_ADDR = 0)
 
-
-
-
-
-#define vJumpTo(where)\
-do{\
-	uint32_t SpInitVal = *(uint32_t *)(where##_ADDR);    \
-	uint32_t JumpAddr = *(uint32_t *)(where##_ADDR + 4); \
-	void (*pAppFun)(void) = (void (*)(void))JumpAddr;    \
-	__set_BASEPRI(0); 	      \
-	__set_FAULTMASK(0);       \
-	__disable_irq();          \
-	__set_MSP(SpInitVal);     \
-	__set_PSP(SpInitVal);     \
-	__set_CONTROL(0);         \
-	(*pAppFun) ();            \
-}while(0)
+#define APP_CORRECT()     (0x20000000 == ((*(uint32_t *)(APP_ADDR))&0x2FFE0000))
 
 
 //------------------------------串口 IAP 相关------------------------------
@@ -74,7 +54,7 @@ void syscfg_write(char * info , uint32_t len);
 
 
 //------------------------------控制台命令------------------------------
-void shell_jump_command(void * arg);
+
 void shell_reboot_command(void * arg);
 
 
