@@ -792,6 +792,32 @@ int cmdline_param(char * str,int * argv,uint32_t maxread)
 	return argc;
 }
 
+/**
+	* @author   古么宁
+	* @brief    welcome_gets
+	*           欢迎页
+	* @param    recv  硬件层所接收到的数据缓冲区地址
+	* @param    len     硬件层所接收到的数据长度
+	* @return   void
+*/
+void welcome_gets(struct shell_input * shellin,char * recv,uint32_t len)
+{
+	static const char minishelllogo[]= //打印一个欢迎页logo
+"\r\n\r\n\
+	 __  __  ____  _   _  ____\r\n\
+	|  \\/  ||_  _||  \\| ||_  _|COPYRIGHT(c):\r\n\
+	| |\\/| | _||_ | |\\\\ | _||_ GoodMorning\r\n\
+	|_|  |_||____||_| \\_||____|2019/01\r\n\
+	 ____  _   _  ____  _     _\r\n\
+	/ ___|| |_| || ___|| |   | |\r\n\
+	\\___ \\|  _  || __| | |__ | |__\r\n\
+	|____/|_| |_||____||____||____|\r\n\r\n";
+	printl((char*)minishelllogo,sizeof(minishelllogo)-1);
+	shellin->gets = cmdline_gets;
+	cmdline_gets(shellin,recv,len);
+	return ;
+}
+
 
 /**
 	* @author   古么宁
@@ -881,12 +907,12 @@ void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 }
 
 /**
-	* @brief    _confirm_gets
+	* @brief    confirm_gets
 	*           命令行信息确认，如果输入 y/Y 则执行命令
 	* @param
 	* @return   void
 */
-static void _confirm_gets(struct shell_input * shellin ,char * buf , uint32_t len)
+static void confirm_gets(struct shell_input * shellin ,char * buf , uint32_t len)
 {
 	char * option = &shellin->cmdline[COMMANDLINE_MAX_LEN-1];
 
@@ -934,7 +960,7 @@ static void _confirm_gets(struct shell_input * shellin ,char * buf , uint32_t le
 void shell_confirm(struct shell_input * shellin ,char * info ,cmd_fn_t yestodo)
 {
 	printk("%s [Y/N] ",info);
-	shellin->gets = _confirm_gets;//串口数据流获取至 shell_option
+	shellin->gets = confirm_gets;//串口数据流获取至 shell_option
 	shellin->apparg = yestodo;
 	shellin->cmdline[COMMANDLINE_MAX_LEN-1] = 0;
 }
@@ -951,7 +977,7 @@ void shell_confirm(struct shell_input * shellin ,char * info ,cmd_fn_t yestodo)
 void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...)
 {
 	char * shellsign = DEFAULT_INPUTSIGN;
-	shellgets_t shellgets = cmdline_gets;
+	shellgets_t shellgets = welcome_gets;
 	
 	va_list ap;
 	va_start(ap, shellputs); //检测有无新定义 
@@ -997,3 +1023,5 @@ void shell_init(char * defaultsign ,fmt_puts_t puts)
 	shell_register_command("clear",shell_clean_screen);
 	shell_register_command("debug-info",shell_debug_stream);
 }
+
+
