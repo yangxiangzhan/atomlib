@@ -66,6 +66,18 @@ static struct shell_input serial_shell;
 /* Gorgeous Split-line 华丽的分割线------------------------------------*/
 
 
+/**
+	* @brief    vSystemReboot 硬件重启
+	* @param    空
+	* @return
+*/
+void shell_reboot_command(void * arg)
+{
+	NVIC_SystemReset();
+}
+
+
+
 
 /**
 	* @brief iap_check_complete iap 升级超时判断任务

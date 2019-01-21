@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file           serial_console.c
-  * @author         杨翔湿
+  * @author         古么宁
   * @brief          serial_console file
                     串口控制台文件。文件不直接操作硬件，依赿serial_hal
   ******************************************************************************
@@ -91,6 +91,22 @@ unsigned long getRunTimeCounterValue(void)
 {
 	return lThreadRuntime;
 }
+
+
+
+
+
+/**
+	* @brief    vSystemReboot 硬件重启
+	* @param    空
+	* @return
+*/
+void shell_reboot_command(void * arg)
+{
+	NVIC_SystemReset();
+}
+
+
 
 
 void shell_erase_flash(void * arg)
