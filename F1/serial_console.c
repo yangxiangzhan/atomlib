@@ -176,6 +176,7 @@ void shell_iap_command(void * arg)
 	iap_unlock_flash();
 	iap_erase_flash(iap.addr , iap.size);
 	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//«Â∆¡
+	serial_recv_reset(HAL_RX_BUF_SIZE/2);
 }
 
 

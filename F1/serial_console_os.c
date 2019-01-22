@@ -29,7 +29,7 @@
 //--------------------相关宏定义及结构体定乿-------------------
 osThreadId SerialConsoleTaskHandle;
 osSemaphoreId osSerialRxSemHandle;
-static char task_list_buf[600];
+
 
 static struct serial_iap
 {
@@ -53,35 +53,51 @@ const static char iap_logo[]=
 
 /*
 	* for freertos;
-	configUSE_STATS_FORMATTING_FUNCTIONS    1
-	portCONFIGURE_TIMER_FOR_RUN_TIME_STATS  1
+	configUSE_STATS_FORMATTING_FUNCTIONS	1
+	portCONFIGURE_TIMER_FOR_RUN_TIME_STATS	1
 	configUSE_TRACE_FACILITY 1
 	
 	STM32CUBEMX : RUN_TIME_STATS
 
-	#ifndef portCONFIGURE_TIMER_FOR_RUN_TIME_STATS
+#ifndef portCONFIGURE_TIMER_FOR_RUN_TIME_STATS
 		extern uint32_t iThreadRuntime;
-		#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() (iThreadRuntime = 0)
-		#define portGET_RUN_TIME_COUNTER_VALUE() (iThreadRuntime)
-	#endif
+	#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() (iThreadRuntime = 0)
+	#define portGET_RUN_TIME_COUNTER_VALUE() (iThreadRuntime)
+#endif
 */
 void task_list(void * arg)
 {
-	static const char acTaskInfo[] = "\r\nthread\t\tstate\tPrior\tstack\tID\r\n----------------------------\r\n";
-	static const char acTaskInfoDescri[] = "\r\n----------------------------\r\nB(block),R(ready),D(delete),S(suspended)\r\n";
+	static const char title[] = "\r\nthread\t\tstate\tPrior\tstack\tID";
+	static const char descri[] = "B(block),R(ready),D(delete),S(suspended)\r\n";
 
-	osThreadList((uint8_t *)task_list_buf);
-	printk("%s%s%s",acTaskInfo,task_list_buf,acTaskInfoDescri);
+	char * tasklistbuf = (char *)pvPortMalloc(1024);
+
+	osThreadList((uint8_t *)tasklistbuf);
+
+	printl((char*)title,sizeof(title)-1);
+	printl((char*)division,sizeof(division)-1);
+	printl(tasklistbuf,strlen(tasklistbuf));
+	printl((char*)division,sizeof(division)-1);
+	printl((char*)descri,sizeof(descri)-1);
+
+	vPortFree(tasklistbuf);
 }
 
 
 void task_runtime(void * arg)
 {
-	static const char acTaskInfo[] = "\r\nthread\t\ttime\t\t%CPU\r\n----------------------------\r\n";
-	static const char acTaskInfoDescri[] = "\r\n----------------------------\r\n";
+	static const char title[] = "\r\nthread\t\ttime\t\t%CPU";
 
-	vTaskGetRunTimeStats(task_list_buf);
-	printk("%s%s%s",acTaskInfo,task_list_buf,acTaskInfoDescri);
+	char * tasklistbuf = (char *)pvPortMalloc(1024);
+
+	vTaskGetRunTimeStats(tasklistbuf);
+
+	printl((char*)title,sizeof(title)-1);
+	printl((char*)division,sizeof(division)-1);
+	printl(tasklistbuf,strlen(tasklistbuf));
+	printl((char*)division,sizeof(division)-1);
+
+	vPortFree(tasklistbuf);
 }
 
 volatile unsigned long lThreadRuntime = 0;
@@ -194,6 +210,7 @@ void shell_iap_command(void * arg)
 	iap_unlock_flash();
 	iap_erase_flash(iap.addr , iap.size);
 	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
+	serial_recv_reset(HAL_RX_BUF_SIZE/2);
 }
 
 

@@ -6,7 +6,7 @@
 
 
 #define HAL_RX_PACKET_SIZE 4     //硬件接收到的缓冲队列，以数据包为单位
-#define HAL_RX_BUF_SIZE    (1024*2+1)  //硬件接收缓冲区
+#define HAL_RX_BUF_SIZE    (512*2+1)  //硬件接收缓冲区
 #define HAL_TX_BUF_SIZE    512  //硬件发送缓冲区
 
 
