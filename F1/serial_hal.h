@@ -5,6 +5,9 @@
 #endif
 
 
+#define HAL_RX_PACKET_SIZE 4     //硬件接收到的缓冲队列，以数据包为单位
+#define HAL_RX_BUF_SIZE    (512*4+1)  //硬件接收缓冲区，这个不能太小，因为涉及到 iap
+#define HAL_TX_BUF_SIZE    512  //硬件发送缓冲区
 
 
 void serial_puts(char * buf,uint16_t len);

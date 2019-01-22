@@ -117,7 +117,12 @@ static int serial_console_recv(void * arg)
 
 
 /** 
-	* @brief iap_gets  iap 升级任务，获取数据流并写入flash
+	* @brief iap_gets  
+	*        iap 升级任务，获取数据流并写入flash
+	*        注：由于在写 flash 的时候，单片机会停止读取 flash，即
+	*        代码不会运行。如果在写 flash 的时候有中断产生，单片机
+	*        可能会死机。写 flash 的时候不妨碍 dma 的传输，所以 dma
+	*        接收缓冲要大一些，要在下一包数据接收完写完当前包数据
 	* @param void
 	* @return NULL
 */
@@ -125,7 +130,8 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 {
 	uint32_t * value = (uint32_t*)buf;
 	
-	for (iap.size = iap.addr + len ; iap.addr < iap.size ; iap.addr += 4)// f4 可以以 word 写入
+	
+	for (iap.size = iap.addr + len ; iap.addr < iap.size ; iap.addr += 4)
 		iap_write_flash(iap.addr,*value++); 
 
 	iap.timestamp = OS_current_time;//更新时间戳
@@ -152,6 +158,13 @@ void shell_iap_command(void * arg)
 	int argc , erasesize ;
 	
 	struct shell_input * shell = container_of(arg, struct shell_input, cmdline);
+	
+	if (shell != &serial_shell)  //防止其他 shell 调用此命令，否则会擦除掉 flash
+	{
+		printk("cannot update in this channal\r\n");
+		return ;
+	}
+	
 	shell->gets = iap_gets;//串口数据流获取至 iap_gets
 	
 	argc = cmdline_param((char*)arg,&erasesize,1);
@@ -359,10 +372,6 @@ void serial_console_init(char * info)
 	
 	while(serial_busy()); //等待打印结束
 }
-
-
-
-
 
 
 
