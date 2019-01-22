@@ -403,7 +403,7 @@ void serial_puts(char * const buf,uint16_t len)
 
 
 //------------------------------以下为一些中断处理------------------------------
-#include "cmsis_os.h"//用了freertos 打开
+//#include "cmsis_os.h"//用了freertos 打开
 
 #ifdef _CMSIS_OS_H
 	extern osSemaphoreId osSerialRxSemHandle;
@@ -499,7 +499,7 @@ void hal_serial_init(void)
 	serial_tx.pkttail = 0;
 	serial_tx.pktsize = 0;
 	
-	serial_recv_reset(COMMANDLINE_MAX_LEN);
+	serial_recv_reset(HAL_RX_BUF_SIZE/2);
 }
 
 

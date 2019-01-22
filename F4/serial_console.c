@@ -364,15 +364,7 @@ void _shell_rm_syscfg(void * arg)
 #endif //#ifdef SYSTEM_CONFIG_FILE
 
 
-/**
-	* @brief    vSystemReboot Ó²¼þÖØÆô
-	* @param    ¿Õ
-	* @return  
-*/
-void shell_reboot_command(void * arg)
-{
-	NVIC_SystemReset();
-}
+
 
 /**
 	* @brief    serial_console_init
