@@ -97,8 +97,6 @@ static int iap_check_complete(void * arg)
 	
 	iap_lock_flash();   //由于要写完最后一包数据才能上锁，所以上锁放在 iap_check_complete 中
 	
-	serial_recv_reset(COMMANDLINE_MAX_LEN); //重置串口接收包长
-	
 	filesize = (SCB->VTOR == FLASH_BASE) ? (iap.addr-APP_ADDR):(iap.addr-IAP_ADDR);
 	
 	printk("\r\nupdate completed!\r\nupdate package size:%d byte\r\n",filesize);

@@ -45,6 +45,8 @@ const static char iap_logo[]=
  _||_ |  _  ||  __/don't press any key now\r\n\
 |____||_| |_||_|   ";
 
+static const char division [] = "\r\n----------------------------\r\n";
+
 //------------------------------相关函数声明------------------------------
 
 
@@ -192,12 +194,6 @@ void shell_iap_command(void * arg)
 	int argc , erasesize ;
 
 	struct shell_input * shell = container_of(arg, struct shell_input, cmdline);
-	
-	if (shell != &serial_shell)  //防止其他 shell 调用此命令，否则会擦除掉 flash
-	{
-		printk("cannot update in this channal\r\n");
-		return ;
-	}
 	
 	shell->gets = iap_gets;//串口数据流获取至 iap_gets
 

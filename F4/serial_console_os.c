@@ -45,6 +45,8 @@ const static char iap_logo[]=
  _||_ |  _  ||  __/don't press any key now\r\n\
 |____||_| |_||_|   ";
 
+static const char division [] = "\r\n----------------------------\r\n";
+
 //------------------------------相关函数声明------------------------------
 
 
@@ -101,14 +103,6 @@ void task_runtime(void * arg)
 }
 
 
-void task_runtime(void * arg)
-{
-	static const char acTaskInfo[] = "\r\nthread\t\ttime\t\t%CPU\r\n----------------------------\r\n";
-	static const char acTaskInfoDescri[] = "\r\n----------------------------\r\n";
-
-	vTaskGetRunTimeStats(task_list_buf);
-	printk("%s%s%s",acTaskInfo,task_list_buf,acTaskInfoDescri);
-}
 
 volatile unsigned long lThreadRuntime = 0;
 void configureTimerForRunTimeStats(void)
@@ -217,12 +211,6 @@ void shell_iap_command(void * arg)
 	int argc , erasesize ;
 
 	struct shell_input * shell = container_of(arg, struct shell_input, cmdline);
-	
-	if (shell != &serial_shell)  //防止其他 shell 调用此命令，否则会擦除掉 flash
-	{
-		printk("cannot update in this channal\r\n");
-		return ;
-	}
 	
 	shell->gets = iap_gets;//串口数据流获取至 iap_gets
 
@@ -341,9 +329,5 @@ void serial_console_init(char * info)
 	osThreadDef(SerialConsole, task_SerialConsole, osPriorityNormal, 0, 168+(sizeof(struct shell_input)/4));
 	SerialConsoleTaskHandle = osThreadCreate(osThread(SerialConsole), NULL);
 }
-
-
-
-
 
 
