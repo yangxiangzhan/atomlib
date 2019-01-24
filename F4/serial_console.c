@@ -15,21 +15,24 @@
 #include <stdarg.h>
 #include <stdint.h> //定义了很多数据类型
 
-#include "tasklib.h"
-#include "iap_hal.h"
+#include "stm32f429xx.h" //for SCB->VTOR
 
-#include "shell.h"
-#include "vim.h"
+#include "iap_hal.h"
 #include "serial_hal.h"
 #include "serial_console.h"
 
-#include "stm32f429xx.h" //for SCB->VTOR
+#include "shell.h"
+#include "tasklib.h"
+
 
 
 /* Private macro ------------------------------------------------------------*/
 
 //#define SYSTEM_CONFIG_FILE 
 
+#ifdef SYSTEM_CONFIG_FILE
+#	include "vim.h"
+#endif
 
 /* Private variables ------------------------------------------------------------*/
 

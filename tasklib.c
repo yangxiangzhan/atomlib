@@ -47,8 +47,15 @@ void OS_task_create(ros_task_t *task,const char * name, int (*start_rtn)(void*),
 	if ( task->init != TASK_IS_INITIALIZED)
 	{
 		INIT_LIST_HEAD(&task->list_node);
-		
 		task->init = TASK_IS_INITIALIZED;
+	}
+
+	if (list_empty(&task->list_node))//如果任务已在运行，不重复注册
+	{
+		list_add_tail(&task->list_node, &OS_scheduler_list);//加入调度链表末端
+		task->lc   = 0;
+		task->dly  = 0;
+		task->post = 0;
 		task->func = start_rtn;//任务执行函数
 		task->arg  = arg;
 		
@@ -58,14 +65,6 @@ void OS_task_create(ros_task_t *task,const char * name, int (*start_rtn)(void*),
 		#endif
 		
 		++IDcnt;
-	}
-
-	if (list_empty(&task->list_node))//如果任务已在运行，不重复注册
-	{
-		task->lc = 0;
-		task->dly = 0;
-		task->post = 0;
-		list_add_tail(&task->list_node, &OS_scheduler_list);//加入调度链表末端
 	}
 }
 
