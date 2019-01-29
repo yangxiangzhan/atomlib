@@ -369,6 +369,7 @@ void serial_console_init(char * info)
 
 	task_create(&serial_console_task,NULL,serial_console_recv,NULL);
 	
+	printk("\r\n");
 	color_printk(purple,"%s",info);//打印开机信息或者控制台信息
 	
 	while(serial_busy()); //等待打印结束

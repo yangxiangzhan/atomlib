@@ -143,8 +143,7 @@ static int __avl_balance_left(struct avl_node *node, struct avl_root *root)
 			else 
 			if (left_right_child_scale == AVL_TILT_LEFT)
 				avl_set_tilt_right(node);
-			else
-			{
+			else {
 				int left_left_child_scale = avl_scale(left_left_child) ;
 				avl_set_balanced(node);
 				AVL_DEBUG("->"); //递归
@@ -165,6 +164,7 @@ static int __avl_balance_left(struct avl_node *node, struct avl_root *root)
 		}
 		else
 		{
+			int left_right_child_scale = avl_scale(left_right_child);
 			__avl_rotate_left(node->avl_left,root);  //对*node的左子树作左平衡处理
 			__avl_rotate_right(node,root);      //对*node作右平衡处理
 			
@@ -228,8 +228,7 @@ static int __avl_balance_right(struct avl_node *node, struct avl_root *root)
 			else 
 			if (right_left_child_scale == AVL_TILT_RIGHT)
 				avl_set_tilt_left(node);
-			else
-			{
+			else {
 				struct avl_node * right_right_child = right_child->avl_right;
 				int right_right_child_scale = avl_scale(right_right_child);
 				avl_set_balanced(node);
@@ -361,10 +360,10 @@ void avl_insert(
 
 	*avl_link = insertnode;
 
-	if (root->avl_node == insertnode) return;
+	if (root->avl_node == insertnode) 
+		return;
 
-	if (AVL_BALANCED != avl_scale(parent))
-	{
+	if (AVL_BALANCED != avl_scale(parent)) {
 		avl_set_balanced(parent);//父节点平衡
 		return;//树没长高返回
 	}
@@ -400,33 +399,28 @@ void avl_delete(struct avl_root *root, struct avl_node * node)
 
 	if (!node->avl_left)//如果被删节点不存在左子树
 	{
-		child = node->avl_right; //把右子树接入父节点中
-
 		parent = avl_parent(node);
 
-		if (child) avl_set_parent(child, parent);
+		if ((child = node->avl_right)) //把右子树接入父节点中
+			avl_set_parent(child, parent);
 
-		if (parent)
-		{
-			if (parent->avl_left == node)
-			{
+		if (parent) {
+			if (parent->avl_left == node) {
 				parent->avl_left = child;
 				backtrack_path = AVL_TILT_LEFT;
-			}
-			else
-			{
+			} else {
 				parent->avl_right = child;
 				backtrack_path = AVL_TILT_RIGHT;
 			}
-		}
-		else
-		{
+		} else { //if (NULL == parent) 
 			root->avl_node = child;
-			if (child) avl_set_balanced(child);
+			if (child) 
+				avl_set_balanced(child);
 			return;
 		}
 	}
-	else if (!node->avl_right) //如果被删节点存在左子树，不存在右子树
+	else 
+	if (!node->avl_right) //如果被删节点存在左子树，不存在右子树
 	{
 		child = node->avl_left;
 
@@ -434,23 +428,18 @@ void avl_delete(struct avl_root *root, struct avl_node * node)
 
 		avl_set_parent(child, parent);
 
-		if (parent)
-		{
-			if (parent->avl_left == node)
-			{
+		if (parent) {
+			if (parent->avl_left == node) {
 				parent->avl_left = child;
 				backtrack_path = AVL_TILT_LEFT;
-			}
-			else
-			{
+			} else {
 				parent->avl_right = child;
 				backtrack_path = AVL_TILT_RIGHT;
 			}
-		}
-		else
-		{
+		} else { //if (NULL == parent) 
 			root->avl_node = child;
-			if (child) avl_set_balanced(child);
+			if (child) 
+				avl_set_balanced(child);
 			return;
 		}
 	}
@@ -460,34 +449,29 @@ void avl_delete(struct avl_root *root, struct avl_node * node)
 
 		node = node->avl_right;
 
-		while ((left = node->avl_left) != NULL) node = left;//找到右子树下最小的替代点
+		while ((left = node->avl_left) != NULL) //找到右子树下最小的替代点
+			node = left;
 
-		if (avl_parent(old)) //旧点所在父节点
-		{
+		if (avl_parent(old)){ //旧点所在父节点
 			if (avl_parent(old)->avl_left == old)
 				avl_parent(old)->avl_left = node;
 			else
 				avl_parent(old)->avl_right = node;
-
+		}else {
+			root->avl_node = node;
 		}
-		else root->avl_node = node;
-
+		
 		child = node->avl_right;  //最小的替代点的右节点
 		parent = avl_parent(node);//最小的替代点的父节点
 
-		if (parent == old) //要删除的节点的右子树没有左子树，替代点(1)没有右节点,(2)存在一个右节点  
-		{
+		if (parent == old) {//要删除的节点的右子树没有左子树，替代点(1)没有右节点,(2)存在一个右节点  
 			backtrack_path = AVL_TILT_RIGHT;
-
 			parent = node;
 			node->avl_parent = old->avl_parent;
 			node->avl_left = old->avl_left;
 			avl_set_parent(old->avl_left, node);
-		}
-		else  //要删除的节点的右子树有左子树
-		{
+		} else { //要删除的节点的右子树有左子树 
 			backtrack_path = AVL_TILT_LEFT;
-
 			parent->avl_left = child;          //最小的替代点的右节点的父节点
 			node->avl_right = old->avl_right;
 			avl_set_parent(old->avl_right, node);
@@ -495,14 +479,13 @@ void avl_delete(struct avl_root *root, struct avl_node * node)
 			node->avl_parent = old->avl_parent;
 			node->avl_left = old->avl_left;
 			avl_set_parent(old->avl_left, node);
-
-			if (child) avl_set_parent(child, parent); //要删除的节点的右子树的左子树末尾点存在右节点
+			if (child) 
+				avl_set_parent(child, parent); //要删除的节点的右子树的左子树末尾点存在右节点
 		}
 	}
 
 	//树低了，需要回溯平衡，直到回溯到根节点
-	while (lower && parent)
-	{
+	while (lower && parent) {
 		if ( (gparent = avl_parent(parent)) )//(parent && (gparent = avl_parent(parent)))//先赋值再判断
 			parent_gparent_path = (parent == gparent->avl_right) ? AVL_TILT_RIGHT : AVL_TILT_LEFT;
 

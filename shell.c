@@ -190,8 +190,7 @@ static void shell_tab(struct shell_input * shellin)
 	index = ((uint32_t)(*str)<<26) | (strlen << 21) ;//查找首字母相同并且长度不小于 strlen 的点
 	end = (uint32_t)(*str + 1)<<26 ;                 //下一个字母开头的点
 
-	while ( node )//index 一定不存在，查找结束后的 shell_cmd 最靠近 index ，用此作为起始匹配点
-	{	
+	while ( node ){//index 一定不存在，查找结束后的 shell_cmd 最靠近 index ，用此作为起始匹配点 
 		shellcmd = avl_entry(node,struct shellcommand, node);	
 		node = (index < shellcmd->ID) ? node->avl_left : node->avl_right;
 	}
@@ -201,8 +200,7 @@ static void shell_tab(struct shell_input * shellin)
 	{
 		shellcmd = avl_entry(node,struct shellcommand, node);
 		
-		if (memcmp(shellcmd->name, str, strlen) == 0) //对比输入的字符串，如果匹配到相同的
-		{
+		if (memcmp(shellcmd->name, str, strlen) == 0){ //对比输入的字符串，如果匹配到相同的 
 			match[match_cnt] = shellcmd; //把匹配到的命令号索引记下来
 			if (++match_cnt > 10)        //超过十条相同返回
 				return ;    
@@ -218,13 +216,11 @@ static void shell_tab(struct shell_input * shellin)
 		shellin->edit = shellin->tail;
 	}
 
-	if (1 == match_cnt)  //如果只找到了一条命令包含当前输入的字符串，直接补全命令，并打印
-	{
+	if (1 == match_cnt){  //如果只找到了一条命令包含当前输入的字符串，直接补全命令，并打印 
 		for(char * ptr = match[0]->name + strlen ; *ptr ;++ptr) //打印剩余的字符
 			shell_getchar(shellin,*ptr);
-	}
-	else   //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
-	{
+	} else {  //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
+
 		for(uint32_t i = 0;i < match_cnt; ++i) //把所有含有输入字符串的命令列表打印出来
 			printk("\r\n\t%s",match[i]->name); 
 		
@@ -232,8 +228,7 @@ static void shell_tab(struct shell_input * shellin)
 		
 		while(1)  //补全命令，把每条命令都包含的字符补全并打印
 		{
-			for (uint32_t i = 1 ; i < match_cnt ; ++i )
-			{
+			for (uint32_t i = 1 ; i < match_cnt ; ++i ) {
 				if (match[0]->name[strlen] != match[i]->name[strlen])
 					return  ; //字符不一样，返回
 			}
@@ -260,8 +255,7 @@ static void shell_list_cmd(void * arg)
 	for (node = avl_first(&shellcmdroot); node; node = avl_next(node))//遍历红黑树
 	{
 		cmd = avl_entry(node,struct shellcommand, node);
-		if (firstchar != (cmd->ID & 0xfc000000))
-		{
+		if (firstchar != (cmd->ID & 0xfc000000)) {
 			firstchar = cmd->ID & 0xfc000000;
 			printk("\r\n(%c)------",((firstchar>>26)|0x40));
 		}
@@ -356,12 +350,9 @@ static void shell_tab(struct shell_input * shellin)
 	}
 	
 	//首字母的大小决定命令索引的大小，超过首字母的点不需要继续匹配
-	for ( ; node && shellcmd->ID < end ; node = node->next )
-	{
-		shellcmd = container_of(node,struct shellcommand, node);
-		
-		if (memcmp(shellcmd->name, str, strlen) == 0) //对比输入的字符串，如果匹配到相同的
-		{
+	for ( ; node && shellcmd->ID < end ; node = node->next ) {
+		shellcmd = container_of(node,struct shellcommand, node); 
+		if (memcmp(shellcmd->name, str, strlen) == 0) {//对比输入的字符串，如果匹配到相同的 
 			match[match_cnt] = shellcmd; //把匹配到的命令号索引记下来
 			if (++match_cnt > 10)        //超过十条相同返回
 				return ;    
@@ -371,28 +362,25 @@ static void shell_tab(struct shell_input * shellin)
 	if (!match_cnt) //如果没有命令包含输入的字符串，返回
 		return ; 
 	
-	if (shellin->edit != shellin->tail) //如果编辑位置不是末端，先把光标移到末端
-	{
+	if (shellin->edit != shellin->tail){ //如果编辑位置不是末端，先把光标移到末端 
 		printl(&shellin->cmdline[shellin->edit],shellin->tail - shellin->edit);
 		shellin->edit = shellin->tail;
 	}
 
-	if (1 == match_cnt)  //如果只找到了一条命令包含当前输入的字符串，直接补全命令，并打印
-	{
+	if (1 == match_cnt){  //如果只找到了一条命令包含当前输入的字符串，直接补全命令，并打印
+	
 		for(char * ptr = match[0]->name + strlen ; *ptr ;++ptr) //打印剩余的字符
 			shell_getchar(shellin,*ptr);
-	}
-	else   //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
-	{
+	} else {  //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
+	
 		for(uint32_t i = 0;i < match_cnt; ++i) //把所有含有输入字符串的命令列表打印出来
 			printk("\r\n\t%s",match[i]->name); 
 		
 		printk("\r\n%s%s",shellin->sign,shellin->cmdline); //重新打印输入标志和已输入的字符串
 		
-		while(1)  //补全命令，把每条命令都包含的字符补全并打印
-		{
-			for (uint32_t i = 1 ; i < match_cnt ; ++i )
-			{
+		while(1) { //补全命令，把每条命令都包含的字符补全并打印
+		
+			for (uint32_t i = 1 ; i < match_cnt ; ++i ) {
 				if (match[0]->name[strlen] != match[i]->name[strlen])
 					return  ; //字符不一样，返回
 			}
@@ -415,11 +403,9 @@ static void shell_list_cmd(void * arg)
 	cmd_entry_t * node = shellcmdroot.next;
 	struct shell_input * shellin = container_of(arg, struct shell_input, cmdline);
 	
-	for ( ; node; node = node->next)//遍历红黑树
-	{
+	for ( ; node; node = node->next){//遍历红黑树
 		cmd = container_of(node,struct shellcommand, node);
-		if (firstchar != (cmd->ID & 0xfc000000))
-		{
+		if (firstchar != (cmd->ID & 0xfc000000)) {
 			firstchar = cmd->ID & 0xfc000000;
 			printk("\r\n(%c)------",((firstchar>>26)|0x40));
 		}
@@ -473,8 +459,7 @@ static void shell_show_history(struct shell_input * shellin,uint8_t LastOrNext)
 	if (shellin->htyread != shellin->htywrt)
 		shellin->htyread = (shellin->htyread + 1) % COMMANDLINE_MAX_RECORD;
 
-	if (shellin->htyread != shellin->htywrt) //把历史记录考到命令行内存
-	{
+	if (shellin->htyread != shellin->htywrt){ //把历史记录考到命令行内存 
 		for (char * history = &shellin->history[shellin->htyread][0]; *history ; ++len)
 			shellin->cmdline[len] = *history++;
 	}
@@ -509,8 +494,7 @@ static void shell_backspace(struct shell_input * shellin)
 
 	//当输入过左右箭头时，需要作字符串插入左移处理，并作反馈回显
 	//如 abUcd 中删除U，需要左移cd，并打印两个 '\b' 使光标回到 ab 处
-	for (char * cp = edit - 1 ; edit < tail ; *cp++ = *edit++)
-	{
+	for (char * cp = edit - 1 ; edit < tail ; *cp++ = *edit++) {
 		*print++ = *edit;
 		*printend++ = '\b';
 	}
@@ -535,14 +519,11 @@ static void shell_getchar(struct shell_input * shellin , char ascii)
 	if (shellin->tail + 1 >= COMMANDLINE_MAX_LEN)
 		return ;
 
-	if (shellin->tail == shellin->edit)
-	{
+	if (shellin->tail == shellin->edit) {
 		shellin->cmdline[shellin->edit++] = ascii;
 		shellin->cmdline[++shellin->tail] = 0;
 		printl(&ascii,1);
-	}
-	else //其实 else 分支完全可以处理 tail == edit 的情况，但是 printbuf 压栈太久
-	{
+	} else {//其实 else 分支完全可以处理 tail == edit 的情况，但是 printbuf 压栈太久 
 		char  printbuf[COMMANDLINE_MAX_LEN*2]={0};//中转内存
 		char *tail = &shellin->cmdline[shellin->tail++];
 		char *edit = &shellin->cmdline[shellin->edit++];
@@ -551,8 +532,7 @@ static void shell_getchar(struct shell_input * shellin , char ascii)
 
 		//当输入过左右箭头时，需要作字符串插入右移处理，并作反馈回显
 		//如 abcd 中在bc插入U，需要右移cd，并打印两个 '\b' 使光标回到 abU 处
-		for (char *cp = tail - 1; cp >= edit ; *tail-- = *cp--)
-		{
+		for (char *cp = tail - 1; cp >= edit ; *tail-- = *cp--) {
 			*print-- = *cp;
 			*printend++ = '\b';
 		}
@@ -587,8 +567,7 @@ static void shell_parse(cmd_root_t * cmdroot , struct shell_input * shellin)
 	if (0 == *str)
 		goto PARSE_END;
 	
-	for (unCmd.part.FirstChar = *str; (*str) && (*str != ' ') ; ++str ,++len)
-	{
+	for (unCmd.part.FirstChar = *str; (*str) && (*str != ' ') ; ++str ,++len) {
 		sum += *str;
 		fcrc8 = F_CRC8_Table[fcrc8^*str];
 		bcrc8 = B_CRC8_Table[bcrc8^*str];
@@ -600,22 +579,16 @@ static void shell_parse(cmd_root_t * cmdroot , struct shell_input * shellin)
 	unCmd.part.CRC2 = bcrc8;
 
 	cmdmatch = shell_search_cmd(cmdroot,unCmd.ID);//匹配命令号
-	if (cmdmatch != NULL)
-	{
-		if (cmdmatch->fnaddr & FUNC_CONFIRM) // 如果是需要确认的命令
-		{
+	if (cmdmatch != NULL) {
+		if (cmdmatch->fnaddr & FUNC_CONFIRM) {// 如果是需要确认的命令 
 			cmd_fn_t func = (cmd_fn_t)(cmdmatch->fnaddr & (~FUNC_CONFIRM)) ;//提取函数指针
 			shellcfm_t * confirm = container_of(cmdmatch, struct shellconfirm, cmd);//提取确认信息
 			shell_confirm(shellin,confirm->prompt,func);//进入确认命令行
-		}
-		else //普通命令
-		{
+		} else {//普通命令 
 			cmd_fn_t func = (cmd_fn_t)cmdmatch->fnaddr ;
 			func(shellin->cmdline);
 		}
-	}
-	else
-	{
+	} else {
 		printk("\r\n\tno reply:%s\r\n",shellin->cmdline);
 	}
 	
@@ -819,6 +792,8 @@ void welcome_gets(struct shell_input * shellin,char * recv,uint32_t len)
 }
 
 
+
+
 /**
 	* @author   古么宁
 	* @brief    shell_input 
@@ -829,80 +804,77 @@ void welcome_gets(struct shell_input * shellin,char * recv,uint32_t len)
 */
 void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 {
-	for ( ; len && *recv; --len,++recv)
+	uint8_t state = 0 ;
+	//for ( ; len && *recv; --len,++recv)
+	for (char * end = recv + len ; recv < end ; ++recv)
 	{
-		if (*recv > 0x1F && *recv < 0x7f)//普通字符,当前命令行输入;
-			shell_getchar(shellin,*recv); 
-		else
-		switch (*recv) //判断字符是否为特殊字符
+		if (0 == state)
 		{
-			case KEYCODE_NEWLINE: //忽略 \r
-				break;
-			case KEYCODE_ENTER:
-				if (shellin->tail)
-				{
-					printk("\r\n");
-					shell_record(shellin);//记录当前输入的命令和命令参数
-					shell_parse(&shellcmdroot ,shellin);
-				}
-				else
-				{
-					printk("\r\n%s",shellin->sign);
-				}
-				break;
-			
-			case KEYCODE_ESC :
-				if (recv[1] == '[')
-				{
-					switch(recv[2])
-					{
-						case 'A'://上箭头
-							shell_show_history(shellin,0);
-							break;
-
-						case 'B'://下箭头
-							shell_show_history(shellin,1);
-							break;
-
-						case 'C'://右箭头input->tail &&
-							if ( shellin->tail != shellin->edit)
-								printl(&shellin->cmdline[shellin->edit++],1);
-							break;
-
-						case 'D'://左箭头
-							if (shellin->edit)
-							{
-								--shellin->edit;
-								printl("\b",1);
-							}
-							break;
-						default:;
+			if (*recv > 0x1F && *recv < 0x7f)//普通字符,当前命令行输入;
+				shell_getchar(shellin,*recv);
+			else
+			switch (*recv) //判断字符是否为特殊字符
+			{
+				case KEYCODE_ENTER:
+					if (shellin->tail){
+						printk("\r\n");
+						shell_record(shellin);//记录当前输入的命令和命令参数
+						shell_parse(&shellcmdroot ,shellin);
+					}else{
+						printk("\r\n%s",shellin->sign);
 					}
-					
-					len  -= 2;
-					recv += 2;//箭头有3个字节字符
-				}
-				break;
+					break;
 
-			case KEYCODE_CTRL_C:
-				shellin->edit = 0;
-				shellin->tail = 0;
-				printk("^C\r\n%s",shellin->sign);
-				break;
-		
-			case KEYCODE_BACKSPACE : 
-			case 0x7f: //for putty
-				shell_backspace(shellin); 
-				break;
-		
-			case KEYCODE_TAB: 
-				shell_tab(shellin); 
-				break;
-		
-			default:
-				;//shell_getchar(shellin,*recv); //当前命令行输入;
+				case KEYCODE_ESC :
+					state = 1;
+					break;
+
+				case KEYCODE_CTRL_C:
+					shellin->edit = 0;
+					shellin->tail = 0;
+					printk("^C\r\n%s",shellin->sign);
+					break;
+
+				case KEYCODE_BACKSPACE :
+				case 0x7f: //for putty
+					shell_backspace(shellin);
+					break;
+
+				case KEYCODE_TAB:
+					shell_tab(shellin);
+					break;
+
+				default: ;//当前命令行输入;
+			}
 		}
-	}
+		else //
+		if (1 == state){ //判断是否是箭头内容
+			state = (*recv == '[') ? 2 : 0 ;
+		}
+		else
+		{ // if (2 == state) //响应箭头内容
+			switch(*recv)
+			{
+				case 'A'://上箭头
+					shell_show_history(shellin,0);
+					break;
+				case 'B'://下箭头
+					shell_show_history(shellin,1);
+					break;
+				case 'C'://右箭头  input->tail &&
+					if ( shellin->tail != shellin->edit)
+						printl(&shellin->cmdline[shellin->edit++],1);
+					break;
+				case 'D'://左箭头
+					if (shellin->edit){
+						--shellin->edit;
+						printl("\b",1);
+					}
+					break;
+				default:;
+			} //switch 箭头内容
+		} // if (2 == state) //响应箭头内容
+	} //for ( ; len && *recv; --len,++recv)
 	return ;
 }
 

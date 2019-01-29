@@ -401,7 +401,9 @@ void serial_console_init(char * info)
 	//创建一个串口接收任务，串口接收到一包传入 serial_console_recv 
 	task_create(&serial_console_task,NULL,serial_console_recv,NULL);
 	
+	serial_puts("\r\n",2);
 	serial_puts(info,strlen(info));//打印开机信息或者控制台信息
+	serial_puts("\r\n",2);
 	
 	while(serial_busy()); //等待打印结束
 }
