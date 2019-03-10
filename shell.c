@@ -26,10 +26,9 @@
 
 /* Private types ------------------------------------------------------------*/
 
-union uncmd
-{
-	struct // 命令号分为以下五个部分  
-	{
+union uncmd {
+
+	struct {// 命令号分为以下五个部分  
 		uint32_t CRC2      : 8;
 		uint32_t CRC1      : 8;//低十六位为两个 crc 校验码
 		uint32_t Sum       : 5;//命令字符的总和
@@ -107,37 +106,34 @@ static void   shell_tab         (struct shell_input * shellin) ;
 #ifdef USE_AVL_TREE //avl tree 建立查询系统
 
 /**
-	* @brief    shell_search_cmd 
-	*           命令树查找，根据 id 号找到对应的控制块
-	* @param    cmdindex  命令号
-	* @param    root      命令二叉树根
-	* @return   成功 id 号对应的控制块
+  * @brief    命令树查找，根据 id 号找到对应的控制块
+  * @param    cmdindex  命令号
+  * @param    root      命令二叉树根
+  * @return   成功 id 号对应的控制块
 */
 static struct shellcommand *shell_search_cmd(cmd_root_t * root , int cmdindex)
 {
-    cmd_entry_t *node = root->avl_node;
+	cmd_entry_t *node = root->avl_node;
 
-    while (node) 
-	{
+	while (node) {
 		struct shellcommand * command = container_of(node, struct shellcommand, node);
 
 		if (cmdindex < command->ID)
 		    node = node->avl_left;
 		else 
 		if (cmdindex > command->ID)
-		    node = node->avl_right;
-  		else 
+			node = node->avl_right;
+		else 
 			return command;
-    }
-    
-    return NULL;
+	}
+  
+	return NULL;
 }
 
 /**
-	* @brief    shell_insert_cmd 
-	*           命令树插入
-	* @param    newcmd   新命令控制块
-	* @return   成功返回 0
+  * @brief    命令树插入
+  * @param    newcmd   新命令控制块
+  * @return   成功返回 0
 */
 static int shell_insert_cmd(cmd_root_t * root , struct shellcommand * newcmd)
 {
@@ -145,8 +141,7 @@ static int shell_insert_cmd(cmd_root_t * root , struct shellcommand * newcmd)
  	cmd_entry_t *parent = NULL;
 	
 	/* Figure out where to put new node */
-	while (*tmp)
-	{
+	while (*tmp) {
 		struct shellcommand *this = container_of(*tmp, struct shellcommand, node);
 
 		parent = *tmp;
@@ -166,10 +161,10 @@ static int shell_insert_cmd(cmd_root_t * root , struct shellcommand * newcmd)
 
 
 /** 
-	* @brief shell_tab 输入 table 键处理
-	* @param input
+  * @brief  输入 table 键处理
+  * @param input
 	*
-	* @return NULL
+  * @return NULL
 */
 static void shell_tab(struct shell_input * shellin)
 {
@@ -196,8 +191,7 @@ static void shell_tab(struct shell_input * shellin)
 	}
 
 	//首字母的大小决定命令索引的大小，超过首字母的点不需要继续匹配
-    for (node = &shellcmd->node ; shellcmd->ID < end && node; node = avl_next(node))
-	{
+    for (node = &shellcmd->node ; shellcmd->ID < end && node; node = avl_next(node)) {
 		shellcmd = avl_entry(node,struct shellcommand, node);
 		
 		if (memcmp(shellcmd->name, str, strlen) == 0){ //对比输入的字符串，如果匹配到相同的 
@@ -210,8 +204,7 @@ static void shell_tab(struct shell_input * shellin)
 	if (!match_cnt) //如果没有命令包含输入的字符串，返回
 		return ; 
 	
-	if (shellin->edit != shellin->tail) //如果编辑位置不是末端，先把光标移到末端
-	{
+	if (shellin->edit != shellin->tail) {//如果编辑位置不是末端，先把光标移到末端 
 		printl(&shellin->cmdline[shellin->edit],shellin->tail - shellin->edit);
 		shellin->edit = shellin->tail;
 	}
@@ -219,15 +212,15 @@ static void shell_tab(struct shell_input * shellin)
 	if (1 == match_cnt){  //如果只找到了一条命令包含当前输入的字符串，直接补全命令，并打印 
 		for(char * ptr = match[0]->name + strlen ; *ptr ;++ptr) //打印剩余的字符
 			shell_getchar(shellin,*ptr);
-	} else {  //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
+		shell_getchar(shellin,' ');
+	}else {  //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
 
 		for(uint32_t i = 0;i < match_cnt; ++i) //把所有含有输入字符串的命令列表打印出来
 			printk("\r\n\t%s",match[i]->name); 
 		
 		printk("\r\n%s%s",shellin->sign,shellin->cmdline); //重新打印输入标志和已输入的字符串
 		
-		while(1)  //补全命令，把每条命令都包含的字符补全并打印
-		{
+		for ( ; ; ) { //补全命令，把每条命令都包含的字符补全并打印
 			for (uint32_t i = 1 ; i < match_cnt ; ++i ) {
 				if (match[0]->name[strlen] != match[i]->name[strlen])
 					return  ; //字符不一样，返回
@@ -238,12 +231,11 @@ static void shell_tab(struct shell_input * shellin)
 }
 
 
-/********************************************************************
-	* @author   古么宁
-	* @brief    shell_list_cmd 
-	*           显示所有注册了的命令
-	* @param    arg       命令后所跟参数
-	* @return   NULL
+/**
+  * @author   古么宁
+  * @brief    显示所有注册了的命令
+  * @param    arg       命令后所跟参数
+  * @return   NULL
 */
 static void shell_list_cmd(void * arg)
 {
@@ -252,8 +244,7 @@ static void shell_list_cmd(void * arg)
 	uint32_t firstchar = 0;
 	cmd_entry_t  * node ;
 	
-	for (node = avl_first(&shellcmdroot); node; node = avl_next(node))//遍历红黑树
-	{
+	for (node = avl_first(&shellcmdroot); node; node = avl_next(node)) { //遍历红黑树
 		cmd = avl_entry(node,struct shellcommand, node);
 		if (firstchar != (cmd->ID & 0xfc000000)) {
 			firstchar = cmd->ID & 0xfc000000;
@@ -265,19 +256,16 @@ static void shell_list_cmd(void * arg)
 	printk("\r\n\r\n%s",shellin->sign);
 }
 
-
 #else  //#ifdef USE_AVL_TREE  单链表建立查询系统
 
 /**
-	* @brief    shell_search_cmd 
-	*           命令树查找，根据 id 号找到对应的控制块
-	* @param    cmdindex        命令号
-	* @return   成功 id 号对应的控制块
+  * @brief    命令树查找，根据 id 号找到对应的控制块
+  * @param    cmdindex        命令号
+  * @return   成功 id 号对应的控制块
 */
 static struct shellcommand *shell_search_cmd(cmd_root_t * root , int cmdindex)
 {
-	for (cmd_entry_t * node = root->next; node ; node = node->next )
-	{
+	for (cmd_entry_t * node = root->next; node ; node = node->next ) {
 		struct shellcommand  * cmd = container_of(node, struct shellcommand, node);
 		if (cmd->ID > cmdindex)
 			return NULL;
@@ -285,23 +273,21 @@ static struct shellcommand *shell_search_cmd(cmd_root_t * root , int cmdindex)
 		if (cmd->ID == cmdindex)
 			return cmd;
 	}
-    
-    return NULL;
+  
+	return NULL;
 }
 
 /**
-	* @brief    shell_insert_cmd 
-	*           命令树插入
-	* @param    newcmd   新命令控制块
-	* @return   成功返回 0
+  * @brief    命令树插入
+  * @param    newcmd   新命令控制块
+  * @return   成功返回 0
 */
 static int shell_insert_cmd(cmd_root_t * root , struct shellcommand * newcmd)
 {
 	cmd_entry_t * prev = root;
 	cmd_entry_t * node ;
 
-	for (node = prev->next; node ; prev = node,node = node->next)
-	{
+	for (node = prev->next; node ; prev = node,node = node->next) {
 		struct shellcommand * cmd = container_of(node, struct shellcommand, node);
 		if ( cmd->ID > newcmd->ID )
 			break;
@@ -318,10 +304,10 @@ static int shell_insert_cmd(cmd_root_t * root , struct shellcommand * newcmd)
 
 	
 /** 
-	* @brief shell_tab 输入 table 键处理
-	* @param input
+  * @brief 输入 table 键处理
+  * @param input
 	*
-	* @return NULL
+  * @return NULL
 */
 static void shell_tab(struct shell_input * shellin)
 {
@@ -342,8 +328,7 @@ static void shell_tab(struct shell_input * shellin)
 	index = ((uint32_t)(*str)<<26) | (strlen << 21) ;//查找首字母相同并且长度不小于 strlen 的点
 	end = (uint32_t)(*str + 1)<<26 ;                 //下一个字母开头的点
 	
-	for ( ; node ; node = node->next )//找到比 index 大的点，用此作为起始匹配点
-	{
+	for ( ; node ; node = node->next ) { //找到比 index 大的点，用此作为起始匹配点
 		shellcmd = container_of(node, struct shellcommand, node);
 		if ( shellcmd->ID > index )
 			break;
@@ -368,18 +353,17 @@ static void shell_tab(struct shell_input * shellin)
 	}
 
 	if (1 == match_cnt){  //如果只找到了一条命令包含当前输入的字符串，直接补全命令，并打印
-	
 		for(char * ptr = match[0]->name + strlen ; *ptr ;++ptr) //打印剩余的字符
 			shell_getchar(shellin,*ptr);
-	} else {  //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
+		shell_getchar(shellin,' ');
+	}else {  //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
 	
 		for(uint32_t i = 0;i < match_cnt; ++i) //把所有含有输入字符串的命令列表打印出来
 			printk("\r\n\t%s",match[i]->name); 
 		
 		printk("\r\n%s%s",shellin->sign,shellin->cmdline); //重新打印输入标志和已输入的字符串
 		
-		while(1) { //补全命令，把每条命令都包含的字符补全并打印
-		
+		for ( ; ; ) { //补全命令，把每条命令都包含的字符补全并打印
 			for (uint32_t i = 1 ; i < match_cnt ; ++i ) {
 				if (match[0]->name[strlen] != match[i]->name[strlen])
 					return  ; //字符不一样，返回
@@ -389,12 +373,11 @@ static void shell_tab(struct shell_input * shellin)
 	}
 }
 
-/********************************************************************
-	* @author   古么宁
-	* @brief    shell_list_cmd 
-	*           显示所有注册了的命令
-	* @param    arg       命令后所跟参数
-	* @return   NULL
+/**
+  * @author   古么宁
+  * @brief    显示所有注册了的命令
+  * @param    arg       命令后所跟参数
+  * @return   NULL
 */
 static void shell_list_cmd(void * arg)
 {
@@ -419,12 +402,12 @@ static void shell_list_cmd(void * arg)
 
 
 #if (COMMANDLINE_MAX_RECORD) //如果定义了历史纪录
+
 /**
-	* @author   古么宁
-	* @brief    shell_record 
-	*           记录此次运行的命令及参数
-	* @param    
-	* @return   返回记录地址
+  * @author   古么宁
+  * @brief    记录此次运行的命令及参数
+  * @param    
+  * @return   返回记录地址
 */
 static char * shell_record(struct shell_input * shellin)
 {	
@@ -441,11 +424,10 @@ static char * shell_record(struct shell_input * shellin)
 
 
 /**
-	* @author   古么宁
-	* @brief    shell_show_history 
-	*           按上下箭头键显示以往输入过的命令，此处只记录最近几次的命令
-	* @param    void
-	* @return   void
+  * @author   古么宁
+  * @brief    按上下箭头键显示以往输入过的命令，此处只记录最近几次的命令
+  * @param    void
+  * @return   void
 */
 static void shell_show_history(struct shell_input * shellin,uint8_t LastOrNext)
 {
@@ -475,11 +457,10 @@ static void shell_show_history(struct shell_input * shellin,uint8_t LastOrNext)
 #endif //#if (COMMANDLINE_MAX_RECORD) //如果定义了历史纪录
 
 /**
-	* @author   古么宁
-	* @brief    shell_backspace 
-	*           控制台输入 回退 键处理
-	* @param    void
-	* @return   void
+  * @author   古么宁
+  * @brief    控制台输入 回退 键处理
+  * @param    void
+  * @return   void
 */
 static void shell_backspace(struct shell_input * shellin)
 {
@@ -508,11 +489,10 @@ static void shell_backspace(struct shell_input * shellin)
 }
 
 /**
-	* @author   古么宁
-	* @brief    shell_getchar 
-	*           命令行记录输入一个字符
-	* @param    
-	* @return   
+  * @author   古么宁
+  * @brief    命令行记录输入一个字符
+  * @param    
+  * @return   
 */
 static void shell_getchar(struct shell_input * shellin , char ascii)
 {
@@ -523,7 +503,7 @@ static void shell_getchar(struct shell_input * shellin , char ascii)
 		shellin->cmdline[shellin->edit++] = ascii;
 		shellin->cmdline[++shellin->tail] = 0;
 		printl(&ascii,1);
-	} else {//其实 else 分支完全可以处理 tail == edit 的情况，但是 printbuf 压栈太久 
+	}else {//其实 else 分支完全可以处理 tail == edit 的情况，但是 printbuf 压栈太久 
 		char  printbuf[COMMANDLINE_MAX_LEN*2]={0};//中转内存
 		char *tail = &shellin->cmdline[shellin->tail++];
 		char *edit = &shellin->cmdline[shellin->edit++];
@@ -546,11 +526,10 @@ static void shell_getchar(struct shell_input * shellin , char ascii)
 
 
 /**
-	* @author   古么宁
-	* @brief    shell_parse
-	*           命令行解析输入
-	* @param
-	* @return
+  * @author   古么宁
+  * @brief    命令行解析输入
+  * @param
+  * @return
 */
 static void shell_parse(cmd_root_t * cmdroot , struct shell_input * shellin)
 {
@@ -584,11 +563,11 @@ static void shell_parse(cmd_root_t * cmdroot , struct shell_input * shellin)
 			cmd_fn_t func = (cmd_fn_t)(cmdmatch->fnaddr & (~FUNC_CONFIRM)) ;//提取函数指针
 			shellcfm_t * confirm = container_of(cmdmatch, struct shellconfirm, cmd);//提取确认信息
 			shell_confirm(shellin,confirm->prompt,func);//进入确认命令行
-		} else {//普通命令 
-			cmd_fn_t func = (cmd_fn_t)cmdmatch->fnaddr ;
+		}else {
+			cmd_fn_t func = (cmd_fn_t)cmdmatch->fnaddr ;//普通命令 
 			func(shellin->cmdline);
 		}
-	} else {
+	}else {
 		printk("\r\n\tno reply:%s\r\n",shellin->cmdline);
 	}
 	
@@ -599,9 +578,9 @@ PARSE_END:
 }
 
 /**
-	* @brief _shell_clean_screen 控制台清屏
-	* @param    arg       命令后所跟参数
-	* @return NULL
+  * @brief    控制台清屏
+  * @param    arg       命令后所跟参数
+  * @return NULL
 */
 static void shell_clean_screen(void * arg)
 {
@@ -612,23 +591,20 @@ static void shell_clean_screen(void * arg)
 
 
 /**
-	* @brief shell_debug_stream 获取 debug 信息
-	* @param    arg       命令后所跟参数
-	* @return void
+  * @brief  获取 debug 信息
+  * @param    arg       命令后所跟参数
+  * @return void
 */
 static void shell_debug_stream(void * arg)
 {
 	int option;
 	int argc = cmdline_param(arg,&option,1);
 	
-	if ((argc > 0) && (option == 0))  //关闭调试信息打印流，仅显示交互信息
-	{
+	if ((argc > 0) && (option == 0)) { //关闭调试信息打印流，仅显示交互信息 
 		static const char closemsg[] = "\r\n\tclose debug information stream\r\n\r\n";
 		current_puts((char*)closemsg,sizeof(closemsg) - 1);
 		default_puts = NULL;       //默认信息流输出为空，将不打印调试信息
-	}
-	else
-	{
+	}else {
 		static const char openmsg[]  = "\r\n\tget debug information\r\n\r\n";
 		current_puts((char*)openmsg,sizeof(openmsg) - 1);
 		default_puts = current_puts; //设置当前交互为信息流输出
@@ -636,13 +612,12 @@ static void shell_debug_stream(void * arg)
 }
 
 /**
-	* @author   古么宁
-	* @brief    _shell_register 
-	*           注册一个命令号和对应的命令函数 ，前缀为 '_' 表示不建议直接调用此函数
-	* @param    cmd_name    命令名
-	* @param    cmd_func        命令名对应的执行函数
-	* @param    newcmd      命令控制块对应的指针
-	* @return   void
+  * @author   古么宁
+  * @brief    注册一个命令号和对应的命令函数 ，前缀为 '_' 表示不建议直接调用此函数
+  * @param    cmd_name    命令名
+  * @param    cmd_func        命令名对应的执行函数
+  * @param    newcmd      命令控制块对应的指针
+  * @return   void
 */
 void _shell_register(struct shellcommand * newcmd,char * cmd_name, cmd_fn_t cmd_func,uint32_t comfirm)
 {
@@ -654,8 +629,7 @@ void _shell_register(struct shellcommand * newcmd,char * cmd_name, cmd_fn_t cmd_
 	uint32_t bcrc8 = 0;
 	uint32_t sum = 0;
 
-	for (clen = 0; *str ; ++clen,++str)
-	{
+	for (clen = 0; *str ; ++clen,++str) {
 		sum += *str;
 		fcrc8 = F_CRC8_Table[fcrc8^*str];
 		bcrc8 = B_CRC8_Table[bcrc8^*str];
@@ -679,13 +653,12 @@ void _shell_register(struct shellcommand * newcmd,char * cmd_name, cmd_fn_t cmd_
 }
 
 /**
-	* @author   古么宁
-	* @brief    cmdline_strtok    for getopt();
-	*     把 "a b c d" 格式化提取为 char*argv[] = {"a","b","c","d"};以供getopt()解析
-	* @param    str     命令字符串后面所跟参数缓冲区指针
-	* @param    argv    数据转换后缓存地址
-	* @param    maxread 最大读取数
-	* @return   argc    最终读取参数个数输出
+  * @author   古么宁
+  * @brief    把 "a b c d" 格式化提取为 char*argv[] = {"a","b","c","d"};以供getopt()解析
+  * @param    str     命令字符串后面所跟参数缓冲区指针
+  * @param    argv    数据转换后缓存地址
+  * @param    maxread 最大读取数
+  * @return   argc    最终读取参数个数输出
 */
 int cmdline_strtok(char * str ,char ** argv ,uint32_t maxread)
 {
@@ -693,8 +666,8 @@ int cmdline_strtok(char * str ,char ** argv ,uint32_t maxread)
 
 	for ( ; ' ' == *str ; ++str) ; //跳过空格
 	
-	for ( ; *str && argc < maxread; ++argc,++argv )//字符不为 ‘\0' 的时候
-	{
+	for ( ; *str && argc < maxread; ++argc,++argv ) { //字符不为 ‘\0' 的时候
+	
 		for (*argv = str ; ' ' != *str && *str ; ++str);//记录这个参数，然后跳过非空字符
 		
 		for ( ; ' ' == *str; *str++ = '\0');//每个参数加字符串结束符，跳过空格		
@@ -705,15 +678,14 @@ int cmdline_strtok(char * str ,char ** argv ,uint32_t maxread)
 
 
 /**
-	* @brief    cmdline_param
-	*           转换获取命令号后面的输入参数，字符串转为整数
-	* @param    str     命令字符串后面所跟参数缓冲区指针
-	* @param    argv    数据转换后缓存地址
-	* @param    maxread 最大读取数
-	* @return   数据个数
-		* @retval   >= 0         读取命令后面所跟参数个数
-		* @retval   PARAMETER_ERROR(-2)  命令后面所跟参数有误
-		* @retval   PARAMETER_HELP(-1)   命令后面跟了 ? 号
+  * @brief    转换获取命令号后面的输入参数，字符串转为整数
+  * @param    str     命令字符串后面所跟参数缓冲区指针
+  * @param    argv    数据转换后缓存地址
+  * @param    maxread 最大读取数
+  * @return   数据个数
+	  * @retval   >= 0         读取命令后面所跟参数个数
+	  * @retval   PARAMETER_ERROR(-2)  命令后面所跟参数有误
+	  * @retval   PARAMETER_HELP(-1)   命令后面跟了 ? 号
 */
 int cmdline_param(char * str,int * argv,uint32_t maxread)
 {
@@ -726,14 +698,12 @@ int cmdline_param(char * str,int * argv,uint32_t maxread)
 	if (*str == '?')
 		return PARAMETER_HELP;//如果命令后面的是问号，返回help
 
-	for (argc = 0; *str && argc < maxread; ++argc , ++argv)//字符不为 ‘\0' 的时候
-	{
+	for (argc = 0; *str && argc < maxread; ++argc , ++argv) { //字符不为 ‘\0' 的时候
+	
 		*argv = 0;
 		
-		if ('0' == str[0] && 'x' == str[1]) //"0x" 开头，十六进制转换
-		{
-			for ( str += 2; ; ++str ) 
-			{
+		if ('0' == str[0] && 'x' == str[1]) { //"0x" 开头，十六进制转换
+			for ( str += 2 ;  ; ++str )  {
 				if ( (value = *str - '0') < 10 ) // value 先赋值，后判断 
 					*argv = (*argv << 4)|value;
 				else
@@ -742,9 +712,7 @@ int cmdline_param(char * str,int * argv,uint32_t maxread)
 				else
 					break;
 			}
-		}
-		else  //循环把字符串转为数字，直到字符不为 0 - 9
-		{
+		}else  { //循环把字符串转为数字，直到字符不为 0 - 9
 			uint32_t minus = ('-' == *str);//正负数转换
 			if (minus)
 				++str;
@@ -766,12 +734,11 @@ int cmdline_param(char * str,int * argv,uint32_t maxread)
 }
 
 /**
-	* @author   古么宁
-	* @brief    welcome_gets
-	*           欢迎页
-	* @param    recv  硬件层所接收到的数据缓冲区地址
-	* @param    len     硬件层所接收到的数据长度
-	* @return   void
+  * @author   古么宁
+  * @brief    欢迎页
+  * @param    recv  硬件层所接收到的数据缓冲区地址
+  * @param    len     硬件层所接收到的数据长度
+  * @return   void
 */
 void welcome_gets(struct shell_input * shellin,char * recv,uint32_t len)
 {
@@ -795,26 +762,22 @@ void welcome_gets(struct shell_input * shellin,char * recv,uint32_t len)
 
 
 /**
-	* @author   古么宁
-	* @brief    shell_input 
-	*           硬件上接收到的数据到命令行的传输
-	* @param    recv  硬件层所接收到的数据缓冲区地址
-	* @param    len     硬件层所接收到的数据长度
-	* @return   void
+  * @author   古么宁
+  * @brief    硬件上接收到的数据到命令行的传输
+  * @param    recv  硬件层所接收到的数据缓冲区地址
+  * @param    len     硬件层所接收到的数据长度
+  * @return   void
 */
 void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 {
-	uint8_t state = 0 ;
-	//for ( ; len && *recv; --len,++recv)
-	for (char * end = recv + len ; recv < end ; ++recv)
-	{
-		if (0 == state)
-		{
+	uint32_t state = 0 ;
+
+	for (char * end = recv + len ; recv < end ; ++recv) {
+		if (0 == state) {
 			if (*recv > 0x1F && *recv < 0x7f)//普通字符,当前命令行输入;
 				shell_getchar(shellin,*recv);
 			else
-			switch (*recv) //判断字符是否为特殊字符
-			{
+			switch (*recv) {//判断字符是否为特殊字符
 				case KEYCODE_ENTER:
 					if (shellin->tail){
 						printk("\r\n");
@@ -824,37 +787,29 @@ void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 						printk("\r\n%s",shellin->sign);
 					}
 					break;
-
 				case KEYCODE_ESC :
 					state = 1;
 					break;
-
 				case KEYCODE_CTRL_C:
 					shellin->edit = 0;
 					shellin->tail = 0;
 					printk("^C\r\n%s",shellin->sign);
 					break;
-
 				case KEYCODE_BACKSPACE :
 				case 0x7f: //for putty
 					shell_backspace(shellin);
 					break;
-
 				case KEYCODE_TAB:
 					shell_tab(shellin);
 					break;
-
 				default: ;//当前命令行输入;
 			}
-		}
-		else //
+		}else //
 		if (1 == state){ //判断是否是箭头内容
 			state = (*recv == '[') ? 2 : 0 ;
-		}
-		else
-		{ // if (2 == state) //响应箭头内容
-			switch(*recv)
-			{
+		}else{
+		// if (2 == state) //响应箭头内容
+			switch(*recv){  
 				case 'A'://上箭头
 					shell_show_history(shellin,0);
 					break;
@@ -879,32 +834,25 @@ void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 }
 
 /**
-	* @brief    confirm_gets
-	*           命令行信息确认，如果输入 y/Y 则执行命令
-	* @param
-	* @return   void
+  * @brief    命令行信息确认，如果输入 y/Y 则执行命令
+  * @param
+  * @return   void
 */
 static void confirm_gets(struct shell_input * shellin ,char * buf , uint32_t len)
 {
 	char * option = &shellin->cmdline[COMMANDLINE_MAX_LEN-1];
 
-	if (0 == *option) //先输入 [Y/y/N/n] ，其他按键无效
-	{
-		if ('Y' == *buf || 'y' == *buf || 'N' == *buf || 'n' == *buf)
-		{
+	if (0 == *option) { //先输入 [Y/y/N/n] ，其他按键无效
+		if ('Y' == *buf || 'y' == *buf || 'N' == *buf || 'n' == *buf) {
 			*option = *buf;
 			printl(buf,1);
 		}
-	}
-	else
-	if (KEYCODE_BACKSPACE == *buf) //回退键
-	{
+	}else
+	if (KEYCODE_BACKSPACE == *buf) { //回退键
 		printl("\b \b",3);
 		*option = 0;
-	}
-	else
-	if ('\r' == *buf || '\n' == *buf) //按回车确定
-	{
+	}else
+	if ('\r' == *buf || '\n' == *buf) {//按回车确定
 		cmd_fn_t yestodo = (cmd_fn_t)shellin->apparg;
  		char opt = *option ; 
 		
@@ -922,12 +870,11 @@ static void confirm_gets(struct shell_input * shellin ,char * buf , uint32_t len
 }
 
 /**
-	* @brief    shell_confirm
-	*           命令行信息确认，如果输入 y/Y 则执行命令
-	* @param    shell  : 输入交互
-	* @param    info   : 选项信息
-	* @param    yestodo: 输入 y/Y 后所需执行的命令
-	* @return   void
+  * @brief    命令行信息确认，如果输入 y/Y 则执行命令
+  * @param    shell  : 输入交互
+  * @param    info   : 选项信息
+  * @param    yestodo: 输入 y/Y 后所需执行的命令
+  * @return   void
 */
 void shell_confirm(struct shell_input * shellin ,char * info ,cmd_fn_t yestodo)
 {
@@ -938,13 +885,12 @@ void shell_confirm(struct shell_input * shellin ,char * info ,cmd_fn_t yestodo)
 }
 
 /**
-	* @author   古么宁
-	* @brief    shell_input_init
-	*           初始化一个 shell 交互，默认输入为 cmdline_gets
-	* @param    shellin   : 需要初始化的 shell 交互 
-	* @param    shellputs : shell 对应输出，如从串口输出。
-	* @param    ...       : 对 gets 和 sign 重定义，如追加 MODIFY_SIGN,"shell>>"
-	* @return   NULL
+  * @author   古么宁
+  * @brief    初始化一个 shell 交互，默认输入为 cmdline_gets
+  * @param    shellin   : 需要初始化的 shell 交互 
+  * @param    shellputs : shell 对应输出，如从串口输出。
+  * @param    ...       : 对 gets 和 sign 重定义，如追加 MODIFY_SIGN,"shell>>"
+  * @return   NULL
 */
 void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...)
 {
@@ -954,8 +900,7 @@ void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...)
 	va_list ap;
 	va_start(ap, shellputs); //检测有无新定义 
 
-	for (uint32_t arg = va_arg(ap, uint32_t) ; MODIFY_MASK == (arg & (~0x0f)) ; arg = va_arg(ap, uint32_t) )
-	{
+	for (uint32_t arg = va_arg(ap, uint32_t) ; MODIFY_MASK == (arg & (~0x0f)) ; arg = va_arg(ap, uint32_t) ) {
 		if (MODIFY_SIGN == arg) //如果重定义当前交互的输入标志
 			shellsign = va_arg(ap, char*);
 		else
@@ -977,11 +922,10 @@ void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...)
 
 
 /**
-	* @author   古么宁
-	* @brief    shell_init 
-	*           shell 初始化,注册几条基本的命令。允许不初始化。
-	* @param    puts : printf,printk,printl 的默认输出，如从串口输出。
-	* @return   void
+  * @author   古么宁
+  * @brief    shell 初始化,注册几条基本的命令。允许不初始化。
+  * @param    puts : printf,printk,printl 的默认输出，如从串口输出。
+  * @return   void
 */
 void shell_init(char * defaultsign ,fmt_puts_t puts)
 {
