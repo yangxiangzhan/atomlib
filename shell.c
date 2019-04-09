@@ -22,7 +22,7 @@
 #include <stdint.h> //定义了很多数据类型
 #include <stdio.h>
 #include "shell.h"
-#include "kernel.h"
+#include "containerof.h"
 
 /* Private types ------------------------------------------------------------*/
 
@@ -175,7 +175,7 @@ static void shell_tab(struct shell_input * shellin)
 	cmd_entry_t  * node = shellcmdroot.avl_node;	
 	struct shellcommand * shellcmd ;
 	struct shellcommand * match[10];    //匹配到的命令行
-	uint32_t           match_cnt = 0;//匹配到的命令号个数
+	uint32_t match_cnt = 0;//匹配到的命令号个数
 	
 	for ( ; *str == ' ' ; ++str,--strlen) ; //有时候会输入空格，需要跳过
 	
@@ -356,8 +356,8 @@ static void shell_tab(struct shell_input * shellin)
 		for(char * ptr = match[0]->name + strlen ; *ptr ;++ptr) //打印剩余的字符
 			shell_getchar(shellin,*ptr);
 		shell_getchar(shellin,' ');
-	}else {  //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
-	
+	}
+	else {  //如果不止一条命令包含当前输入的字符串，打印含有相同字符的命令列表，并补全字符串输出直到命令区分点
 		for(uint32_t i = 0;i < match_cnt; ++i) //把所有含有输入字符串的命令列表打印出来
 			printk("\r\n\t%s",match[i]->name); 
 		
@@ -503,7 +503,8 @@ static void shell_getchar(struct shell_input * shellin , char ascii)
 		shellin->cmdline[shellin->edit++] = ascii;
 		shellin->cmdline[++shellin->tail] = 0;
 		printl(&ascii,1);
-	}else {//其实 else 分支完全可以处理 tail == edit 的情况，但是 printbuf 压栈太久 
+	}
+	else {//其实 else 分支完全可以处理 tail == edit 的情况，但是 printbuf 压栈太久 
 		char  printbuf[COMMANDLINE_MAX_LEN*2]={0};//中转内存
 		char *tail = &shellin->cmdline[shellin->tail++];
 		char *edit = &shellin->cmdline[shellin->edit++];
@@ -783,7 +784,8 @@ void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 						printk("\r\n");
 						shell_record(shellin);//记录当前输入的命令和命令参数
 						shell_parse(&shellcmdroot ,shellin);
-					}else{
+					}
+					else{
 						printk("\r\n%s",shellin->sign);
 					}
 					break;
@@ -804,11 +806,12 @@ void cmdline_gets(struct shell_input * shellin,char * recv,uint32_t len)
 					break;
 				default: ;//当前命令行输入;
 			}
-		}else //
+		}
+		else //
 		if (1 == state){ //判断是否是箭头内容
 			state = (*recv == '[') ? 2 : 0 ;
-		}else{
-		// if (2 == state) //响应箭头内容
+		}
+		else{// if (2 == state) //响应箭头内容
 			switch(*recv){  
 				case 'A'://上箭头
 					shell_show_history(shellin,0);
@@ -847,11 +850,13 @@ static void confirm_gets(struct shell_input * shellin ,char * buf , uint32_t len
 			*option = *buf;
 			printl(buf,1);
 		}
-	}else
+	}
+	else
 	if (KEYCODE_BACKSPACE == *buf) { //回退键
 		printl("\b \b",3);
 		*option = 0;
-	}else
+	}
+	else
 	if ('\r' == *buf || '\n' == *buf) {//按回车确定
 		cmd_fn_t yestodo = (cmd_fn_t)shellin->apparg;
  		char opt = *option ; 

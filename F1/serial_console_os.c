@@ -23,7 +23,7 @@
 #include "serial_console.h"
 #include "iap_hal.h"
 
-#include "kernel.h"
+#include "containerof.h"
 #include "shell.h"
 #include "vim.h"
 //--------------------相关宏定义及结构体定乿-------------------

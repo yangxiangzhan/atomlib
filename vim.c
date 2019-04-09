@@ -77,24 +77,21 @@ static const char editing_title[] = "Editing...press ESC to quit";
 */
 static void cursor_up(struct vim_edit_buf * vimedit)
 {				
-	if (vimedit->rows > 1)  //如果编辑所在位置为第一行，则不进行响应
-	{
+	if (vimedit->rows > 1) { //如果编辑所在位置为第一行，则不进行响应
+	
 		char   * ptr = vimedit->edit; //当前编辑位置
 		uint32_t cnt;
 		
-		if ((--vimedit->rows) > 1)
-		{
+		if ((--vimedit->rows) > 1) {
 			for ( ; *  ptr   != '\n' ; --ptr ); //回到上一行结尾处的'\n'
 			for ( ; *(ptr-1) != '\n' ; --ptr ); //上一行开头
 		}
-		else //如果现在是第二行，则回到第一行所在位置
-		{
+		else {//如果现在是第二行，则回到第一行所在位置
 			ptr = vimedit->editbuf;
 		}
 
-		for (cnt = 1;cnt < vimedit->cols ;++cnt)//计算当前行的列位置
-		{
-			if (*ptr == '\r' || *ptr == '\n')   //当前行比下一行短，则没有办法回到下一行所在的列位置
+		for (cnt = 1;cnt < vimedit->cols ;++cnt) { //计算当前行的列位置
+			if (*ptr == '\r' || *ptr == '\n')      //当前行比下一行短，则没有办法回到下一行所在的列位置
 				break;
 			else
 				++ptr;
@@ -115,15 +112,14 @@ static void cursor_up(struct vim_edit_buf * vimedit)
 */
 static void cursor_down(struct vim_edit_buf * vimedit)
 {
-	if (vimedit->rows < vimedit->rowmax) //如果当前行不是文本最后一行，响应下箭头
-	{	
+	if (vimedit->rows < vimedit->rowmax){	 //如果当前行不是文本最后一行，响应下箭头
+	
 		char   * ptr = vimedit->edit;
 		uint32_t cnt;
 		
 		while( *ptr++ != '\n'  );//下一行开头处
 		
-		for (cnt = 1; cnt < vimedit->cols ; ++cnt)
-		{
+		for (cnt = 1; cnt < vimedit->cols ; ++cnt) {
 			if ( *ptr == '\r' || *ptr == '\0' || *ptr == '\n')//比上一行短时，无法移动光标至原来的列位置
 				break;
 			else
@@ -181,8 +177,7 @@ static void cursor_left(struct vim_edit_buf * vimedit)
 */
 static void cursor_move(struct vim_edit_buf * vimedit , char arrow)
 {
-	switch( arrow )
-	{
+	switch( arrow ) {
 		case 'A':cursor_up(vimedit);break; //上箭头
 
 		case 'B':cursor_down(vimedit);break;//下箭头
@@ -209,8 +204,8 @@ static void vim_backspace(struct vim_edit_buf * vim)
 	char * tail = &vim->editbuf[vim->tail];//原编辑区结尾; 
 	
 	//if (*(vim->edit-1) != '\n') //如果当前编辑位置不是行开头
-	if (vim->cols != 1)//如果当前编辑位置不是行开头
-	{
+	if (vim->cols != 1) {  //如果当前编辑位置不是行开头
+	
 		char * copy = vim->edit;
 		
 		//找到当前行结束位置，并复制到打印内存中
@@ -231,8 +226,8 @@ static void vim_backspace(struct vim_edit_buf * vim)
 		vim->editbuf[vim->tail] = 0;//末端添加字符串结束符
 		printl(vim->printbuf,print - vim->printbuf);
 	}
-	else //当前编辑位置是行开头，回退一行
-	{
+	else {//当前编辑位置是行开头，回退一行
+	
 		char * prevlines ; //当前编辑点上一行的开头
 		char * prevlinee ; //当前编辑点上一行的结尾
 		
@@ -356,19 +351,16 @@ static void vim_edit_getchar(struct vim_edit_buf * vim,char data)
 {
 
 	if (KEYCODE_CTRL_C == data || KEYCODE_TAB == data ||
-		KEYCODE_END == data || KEYCODE_HOME == data )//一些特别的字符过滤
-	{
+		KEYCODE_END == data || KEYCODE_HOME == data ) { //一些特别的字符过滤
 		return ;
 	}
 
-	if (KEYCODE_BACKSPACE == data || 0x7f == data) //0x7f ,for putty
-	{
+	if (KEYCODE_BACKSPACE == data || 0x7f == data) {//0x7f ,for putty
 		if (vim->editbuf != vim->edit)
 			vim_backspace(vim);
 	}
 	else
-	if (vim->tail < VIM_MAX_EDIT/2) //插入字符
-	{
+	if (vim->tail < VIM_MAX_EDIT/2) {//插入字符
 		if ('\r' == data || '\n' == data ) //插入换行符
 			vim_insert_newline(vim);
 		else
@@ -386,61 +378,51 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 {
 	struct vim_edit_buf * vimedit = (struct vim_edit_buf *)shell->apparg ;
 
-	switch(vimedit->state)//状态机
-	{
-		case VIM_READ_ONLY: //文本只读过程
-			if (*buf == 'i')//键盘输入 'i'
-			{
+	switch(vimedit->state) {   //状态机
+		case VIM_READ_ONLY:    //文本只读过程
+			if (*buf == 'i') { //键盘输入 'i'
 				vimedit->state = VIM_EDITING;//进入编辑模式
 				printk("\033[%d;%dH\033[2K\r\t",1,1);//光标回到第一行并清空第一行
 				printl((char*)editing_title,sizeof(editing_title)-1); //打印提示信息
 				printk("\033[%d;%dH",vimedit->rows + 1,vimedit->cols);//恢复光标位置
 			}
 			else
-			if (*buf == ':')
-			{
+			if (*buf == ':') {
 				vimedit->option = 0;
 				vimedit->state = VIM_COMMAND;
 				printk("\033[%d;%dH\033[2K\r(w/q):",1,1);//光标回到第一行并清空第一行
 			}
 			else
-			if ( buf[0] == '\033' && len > 1 && buf[1] == '[' )
-			{
+			if ( buf[0] == '\033' && len > 1 && buf[1] == '[' ) {
 				cursor_move(vimedit,buf[2]);
 			}
 			break;
 			
 		case VIM_EDITING: //文本编辑过程
-			if (*buf == '\033')
-			{
-				if ( len > 1 && buf[1] == '[' )
-				{
+			if (*buf == '\033') {
+				if ( len > 1 && buf[1] == '[' ) {
 					cursor_move(vimedit,buf[2]);//如果是箭头输入
 				}
-				else
-				{
+				else {
 					vimedit->state = VIM_READ_ONLY; //如果是单按键 Esc ，回到只读模式
 					printk("\033[%d;%dH\033[2K\r",1,1);//光标回到第一行并清空第一行
 					printk("\t%s",waiting_title);      //打印提示信息
 					printk("\033[%d;%dH",vimedit->rows + 1,vimedit->cols);//恢复光标位置
 				}
 			}
-			else
-			{
+			else {
 				vim_edit_getchar(vimedit ,* buf);
 			}
 			break;
 			
 		case VIM_COMMAND: //等待命令
-			if (*buf == 'q' ||*buf == 'w')
-			{
+			if (*buf == 'q' ||*buf == 'w') {
 				vimedit->state  = VIM_QIUT;
 				vimedit->option = *buf;
 				printl(buf,1);
 			}
 			else
-			if (*buf == '\033' )//&& len == 1)
-			{
+			if (*buf == '\033' ) { //&& len == 1) 
 				vimedit->state = VIM_READ_ONLY;  //进入只读模式
 				vimedit->edit = vimedit->editbuf;
 				vimedit->cols = 1;
@@ -450,14 +432,12 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 			break;
 			
 		case VIM_QIUT:   //等待退出
-			if (*buf == KEYCODE_BACKSPACE || *buf == 0x7f) //回退键
-			{
+			if (*buf == KEYCODE_BACKSPACE || *buf == 0x7f) { //回退键
 				vimedit->state  = VIM_COMMAND;
 				printl("\b \b",3);
 			}
 			else
-			if (*buf == '\r' || *buf == '\n') //回车确认
-			{
+			if (*buf == '\r' || *buf == '\n') { //回车确认
 				if ('w' == vimedit->option)//输入保存，则输出此文件
 					vimedit->fputs(vimedit->fpath,vimedit->editbuf,vimedit->tail);
 				VIM_FREE(vimedit);
@@ -466,8 +446,7 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 				printk("\033[2J\033[%d;%dH%s",1,1,shell->sign);
 			}
 			else
-			if (*buf == '\033' )//&& len == 1)
-			{
+			if (*buf == '\033' ) { //&& len == 1)
 				vimedit->state = VIM_READ_ONLY;  //进入只读模式
 				vimedit->edit = vimedit->editbuf;
 				vimedit->cols = 1;
@@ -496,8 +475,7 @@ void shell_into_edit(struct shell_input * shell,vim_fgets_t fgets ,vim_fputs_t f
 	struct vim_edit_buf * edit;
 	
 	shell->apparg = VIM_MALLOC(sizeof(struct vim_edit_buf));
-	if ( NULL ==  shell->apparg )
-	{
+	if ( NULL ==  shell->apparg ) {
 		printk("not enough memery\r\n");
 		return ;
 	}
@@ -508,8 +486,7 @@ void shell_into_edit(struct shell_input * shell,vim_fgets_t fgets ,vim_fputs_t f
 	edit->fpath = argv[1]; //路径名称为第二个参数
 
 	//尝试打开，如果失败则返回
-	if (VIM_FILE_OK !=  fgets(edit->fpath,&edit->editbuf[0],&edit->tail))
-	{
+	if (VIM_FILE_OK !=  fgets(edit->fpath,&edit->editbuf[0],&edit->tail)) {
 		VIM_FREE(shell->apparg);
 		return ;
 	}
@@ -528,8 +505,7 @@ void shell_into_edit(struct shell_input * shell,vim_fgets_t fgets ,vim_fputs_t f
 	edit->rowmax = 1;
 
 	//扫描文件共有几行
-	for (char * editbuf = edit->editbuf ; *editbuf ; ++editbuf)
-	{
+	for (char * editbuf = edit->editbuf ; *editbuf ; ++editbuf) {
 		if (*editbuf == '\n')
 			++edit->rowmax;
 	}

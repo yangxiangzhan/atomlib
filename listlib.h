@@ -2,7 +2,7 @@
 #ifndef _LIST_HEAD_H
 #define _LIST_HEAD_H
 
-#include "kernel.h"
+#include "containerof.h"
 
 
 // 双向链表节点
