@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
   * @file           ustdio.c
-  * @author         ¹ÅÃ´Äş
-  * @brief          ·Ç±ê×¼»¯´òÓ¡Êä³ö
+  * @author         å¤ä¹ˆå®
+  * @brief          éæ ‡å‡†åŒ–æ‰“å°è¾“å‡º
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -55,10 +55,10 @@ char * default_color = (char *)none;
 
 
 /**
-	* @author   ¹ÅÃ´Äş
-	* @brief    ÖØ¶¨Òå printf º¯Êı¡£±¾ÉíÀ´Ëµ printf ·½·¨ÊÇ±È½ÏÂıµÄ£¬
-	*           ÒòÎª printf Òª×ö¸ü¶àµÄ¸ñÊ½ÅĞ¶Ï£¬Êä³öµÄ¸ñÊ½¸ü¶àÒ»Ğ©¡£
-	*           ËùÒÔÎªÁËĞ§ÂÊ£¬ÔÚºóÃæĞ´ÁË printk º¯Êı¡£
+	* @author   å¤ä¹ˆå®
+	* @brief    é‡å®šä¹‰ printf å‡½æ•°ã€‚æœ¬èº«æ¥è¯´ printf æ–¹æ³•æ˜¯æ¯”è¾ƒæ…¢çš„ï¼Œ
+	*           å› ä¸º printf è¦åšæ›´å¤šçš„æ ¼å¼åˆ¤æ–­ï¼Œè¾“å‡ºçš„æ ¼å¼æ›´å¤šä¸€äº›ã€‚
+	*           æ‰€ä»¥ä¸ºäº†æ•ˆç‡ï¼Œåœ¨åé¢å†™äº† printk å‡½æ•°ã€‚
 	* @return   NULL
 */
 #ifdef __GNUC__ //for TrueStudio 
@@ -73,7 +73,7 @@ PUTCHAR_PROTOTYPE
 	return ch;
 }
 */
-//C/C++ build->Settings->Tool Settings->C Linker->Miscellaneous->Other options Ñ¡Ïî¿ÕÖĞÌîĞ´£º-u_printf_float
+//C/C++ build->Settings->Tool Settings->C Linker->Miscellaneous->Other options é€‰é¡¹ç©ºä¸­å¡«å†™ï¼š-u_printf_float
 
 int _write(int file, char *ptr, int len)
 {
@@ -87,20 +87,20 @@ int _write(int file, char *ptr, int len)
 
 
 #pragma import(__use_no_semihosting)
-//±ê×¼¿âĞèÒªµÄÖ§³Öº¯Êı                 
+//æ ‡å‡†åº“éœ€è¦çš„æ”¯æŒå‡½æ•°                 
 struct __FILE 
 { 
 	int handle; 
 }; 
 
 FILE __stdout;
-//¶¨Òå_sys_exit()ÒÔ±ÜÃâÊ¹ÓÃ°ëÖ÷»úÄ£Ê½    
+//å®šä¹‰_sys_exit()ä»¥é¿å…ä½¿ç”¨åŠä¸»æœºæ¨¡å¼    
 void _sys_exit(int x) 
 { 
 	x = x; 
 }
 
-//ÖØ¶¨Òåfputcº¯Êı 
+//é‡å®šä¹‰fputcå‡½æ•° 
 int fputc(int ch, FILE *f)
 {
 	char  cChar = (char)ch;
@@ -116,12 +116,12 @@ int fputc(int ch, FILE *f)
 
 #if 1
 /**
-	* @author   ¹ÅÃ´Äş
+	* @author   å¤ä¹ˆå®
 	* @brief    i_itoa 
-	*           ÕûĞÍ×ªÊ®½øÖÆ×Ö·û´®
-	* @param    strbuf   ×ª×Ö·û´®ËùÔÚÄÚ´æ
-	* @param    value  Öµ
-	* @return   ×ª»»ËùµÃ×Ö·û´®³¤¶È
+	*           æ•´å‹è½¬åè¿›åˆ¶å­—ç¬¦ä¸²
+	* @param    strbuf   è½¬å­—ç¬¦ä¸²æ‰€åœ¨å†…å­˜
+	* @param    value  å€¼
+	* @return   è½¬æ¢æ‰€å¾—å­—ç¬¦ä¸²é•¿åº¦
 */	
 int i_itoa(char * strbuf,int value)		
 {
@@ -151,12 +151,12 @@ int i_itoa(char * strbuf,int value)
 #else
 
 /**
-	* @author   ¹ÅÃ´Äş
+	* @author   å¤ä¹ˆå®
 	* @brief    i_itoa 
-	*           ÕûĞÍ×ªÊ®½øÖÆ×Ö·û´®
-	* @param    strbuf   ×ª×Ö·û´®ËùÔÚÄÚ´æ
-	* @param    value  Öµ
-	* @return   ×ª»»ËùµÃ×Ö·û´®³¤¶È
+	*           æ•´å‹è½¬åè¿›åˆ¶å­—ç¬¦ä¸²
+	* @param    strbuf   è½¬å­—ç¬¦ä¸²æ‰€åœ¨å†…å­˜
+	* @param    value  å€¼
+	* @return   è½¬æ¢æ‰€å¾—å­—ç¬¦ä¸²é•¿åº¦
 */	
 int i_itoa(char * out,int value)		
 {
@@ -184,12 +184,12 @@ int i_itoa(char * out,int value)
 
 
 /**
-	* @author   ¹ÅÃ´Äş
+	* @author   å¤ä¹ˆå®
 	* @brief    i_ftoa 
-	*           ¸¡µãĞÍ×ª×Ö·û´®£¬±£Áô4Î»Ğ¡Êı
-	* @param    strbuf   ×ª×Ö·û´®ËùÔÚÄÚ´æ
-	* @param    value  Öµ
-	* @return   ×Ö·û´®³¤¶È
+	*           æµ®ç‚¹å‹è½¬å­—ç¬¦ä¸²ï¼Œä¿ç•™4ä½å°æ•°
+	* @param    strbuf   è½¬å­—ç¬¦ä¸²æ‰€åœ¨å†…å­˜
+	* @param    value  å€¼
+	* @return   å­—ç¬¦ä¸²é•¿åº¦
 */
 int i_ftoa(char * strbuf,float value)		
 {
@@ -228,12 +228,12 @@ int i_ftoa(char * strbuf,float value)
 
 
 /**
-	* @author   ¹ÅÃ´Äş
+	* @author   å¤ä¹ˆå®
 	* @brief    i_itoa 
-	*           ÕûĞÍ×ªÊ®Áù½øÖÆ×Ö·û´®
-	* @param    strbuf   ×ª×Ö·û´®ËùÔÚÄÚ´æ
-	* @param    value  Öµ
-	* @return   ×ª»»ËùµÃ×Ö·û´®³¤¶È
+	*           æ•´å‹è½¬åå…­è¿›åˆ¶å­—ç¬¦ä¸²
+	* @param    strbuf   è½¬å­—ç¬¦ä¸²æ‰€åœ¨å†…å­˜
+	* @param    value  å€¼
+	* @return   è½¬æ¢æ‰€å¾—å­—ç¬¦ä¸²é•¿åº¦
 */	
 int i_xtoa(char * strbuf,uint32_t value)		
 {
@@ -259,12 +259,12 @@ int i_xtoa(char * strbuf,uint32_t value)
 
 
 /**
-	* @author   ¹ÅÃ´Äş
+	* @author   å¤ä¹ˆå®
 	* @brief    printk 
-	*           ¸ñÊ½»¯Êä³ö£¬ÀàËÆÓÚ sprintf ºÍ printf 
-	*           ÓÃ±ê×¼¿âµÄ sprintf ºÍ printf µÄ·½·¨Ì«ÂıÁË£¬ËùÒÔ×Ô¼ºĞ´ÁËÒ»¸ö£¬ÖØµãÒª¿ì
-	* @param    fmt     Òª¸ñÊ½»¯µÄĞÅÏ¢×Ö·û´®Ö¸Õë
-	* @param    ...     ²»¶¨²Î
+	*           æ ¼å¼åŒ–è¾“å‡ºï¼Œç±»ä¼¼äº sprintf å’Œ printf 
+	*           ç”¨æ ‡å‡†åº“çš„ sprintf å’Œ printf çš„æ–¹æ³•å¤ªæ…¢äº†ï¼Œæ‰€ä»¥è‡ªå·±å†™äº†ä¸€ä¸ªï¼Œé‡ç‚¹è¦å¿«
+	* @param    fmt     è¦æ ¼å¼åŒ–çš„ä¿¡æ¯å­—ç¬¦ä¸²æŒ‡é’ˆ
+	* @param    ...     ä¸å®šå‚
 	* @return   void
 */
 void printk(char* fmt, ...)
@@ -280,27 +280,27 @@ void printk(char* fmt, ...)
 
 	while ( *buf_tail )
 	{
-		if ('%' == *buf_tail) //Óöµ½¸ñÊ½»¯±êÖ¾,ÎªÁËĞ§ÂÊ½öÖ§³Ö %d ,%f ,%s %x ,%c 
+		if ('%' == *buf_tail) //é‡åˆ°æ ¼å¼åŒ–æ ‡å¿—,ä¸ºäº†æ•ˆç‡ä»…æ”¯æŒ %d ,%f ,%s %x ,%c 
 		{
-			char  buf_malloc[64] = { 0 };//°ÑÊı×Ö×ªÎª×Ö·û´®µÄ»º³åÇø
-			char *buf = buf_malloc;  //°ÑÊı×Ö×ªÎª×Ö·û´®µÄ»º³åÇø
-			int   len = 0;   //×îÖÕ×ª»»³¤¶È
+			char  buf_malloc[64] = { 0 };//æŠŠæ•°å­—è½¬ä¸ºå­—ç¬¦ä¸²çš„ç¼“å†²åŒº
+			char *buf = buf_malloc;  //æŠŠæ•°å­—è½¬ä¸ºå­—ç¬¦ä¸²çš„ç¼“å†²åŒº
+			int   len = 0;   //æœ€ç»ˆè½¬æ¢é•¿åº¦
 			
-			if (buf_tail != buf_head)    //ÏÈ°Ñ % Ç°ÃæµÄ²¿·ÖÊä³ö
+			if (buf_tail != buf_head)    //å…ˆæŠŠ % å‰é¢çš„éƒ¨åˆ†è¾“å‡º
 				current_puts(buf_head,buf_tail - buf_head);
 	
 			buf_head = buf_tail++;
-			switch (*buf_tail++) // ¾­¹ıÁ½´Î ++, buf_tail ÒÑÔ½¹ı %#
+			switch (*buf_tail++) // ç»è¿‡ä¸¤æ¬¡ ++, buf_tail å·²è¶Šè¿‡ %#
 			{
-				case 'd': //Êä³öÕûÊıµÄÓÃ·¨×î¶à£¬ËùÒÔ°Ñ %d ·ÅµÚÒ»Î»
+				case 'd': //è¾“å‡ºæ•´æ•°çš„ç”¨æ³•æœ€å¤šï¼Œæ‰€ä»¥æŠŠ %d æ”¾ç¬¬ä¸€ä½
 					len = i_itoa(buf,va_arg(ap, int));
 					break;
 
-				case 'x': //Êä³öÊ®Áù½øÖÆÕûÊı
+				case 'x': //è¾“å‡ºåå…­è¿›åˆ¶æ•´æ•°
 					len = i_xtoa(buf,va_arg(ap, int));
 					break;
 				
-				case 's': //Êä³ö×Ö·û´®
+				case 's': //è¾“å‡ºå­—ç¬¦ä¸²
 					buf = va_arg(ap, char*);
 					len = strlen(buf);
 					break;
@@ -324,7 +324,7 @@ void printk(char* fmt, ...)
 		}
 		else  //if ('%' != *buf_tail)
 		{
-			++buf_tail;//ÆÕÍ¨×Ö·û
+			++buf_tail;//æ™®é€šå­—ç¬¦
 		}
 	}
 
@@ -338,12 +338,12 @@ print_end:
 
 
 /**
-	* @author   ¹ÅÃ´Äş
+	* @author   å¤ä¹ˆå®
 	* @brief    sprintk
-	*           ¸ñÊ½»¯Êä³ö£¬ÀàËÆÓÚ sprintf ºÍ printf
-	*           ÓÃ±ê×¼¿âµÄ sprintf ºÍ printf µÄ·½·¨Ì«ÂıÁË£¬ËùÒÔ×Ô¼ºĞ´ÁËÒ»¸ö£¬ÖØµãÒª¿ì
-	* @param    fmt     Òª¸ñÊ½»¯µÄĞÅÏ¢×Ö·û´®Ö¸Õë
-	* @param    ...     ²»¶¨²Î
+	*           æ ¼å¼åŒ–è¾“å‡ºï¼Œç±»ä¼¼äº sprintf å’Œ printf
+	*           ç”¨æ ‡å‡†åº“çš„ sprintf å’Œ printf çš„æ–¹æ³•å¤ªæ…¢äº†ï¼Œæ‰€ä»¥è‡ªå·±å†™äº†ä¸€ä¸ªï¼Œé‡ç‚¹è¦å¿«
+	* @param    fmt     è¦æ ¼å¼åŒ–çš„ä¿¡æ¯å­—ç¬¦ä¸²æŒ‡é’ˆ
+	* @param    ...     ä¸å®šå‚
 	* @return   void
 */
 int sprintk(char * buffer ,const char * fmt , ...)
@@ -356,23 +356,23 @@ int sprintk(char * buffer ,const char * fmt , ...)
 
 	while ( *copy )
 	{
-		if ('%' == *copy) //Óöµ½¸ñÊ½»¯±êÖ¾,ÎªÁËĞ§ÂÊ½öÖ§³Ö %d ,%f ,%s %x ,%c 
+		if ('%' == *copy) //é‡åˆ°æ ¼å¼åŒ–æ ‡å¿—,ä¸ºäº†æ•ˆç‡ä»…æ”¯æŒ %d ,%f ,%s %x ,%c 
 		{
-			char  buf_malloc[32] ;//°ÑÊı×Ö×ªÎª×Ö·û´®µÄ»º³åÇø
-			char *buf = buf_malloc;  //°ÑÊı×Ö×ªÎª×Ö·û´®µÄ»º³åÇø
-			int   len = 0;   //×îÖÕ×ª»»³¤¶È
+			char  buf_malloc[32] ;//æŠŠæ•°å­—è½¬ä¸ºå­—ç¬¦ä¸²çš„ç¼“å†²åŒº
+			char *buf = buf_malloc;  //æŠŠæ•°å­—è½¬ä¸ºå­—ç¬¦ä¸²çš„ç¼“å†²åŒº
+			int   len = 0;   //æœ€ç»ˆè½¬æ¢é•¿åº¦
 	
 			switch (copy[1])
 			{
-				case 'd': //Êä³öÕûÊıµÄÓÃ·¨×î¶à£¬ËùÒÔ°Ñ %d ·ÅµÚÒ»Î»
+				case 'd': //è¾“å‡ºæ•´æ•°çš„ç”¨æ³•æœ€å¤šï¼Œæ‰€ä»¥æŠŠ %d æ”¾ç¬¬ä¸€ä½
 					len = i_itoa(buf,va_arg(ap, int));
 					break;
 
-				case 'x': //Êä³öÊ®Áù½øÖÆÕûÊı
+				case 'x': //è¾“å‡ºåå…­è¿›åˆ¶æ•´æ•°
 					len = i_xtoa(buf,va_arg(ap, int));
 					break;
 				
-				case 's': //Êä³ö×Ö·û´®
+				case 's': //è¾“å‡ºå­—ç¬¦ä¸²
 					buf = va_arg(ap, char*);
 					len = strlen(buf);
 					break;
@@ -389,7 +389,7 @@ int sprintk(char * buffer ,const char * fmt , ...)
 					*buffer++  = '%';
 					goto sprint_end;
 
-				default://ÆÕÍ¨×Ö·û
+				default://æ™®é€šå­—ç¬¦
 					*buffer++ = *copy++;
 					continue; 
 			}
@@ -398,7 +398,7 @@ int sprintk(char * buffer ,const char * fmt , ...)
 		}
 		else  //if ('%' != *buf_tail)
 		{
-			*buffer++ = *copy++;//ÆÕÍ¨×Ö·û
+			*buffer++ = *copy++;//æ™®é€šå­—ç¬¦
 		}
 	}
 

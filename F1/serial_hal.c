@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file           serial_hal.c
   * @author         goodmorning
-  * @brief          ´®¿Ú¿ØÖÆÌ¨µ×²ãÓ²¼şÊµÏÖ¡£
+  * @brief          ä¸²å£æ§åˆ¶å°åº•å±‚ç¡¬ä»¶å®ç°ã€‚
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -21,36 +21,36 @@
 #include "shell.h"
 
 
-//--------------------- [Ïà¹ØÅäÖÃ] --------------------------
-// Èç¹ûÒª¶ÔÓ²¼ş½øĞĞÒÆÖ²ĞŞ¸Ä£¬ĞŞ¸ÄÏÂÁĞºê£¬²¢ĞŞ¸Ä usart_gpio_init Òı½Å³õÊ¼»¯³ÌĞò
+//--------------------- [ç›¸å…³é…ç½®] --------------------------
+// å¦‚æœè¦å¯¹ç¡¬ä»¶è¿›è¡Œç§»æ¤ä¿®æ”¹ï¼Œä¿®æ”¹ä¸‹åˆ—å®ï¼Œå¹¶ä¿®æ”¹ usart_gpio_init å¼•è„šåˆå§‹åŒ–ç¨‹åº
 
-//#include "cmsis_os.h"//ÓÃÁËfreertos ´ò¿ª ,ÒªĞŞ¸Ä¶ÔÓ¦ĞÅºÅÁ¿µÄÃû×Ö
+//#include "cmsis_os.h"//ç”¨äº†freertos æ‰“å¼€ ,è¦ä¿®æ”¹å¯¹åº”ä¿¡å·é‡çš„åå­—
 #ifdef _CMSIS_OS_H
 	extern  osSemaphoreId osSerialRxSemHandle;
 	#define RXPKT_SAMPH   osSerialRxSemHandle
 #endif
 
-#define USART_BAUDRATE          115200   //²¨ÌØÂÊ
-#define USART_DMA_CLOCK_INIT()  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1)//¸ú DMAx ¶ÔÓ¦
+#define USART_BAUDRATE          115200   //æ³¢ç‰¹ç‡
+#define USART_DMA_CLOCK_INIT()  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1)//è·Ÿ DMAx å¯¹åº”
 
-#define xUSART                  1  //ÒıÓÃ´®¿ÚºÅ
+#define xUSART                  1  //å¼•ç”¨ä¸²å£å·
 
-#if   (xUSART == 1) //´®¿Ú1¶ÔÓ¦DMA
-#	define xDMA                 1  //¶ÔÓ¦DMA £¬Îª 0 Ê±²»ÆôÓÃ dma
-#	define xDMATxCH             4  //·¢ËÍ¶ÔÓ¦ DMA Í¨µÀºÅ
-#	define xDMARxCH             5  //½ÓÊÕ¶ÔÓ¦ DMA Í¨µÀºÅ
-#elif (xUSART == 2) //´®¿Ú2¶ÔÓ¦DMA
-#	define xDMA                 1  //¶ÔÓ¦DMA £¬Îª 0 Ê±²»ÆôÓÃ dma
-#	define xDMATxCH             7  //·¢ËÍ¶ÔÓ¦ DMA Í¨µÀºÅ
-#	define xDMARxCH             6  //½ÓÊÕ¶ÔÓ¦ DMA Í¨µÀºÅ
-#elif (xUSART == 3) //´®¿Ú3¶ÔÓ¦DMA
+#if   (xUSART == 1) //ä¸²å£1å¯¹åº”DMA
+#	define xDMA                 1  //å¯¹åº”DMA ï¼Œä¸º 0 æ—¶ä¸å¯ç”¨ dma
+#	define xDMATxCH             4  //å‘é€å¯¹åº” DMA é€šé“å·
+#	define xDMARxCH             5  //æ¥æ”¶å¯¹åº” DMA é€šé“å·
+#elif (xUSART == 2) //ä¸²å£2å¯¹åº”DMA
+#	define xDMA                 1  //å¯¹åº”DMA ï¼Œä¸º 0 æ—¶ä¸å¯ç”¨ dma
+#	define xDMATxCH             7  //å‘é€å¯¹åº” DMA é€šé“å·
+#	define xDMARxCH             6  //æ¥æ”¶å¯¹åº” DMA é€šé“å·
+#elif (xUSART == 3) //ä¸²å£3å¯¹åº”DMA
 //#	define     RemapPartial_USART
-#	define xDMA                 1  //¶ÔÓ¦DMA £¬Îª 0 Ê±²»ÆôÓÃ dma
-#	define xDMATxCH             2  //·¢ËÍ¶ÔÓ¦ DMA Í¨µÀºÅ
-#	define xDMARxCH             3  //½ÓÊÕ¶ÔÓ¦ DMA Í¨µÀºÅ
+#	define xDMA                 1  //å¯¹åº”DMA ï¼Œä¸º 0 æ—¶ä¸å¯ç”¨ dma
+#	define xDMATxCH             2  //å‘é€å¯¹åº” DMA é€šé“å·
+#	define xDMARxCH             3  //æ¥æ”¶å¯¹åº” DMA é€šé“å·
 #endif
 
-//---------------------HAL²ãºêÌæ»»--------------------------
+//---------------------HALå±‚å®æ›¿æ¢--------------------------
 #define USART_X(x)	            USART##x
 #define USART_x(x)	            USART_X(x)
 	 
@@ -81,20 +81,20 @@
 //----------------------------------------------------------------
 
 #define DMA0                    ((DMA_TypeDef *)0)
-#define DMAx                    DMA_x(xDMA)     //´®¿ÚËùÔÚ dma ×ÜÏß
-#define USARTx                  USART_x(xUSART)   //ÒıÓÃ´®¿Ú
-#define USARTIRQn               USARTx_IRQNUM(xUSART) //ÖĞ¶ÏºÅ
-#define USART_IRQ_HANDLER       USARTx_IRQFN(xUSART) //ÖĞ¶Ïº¯ÊıÃû
+#define DMAx                    DMA_x(xDMA)     //ä¸²å£æ‰€åœ¨ dma æ€»çº¿
+#define USARTx                  USART_x(xUSART)   //å¼•ç”¨ä¸²å£
+#define USARTIRQn               USARTx_IRQNUM(xUSART) //ä¸­æ–­å·
+#define USART_IRQ_HANDLER       USARTx_IRQFN(xUSART) //ä¸­æ–­å‡½æ•°å
 
-#define DMA_TX_CHx              DMA_Channelx(xDMATxCH)    //´®¿Ú·¢ËÍ dma Í¨µÀ
+#define DMA_TX_CHx              DMA_Channelx(xDMATxCH)    //ä¸²å£å‘é€ dma é€šé“
 #define DMA_TX_IRQn             DMAx_CHy_IRQNUM(xDMA,xDMATxCH)
-#define DMA_TX_IRQ_HANDLER      DMAx_CHy_IRQFN(xDMA,xDMATxCH) //ÖĞ¶Ïº¯ÊıÃû
+#define DMA_TX_IRQ_HANDLER      DMAx_CHy_IRQFN(xDMA,xDMATxCH) //ä¸­æ–­å‡½æ•°å
 #define DMA_TX_CLEAR_FLAG()     DMAx_CHy_TCCLEAR(xDMA,xDMATxCH)
 #define DMA_TX_COMPLETE_FLAG()  DMAx_CHy_TCFLAG(xDMA,xDMATxCH)
 
 #define DMA_RX_CHx              DMA_Channelx(xDMARxCH)
 #define DMA_RX_IRQn             DMAx_CHy_IRQNUM(xDMA,xDMARxCH)
-#define DMA_RX_IRQ_HANDLER      DMAx_CHy_IRQFN(xDMA,xDMARxCH) //ÖĞ¶Ïº¯ÊıÃû
+#define DMA_RX_IRQ_HANDLER      DMAx_CHy_IRQFN(xDMA,xDMARxCH) //ä¸­æ–­å‡½æ•°å
 #define DMA_RX_CLEAR_FLAG()     DMAx_CHy_TCCLEAR(xDMA,xDMARxCH)
 #define DMA_RX_COMPLETE_FLAG()  DMAx_CHy_TCFLAG(xDMA,xDMARxCH)
 
@@ -215,7 +215,7 @@ static void usart_gpio_init(void)
 
 
 /**
-	* @brief usart_base_init ¿ØÖÆÌ¨´®¿Ú²ÎÊı³õÊ¼»¯
+	* @brief usart_base_init æ§åˆ¶å°ä¸²å£å‚æ•°åˆå§‹åŒ–
 	* @param void
 	* @return NULL
 */
@@ -253,7 +253,7 @@ static void usart_base_init(void)
 
 #if xDMA
 /** 
-	* @brief usart_dma_init ¿ØÖÆÌ¨ DMA ³õÊ¼»¯
+	* @brief usart_dma_init æ§åˆ¶å° DMA åˆå§‹åŒ–
 	* @param void
 	* @return NULL
 */
@@ -281,13 +281,13 @@ static void usart_dma_init(void)
 	LL_DMA_SetMemorySize(DMAx, DMA_TX_CHx, LL_DMA_MDATAALIGN_BYTE);
 	LL_DMA_SetPeriphAddress(DMAx,DMA_TX_CHx,LL_USART_DMA_GetRegAddr(USARTx));
 
-	LL_DMA_DisableChannel(DMAx,DMA_TX_CHx);//·¢ËÍÔİ²»Ê¹ÄÜ
-	LL_DMA_DisableChannel(DMAx,DMA_RX_CHx);//·¢ËÍÔİ²»Ê¹ÄÜ
+	LL_DMA_DisableChannel(DMAx,DMA_TX_CHx);//å‘é€æš‚ä¸ä½¿èƒ½
+	LL_DMA_DisableChannel(DMAx,DMA_RX_CHx);//å‘é€æš‚ä¸ä½¿èƒ½
 
 	DMA_TX_CLEAR_FLAG();
 	DMA_RX_CLEAR_FLAG();
 	
-	  /* DMA interrupt init ÖĞ¶Ï*/
+	  /* DMA interrupt init ä¸­æ–­*/
 	NVIC_SetPriority(DMA_TX_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),6, 0));
 	NVIC_EnableIRQ(DMA_TX_IRQn);
 	  
@@ -299,14 +299,14 @@ static void usart_dma_init(void)
 }
 
 /**
-	* @brief    ÉèÖÃ console Ó²¼ş½ÓÊÕ»º´æÇø£¬Í¬Ê±»áÇå³ı½ÓÊÕ±êÖ¾Î»
-	* @param    ¿Õ
+	* @brief    è®¾ç½® console ç¡¬ä»¶æ¥æ”¶ç¼“å­˜åŒºï¼ŒåŒæ—¶ä¼šæ¸…é™¤æ¥æ”¶æ ‡å¿—ä½
+	* @param    ç©º
 	* @return   
 */
 static inline void serial_dma_next_recv( uint32_t memory_addr ,uint16_t dma_max_len)
 {
 	LL_DMA_DisableIT_TC(DMAx,DMA_RX_CHx);
-	LL_DMA_DisableChannel(DMAx,DMA_RX_CHx);//·¢ËÍÔİ²»Ê¹ÄÜ
+	LL_DMA_DisableChannel(DMAx,DMA_RX_CHx);//å‘é€æš‚ä¸ä½¿èƒ½
 	
 	DMA_RX_CLEAR_FLAG();
 	
@@ -317,9 +317,9 @@ static inline void serial_dma_next_recv( uint32_t memory_addr ,uint16_t dma_max_
 	LL_DMA_EnableChannel(DMAx,DMA_RX_CHx);//new
 }
 /**
-  * @brief    console Æô¶¯·¢ËÍµ±Ç°°ü
-  * @param    ¿Õ
-  * @retval   ¿Õ
+  * @brief    console å¯åŠ¨å‘é€å½“å‰åŒ…
+  * @param    ç©º
+  * @retval   ç©º
   */
 static inline void serial_send_pkt(void)
 {
@@ -335,27 +335,27 @@ static inline void serial_send_pkt(void)
 
 
 /**
-	* @brief    hal_usart_puts console Ó²¼ş²ãÊä³ö
-	* @param    ¿Õ
-	* @return   ¿Õ
+	* @brief    hal_usart_puts console ç¡¬ä»¶å±‚è¾“å‡º
+	* @param    ç©º
+	* @return   ç©º
 */
 void serial_puts(char * const buf,uint16_t len)
 {
-	uint32_t pkttail = serialtx.pkttail;   //ÏÈ»ñÈ¡µ±Ç°Î²²¿µØÖ·
+	uint32_t pkttail = serialtx.pkttail;   //å…ˆè·å–å½“å‰å°¾éƒ¨åœ°å€
 
-	if (pkttail < HAL_TX_BUF_SIZE && len)	//µ±Ç°·¢ËÍ»º´æÓĞ¿Õ¼ä
+	if (pkttail < HAL_TX_BUF_SIZE && len)	//å½“å‰å‘é€ç¼“å­˜æœ‰ç©ºé—´
 	{
 		uint32_t remain  = HAL_TX_BUF_SIZE - pkttail;
 		uint32_t pktsize = (remain > len) ? len : remain;
 
-		memcpy(&serialtx.buf[pkttail] , buf , pktsize);//°ÑÊı¾İ°ü¿½µ½»º´æÇøÖĞ
+		memcpy(&serialtx.buf[pkttail] , buf , pktsize);//æŠŠæ•°æ®åŒ…æ‹·åˆ°ç¼“å­˜åŒºä¸­
 
 		pkttail += pktsize;
 
-		serialtx.pkttail = pkttail;  //¸üĞÂÎ²²¿
-		serialtx.pktsize += pktsize;//ÉèÖÃµ±Ç°°ü´óĞ¡
+		serialtx.pkttail = pkttail;  //æ›´æ–°å°¾éƒ¨
+		serialtx.pktsize += pktsize;//è®¾ç½®å½“å‰åŒ…å¤§å°
 
-		//¿ªÊ¼·¢ËÍ
+		//å¼€å§‹å‘é€
 		if (!LL_DMA_IsEnabledChannel(DMAx,DMA_TX_CHx))//
 			serial_send_pkt();
 	}
@@ -375,28 +375,28 @@ int serial_busy(void)
 #define serial_send_pkt()
 
 /**
-	* @brief    hal_usart_puts console Ó²¼ş²ãÊä³ö
-	* @param    ¿Õ
-	* @return   ¿Õ
+	* @brief    hal_usart_puts console ç¡¬ä»¶å±‚è¾“å‡º
+	* @param    ç©º
+	* @return   ç©º
 */
 void serial_puts(char * const buf,uint16_t len)
 {
-	uint32_t pkttail = serialtx.pkttail;   //ÏÈ»ñÈ¡µ±Ç°Î²²¿µØÖ·
+	uint32_t pkttail = serialtx.pkttail;   //å…ˆè·å–å½“å‰å°¾éƒ¨åœ°å€
 
-	if (pkttail < HAL_TX_BUF_SIZE && len)	//µ±Ç°·¢ËÍ»º´æÓĞ¿Õ¼ä
+	if (pkttail < HAL_TX_BUF_SIZE && len)	//å½“å‰å‘é€ç¼“å­˜æœ‰ç©ºé—´
 	{
 		uint32_t remain  = HAL_TX_BUF_SIZE - pkttail;
 		uint32_t pktsize = (remain > len) ? len : remain;
 		char * copyto = &serialtx.buf[pkttail];
 		char * from = (char*)buf;
 		for (char * end = from + pktsize ; from < end ; *copyto++ = *from++) ;
-		//memcpy(&serialtx.buf[pkttail] , buf , pktsize);//°ÑÊı¾İ°ü¿½µ½»º´æÇøÖĞ
+		//memcpy(&serialtx.buf[pkttail] , buf , pktsize);//æŠŠæ•°æ®åŒ…æ‹·åˆ°ç¼“å­˜åŒºä¸­
 
 		if (0 == serialtx.pktsize)
 			LL_USART_TransmitData8(USARTx,(uint8_t)(serialtx.buf[pkttail]));
 
-		serialtx.pkttail = pktsize + pkttail;  //¸üĞÂÎ²²¿
-		serialtx.pktsize += pktsize;//ÉèÖÃµ±Ç°°ü´óĞ¡
+		serialtx.pkttail = pktsize + pkttail;  //æ›´æ–°å°¾éƒ¨
+		serialtx.pktsize += pktsize;//è®¾ç½®å½“å‰åŒ…å¤§å°
 	}
 }
 
@@ -414,9 +414,9 @@ int serial_busy(void)
 
 
 /**
-  * @brief    serial_rxpkt_max_len ÉèÖÃÓ²¼ş½ÓÊÕ×î´ó°ü
-  * @param    ¿Õ
-  * @retval   ¿Õ
+  * @brief    serial_rxpkt_max_len è®¾ç½®ç¡¬ä»¶æ¥æ”¶æœ€å¤§åŒ…
+  * @param    ç©º
+  * @retval   ç©º
   */
 void serial_recv_reset(uint16_t pktmax)
 {
@@ -435,9 +435,9 @@ void serial_recv_reset(uint16_t pktmax)
 
 
 /**
-	* @brief    serial_rxpkt_queue_in console ´®¿Ú½ÓÊÕÊı¾İ°ü¶ÓÁĞÈëÁĞ
+	* @brief    serial_rxpkt_queue_in console ä¸²å£æ¥æ”¶æ•°æ®åŒ…é˜Ÿåˆ—å…¥åˆ—
 	* @param    
-	* @return   ¿Õ
+	* @return   ç©º
 */
 static inline void serial_rxpkt_queue_in(char * pkt ,uint16_t len)
 {
@@ -448,9 +448,9 @@ static inline void serial_rxpkt_queue_in(char * pkt ,uint16_t len)
 
 
 /**
-	* @brief    serial_rxpkt_queue_out console ´®¿Ú¶ÓÁĞ³ö¶Ó
+	* @brief    serial_rxpkt_queue_out console ä¸²å£é˜Ÿåˆ—å‡ºé˜Ÿ
 	* @param    rxpktqueue
-	* @return   ¿Õ
+	* @return   ç©º
 */
 int serial_rxpkt_queue_out(char ** data,uint16_t * len)
 {
@@ -470,46 +470,46 @@ int serial_rxpkt_queue_out(char ** data,uint16_t * len)
 
 
 
-//------------------------------ÒÔÏÂÎªÒ»Ğ©ÖĞ¶Ï´¦Àí------------------------------
+//------------------------------ä»¥ä¸‹ä¸ºä¸€äº›ä¸­æ–­å¤„ç†------------------------------
 
 
 /**
-	* @brief    DMA_TX_IRQ_HANDLER console ´®¿Ú·¢ËÍÒ»°üÊı¾İÍê³ÉÖĞ¶Ï
-	* @param    ¿Õ
-	* @return   ¿Õ
+	* @brief    DMA_TX_IRQ_HANDLER console ä¸²å£å‘é€ä¸€åŒ…æ•°æ®å®Œæˆä¸­æ–­
+	* @param    ç©º
+	* @return   ç©º
 */
 void DMA_TX_IRQ_HANDLER(void) 
 {
 	LL_DMA_DisableChannel(DMAx,DMA_TX_CHx);
 	DMA_TX_CLEAR_FLAG();
 
-	if (serialtx.pktsize == 0) //·¢ËÍÍê´Ë°üºóÎŞÊı¾İ£¬¸´Î»»º³åÇø
+	if (serialtx.pktsize == 0) //å‘é€å®Œæ­¤åŒ…åæ— æ•°æ®ï¼Œå¤ä½ç¼“å†²åŒº
 		serialtx.pkttail = 0;
-	else                        //»¹ÓĞÊı¾İÔò¼ÌĞø·¢ËÍ
+	else                        //è¿˜æœ‰æ•°æ®åˆ™ç»§ç»­å‘é€
 		serial_send_pkt(); 	
 }
 
 
 /**
-	* @brief    DMA_RX_IRQ_HANDLER console ´®¿Ú½ÓÊÕÂúÖĞ¶Ï
-	* @param    ¿Õ
-	* @return   ¿Õ
+	* @brief    DMA_RX_IRQ_HANDLER console ä¸²å£æ¥æ”¶æ»¡ä¸­æ–­
+	* @param    ç©º
+	* @return   ç©º
 */
 void DMA_RX_IRQ_HANDLER(void) 
 {
 	DMA_RX_CLEAR_FLAG();
 	
-	serial_rxpkt_queue_in(&serialrx.buf[serialrx.pkttail],serialrx.pktmax); //°Ñµ±Ç°°üµØÖ·ºÍ´óĞ¡ËÍÈë»º³å¶ÓÁĞ
+	serial_rxpkt_queue_in(&serialrx.buf[serialrx.pkttail],serialrx.pktmax); //æŠŠå½“å‰åŒ…åœ°å€å’Œå¤§å°é€å…¥ç¼“å†²é˜Ÿåˆ—
 	
-	serialrx.pkttail += serialrx.pktmax ; //¸üĞÂ»º³åµØÖ·
+	serialrx.pkttail += serialrx.pktmax ; //æ›´æ–°ç¼“å†²åœ°å€
 	
-	if (serialrx.pkttail + serialrx.pktmax > HAL_RX_BUF_SIZE) //Èç¹ûÊ£Óà¿Õ¼ä²»×ãÒÔ»º´æ×î´ó°ü³¤¶È£¬´Ó 0 ¿ªÊ¼
+	if (serialrx.pkttail + serialrx.pktmax > HAL_RX_BUF_SIZE) //å¦‚æœå‰©ä½™ç©ºé—´ä¸è¶³ä»¥ç¼“å­˜æœ€å¤§åŒ…é•¿åº¦ï¼Œä» 0 å¼€å§‹
 		serialrx.pkttail = 0;
 	
-	serial_dma_next_recv((uint32_t)(&serialrx.buf[serialrx.pkttail]),serialrx.pktmax);//ÉèÖÃ»º³åµØÖ·ºÍ×î´ó°ü³¤¶È
+	serial_dma_next_recv((uint32_t)(&serialrx.buf[serialrx.pkttail]),serialrx.pktmax);//è®¾ç½®ç¼“å†²åœ°å€å’Œæœ€å¤§åŒ…é•¿åº¦
 
 	#ifdef _CMSIS_OS_H	
-		osSemaphoreRelease(RXPKT_SAMPH);// ÊÍ·ÅĞÅºÅÁ¿
+		osSemaphoreRelease(RXPKT_SAMPH);// é‡Šæ”¾ä¿¡å·é‡
 	#endif
 
 }
@@ -517,88 +517,88 @@ void DMA_RX_IRQ_HANDLER(void)
 
 
 /**
-	* @brief    USART_IRQ_HANDLER ´®¿ÚÖĞ¶Ïº¯Êı
-	* @param    ¿Õ
-	* @return   ¿Õ
+	* @brief    USART_IRQ_HANDLER ä¸²å£ä¸­æ–­å‡½æ•°
+	* @param    ç©º
+	* @return   ç©º
 */
 #if (xDMA)
 void USART_IRQ_HANDLER(void) 
 {
 	uint16_t pkt_len ;
 	
-	LL_USART_ClearFlag_IDLE(USARTx); //Çå³ı¿ÕÏĞÖĞ¶Ï
+	LL_USART_ClearFlag_IDLE(USARTx); //æ¸…é™¤ç©ºé—²ä¸­æ–­
 	
-	pkt_len = serialrx.pktmax - LL_DMA_GetDataLength(DMAx,DMA_RX_CHx);//µÃµ½µ±Ç°°üµÄ³¤¶È
+	pkt_len = serialrx.pktmax - LL_DMA_GetDataLength(DMAx,DMA_RX_CHx);//å¾—åˆ°å½“å‰åŒ…çš„é•¿åº¦
 	
 	if (pkt_len)
 	{
-		serial_rxpkt_queue_in(&(serialrx.buf[serialrx.pkttail]),pkt_len); //°Ñµ±Ç°°üËÍÈë»º³å¶ÓÁĞ£¬½»ÓÉÓ¦ÓÃ²ã´¦Àí
+		serial_rxpkt_queue_in(&(serialrx.buf[serialrx.pkttail]),pkt_len); //æŠŠå½“å‰åŒ…é€å…¥ç¼“å†²é˜Ÿåˆ—ï¼Œäº¤ç”±åº”ç”¨å±‚å¤„ç†
 	
-		serialrx.pkttail += pkt_len ;	 //¸üĞÂ»º³åµØÖ·
-		if (serialrx.pkttail + serialrx.pktmax > HAL_RX_BUF_SIZE)//Èç¹ûÊ£Óà¿Õ¼ä²»×ãÒÔ»º´æ×î´ó°ü³¤¶È£¬´Ó 0 ¿ªÊ¼
+		serialrx.pkttail += pkt_len ;	 //æ›´æ–°ç¼“å†²åœ°å€
+		if (serialrx.pkttail + serialrx.pktmax > HAL_RX_BUF_SIZE)//å¦‚æœå‰©ä½™ç©ºé—´ä¸è¶³ä»¥ç¼“å­˜æœ€å¤§åŒ…é•¿åº¦ï¼Œä» 0 å¼€å§‹
 			serialrx.pkttail = 0;
 
-		serial_dma_next_recv((uint32_t)&(serialrx.buf[serialrx.pkttail]),serialrx.pktmax);//ÉèÖÃ»º³åµØÖ·ºÍ×î´ó°ü³¤¶È
+		serial_dma_next_recv((uint32_t)&(serialrx.buf[serialrx.pkttail]),serialrx.pktmax);//è®¾ç½®ç¼“å†²åœ°å€å’Œæœ€å¤§åŒ…é•¿åº¦
 
 		#ifdef _CMSIS_OS_H
-			osSemaphoreRelease(RXPKT_SAMPH);// ÊÍ·ÅĞÅºÅÁ¿
+			osSemaphoreRelease(RXPKT_SAMPH);// é‡Šæ”¾ä¿¡å·é‡
 		#endif
 	}
 }
-#else //²»ÓÃ dma Ê±µÄ´®¿ÚÖĞ¶Ï
+#else //ä¸ç”¨ dma æ—¶çš„ä¸²å£ä¸­æ–­
 void USART_IRQ_HANDLER(void)
 {
 	static uint16_t rxtail = 0;
 	static uint16_t txhead = 0;
 
-	if (LL_USART_IsActiveFlag_RXNE(USARTx)) {//½ÓÊÕµ¥¸ö×Ö½ÚÖĞ¶Ï
+	if (LL_USART_IsActiveFlag_RXNE(USARTx)) {//æ¥æ”¶å•ä¸ªå­—èŠ‚ä¸­æ–­
 
-		LL_USART_ClearFlag_RXNE(USARTx); //Çå³ıÖĞ¶Ï
+		LL_USART_ClearFlag_RXNE(USARTx); //æ¸…é™¤ä¸­æ–­
 
-		serialrx.buf[rxtail++] = LL_USART_ReceiveData8(USARTx);//Êı¾İ´æÈëÄÚ´æ
+		serialrx.buf[rxtail++] = LL_USART_ReceiveData8(USARTx);//æ•°æ®å­˜å…¥å†…å­˜
 
-		if (rxtail - serialrx.pkttail >= serialrx.pktmax ) {//½ÓÊÕµ½×î´ó°ü³¤¶È
+		if (rxtail - serialrx.pkttail >= serialrx.pktmax ) {//æ¥æ”¶åˆ°æœ€å¤§åŒ…é•¿åº¦
 
-			serial_rxpkt_queue_in(&serialrx.buf[serialrx.pkttail],serialrx.pktmax); //°Ñµ±Ç°°üµØÖ·ºÍ´óĞ¡ËÍÈë»º³å¶ÓÁĞ
-			serialrx.pkttail += serialrx.pktmax ; //¸üĞÂ»º³åÎ²²¿
+			serial_rxpkt_queue_in(&serialrx.buf[serialrx.pkttail],serialrx.pktmax); //æŠŠå½“å‰åŒ…åœ°å€å’Œå¤§å°é€å…¥ç¼“å†²é˜Ÿåˆ—
+			serialrx.pkttail += serialrx.pktmax ; //æ›´æ–°ç¼“å†²å°¾éƒ¨
 
-			 //Èç¹ûÊ£Óà¿Õ¼ä²»×ãÒÔ»º´æ×î´ó°ü³¤¶È£¬´Ó 0 ¿ªÊ¼
+			 //å¦‚æœå‰©ä½™ç©ºé—´ä¸è¶³ä»¥ç¼“å­˜æœ€å¤§åŒ…é•¿åº¦ï¼Œä» 0 å¼€å§‹
 			if (serialrx.pkttail + serialrx.pktmax > HAL_RX_BUF_SIZE){
 				serialrx.pkttail = 0;
 				rxtail = 0;
 			}
 			#ifdef _CMSIS_OS_H
-				osSemaphoreRelease(RXPKT_SAMPH);// ÊÍ·ÅĞÅºÅÁ¿
+				osSemaphoreRelease(RXPKT_SAMPH);// é‡Šæ”¾ä¿¡å·é‡
 			#endif
-		} //if (rxtail - serialrx.pkttail >= serialrx.pktmax ) {//½ÓÊÕµ½×î´ó°ü³¤¶È
+		} //if (rxtail - serialrx.pkttail >= serialrx.pktmax ) {//æ¥æ”¶åˆ°æœ€å¤§åŒ…é•¿åº¦
 	}
 
-	if (LL_USART_IsActiveFlag_IDLE(USARTx)) { //¿ÕÏĞÖĞ¶Ï
+	if (LL_USART_IsActiveFlag_IDLE(USARTx)) { //ç©ºé—²ä¸­æ–­
 
-		LL_USART_ClearFlag_IDLE(USARTx); //Çå³ı¿ÕÏĞÖĞ¶Ï
+		LL_USART_ClearFlag_IDLE(USARTx); //æ¸…é™¤ç©ºé—²ä¸­æ–­
 
-		uint16_t pkt_len = rxtail - serialrx.pkttail;//¿ÕÏĞÖĞ¶Ï³¤¶È
+		uint16_t pkt_len = rxtail - serialrx.pkttail;//ç©ºé—²ä¸­æ–­é•¿åº¦
 
-		if (pkt_len) { // Èç¹û¸ÕºÃÎª pktmax ³¤¶È£¬ÔÚ RXNE ÒÑ´¦Àí
+		if (pkt_len) { // å¦‚æœåˆšå¥½ä¸º pktmax é•¿åº¦ï¼Œåœ¨ RXNE å·²å¤„ç†
 
-			serial_rxpkt_queue_in(&(serialrx.buf[serialrx.pkttail]),pkt_len); //°Ñµ±Ç°°üËÍÈë»º³å¶ÓÁĞ£¬½»ÓÉÓ¦ÓÃ²ã´¦Àí
-			serialrx.pkttail += pkt_len ;	 //¸üĞÂ»º³åµØÖ·
+			serial_rxpkt_queue_in(&(serialrx.buf[serialrx.pkttail]),pkt_len); //æŠŠå½“å‰åŒ…é€å…¥ç¼“å†²é˜Ÿåˆ—ï¼Œäº¤ç”±åº”ç”¨å±‚å¤„ç†
+			serialrx.pkttail += pkt_len ;	 //æ›´æ–°ç¼“å†²åœ°å€
 
-			//Èç¹ûÊ£Óà¿Õ¼ä²»×ãÒÔ»º´æ×î´ó°ü³¤¶È£¬´Ó 0 ¿ªÊ¼
+			//å¦‚æœå‰©ä½™ç©ºé—´ä¸è¶³ä»¥ç¼“å­˜æœ€å¤§åŒ…é•¿åº¦ï¼Œä» 0 å¼€å§‹
 			if (serialrx.pkttail + serialrx.pktmax > HAL_RX_BUF_SIZE){
 				rxtail = 0;
 				serialrx.pkttail = 0;
 			}
 			#ifdef _CMSIS_OS_H
-				osSemaphoreRelease(RXPKT_SAMPH);// ÊÍ·ÅĞÅºÅÁ¿
+				osSemaphoreRelease(RXPKT_SAMPH);// é‡Šæ”¾ä¿¡å·é‡
 			#endif
 		} //if (pkt_len)
 	}
 
-	if (LL_USART_IsActiveFlag_TC(USARTx)) { //·¢ËÍÖĞ¶Ï
-		LL_USART_ClearFlag_TC(USARTx); //Çå³ıÖĞ¶Ï
+	if (LL_USART_IsActiveFlag_TC(USARTx)) { //å‘é€ä¸­æ–­
+		LL_USART_ClearFlag_TC(USARTx); //æ¸…é™¤ä¸­æ–­
 		txhead = (0==txhead)?(serialtx.pkttail-serialtx.pktsize+1):(1+txhead);
-		if (txhead < serialtx.pkttail) { //Èç¹ûÎ´·¢ËÍÍæµ±Ç°Êı¾İ£¬·¢ËÍÏÂÒ»¸ö×Ö½Ú
+		if (txhead < serialtx.pkttail) { //å¦‚æœæœªå‘é€ç©å½“å‰æ•°æ®ï¼Œå‘é€ä¸‹ä¸€ä¸ªå­—èŠ‚
 			LL_USART_TransmitData8(USARTx,(uint8_t)(serialtx.buf[txhead]));
 		} else {
 			txhead = 0;
@@ -609,15 +609,15 @@ void USART_IRQ_HANDLER(void)
 }
 #endif
 
-//------------------------------»ªÀöµÄ·Ö¸îÏß------------------------------
+//------------------------------åä¸½çš„åˆ†å‰²çº¿------------------------------
 /**
-	* @brief    hal_serial_init console Ó²¼ş²ã³õÊ¼»¯
-	* @param    ¿Õ
-	* @return   ¿Õ
+	* @brief    hal_serial_init console ç¡¬ä»¶å±‚åˆå§‹åŒ–
+	* @param    ç©º
+	* @return   ç©º
 */
 void hal_serial_init(void)
 {
-	usart_gpio_init();//Òı½Å³õÊ¼»¯
+	usart_gpio_init();//å¼•è„šåˆå§‹åŒ–
 	usart_base_init();
 	usart_dma_init();
 

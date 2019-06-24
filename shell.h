@@ -1,14 +1,14 @@
 /**
   ******************************************************************************
   * @file           shell.h
-  * @author         ¹ÅÃ´Äş
-  * @brief          ÃüÁî½âÊÍÆ÷Í·ÎÄ¼ş
-  * Ê¹ÓÃ²½Öè£º
-  *    0.³õÊ¼»¯Ó²¼ş²¿·Ö¡£
-  *    1.±àĞ´Ó²¼ş¶ÔÓ¦µÄvoid puts(char * buf , uint16_t len) ·¢ËÍº¯Êı¡£
-  *    2.shell_init(sign,puts) ³õÊ¼»¯ÊäÈë±êÖ¾ºÍÄ¬ÈÏÊä³ö¡£
-  *    3.ĞÂ½¨Ò»¸ö  shellinput_t shellx , ³õÊ¼»¯Êä³ö shell_input_init(&shellx,puts,...);
-  *    4.½ÓÊÕµ½Ò»°üÊı¾İºó£¬µ÷ÓÃ shell_input(shellx,buf,len)
+  * @author         å¤ä¹ˆå®
+  * @brief          å‘½ä»¤è§£é‡Šå™¨å¤´æ–‡ä»¶
+  * ä½¿ç”¨æ­¥éª¤ï¼š
+  *    0.åˆå§‹åŒ–ç¡¬ä»¶éƒ¨åˆ†ã€‚
+  *    1.ç¼–å†™ç¡¬ä»¶å¯¹åº”çš„void puts(char * buf , uint16_t len) å‘é€å‡½æ•°ã€‚
+  *    2.shell_init(sign,puts) åˆå§‹åŒ–è¾“å…¥æ ‡å¿—å’Œé»˜è®¤è¾“å‡ºã€‚
+  *    3.æ–°å»ºä¸€ä¸ª  shellinput_t shellx , åˆå§‹åŒ–è¾“å‡º shell_input_init(&shellx,puts,...);
+  *    4.æ¥æ”¶åˆ°ä¸€åŒ…æ•°æ®åï¼Œè°ƒç”¨ shell_input(shellx,buf,len)
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -18,34 +18,34 @@
 #ifndef __SHELL_H__
 #define __SHELL_H__
 
-// ÒÔÏÂÎª shell ËùÒÀÀµµÄ»ù±¾¿â
+// ä»¥ä¸‹ä¸º shell æ‰€ä¾èµ–çš„åŸºæœ¬åº“
 #include "ustdio.h"
 
 
-/* Public macro (¹²ÓĞºê)------------------------------------------------------------*/
+/* Public macro (å…±æœ‰å®)------------------------------------------------------------*/
 
-/* ---- option (ÅäÖÃÏî) ---- */
+/* ---- option (é…ç½®é¡¹) ---- */
 
-//ÃüÁîÊı³¬¹ı30ÌõÊ±¿ÉÒÔ¿¼ÂÇÓÃÆ½ºâ¶ş²æÊ÷½øĞĞ²éÕÒÆ¥Åä
+//å‘½ä»¤æ•°è¶…è¿‡30æ¡æ—¶å¯ä»¥è€ƒè™‘ç”¨å¹³è¡¡äºŒå‰æ ‘è¿›è¡ŒæŸ¥æ‰¾åŒ¹é…
 //#define USE_AVL_TREE
 
-//ÃüÁî´øÉÏ²ÎÊıµÄ×Ö·û´®ÊäÈë×î³¤¼ÇÂ¼³¤¶È
+//å‘½ä»¤å¸¦ä¸Šå‚æ•°çš„å­—ç¬¦ä¸²è¾“å…¥æœ€é•¿è®°å½•é•¿åº¦
 #define COMMANDLINE_MAX_LEN     36     
 
-//¿ØÖÆÌ¨¼ÇÂ¼ÌõÄ¿Êı£¬ÉèÎª 0 Ê±²»¼ÇÂ¼
+//æ§åˆ¶å°è®°å½•æ¡ç›®æ•°ï¼Œè®¾ä¸º 0 æ—¶ä¸è®°å½•
 #define COMMANDLINE_MAX_RECORD  4
 
 /* ---- option end ---- */
 
 
-// Ò»Ğ©¼üÖµ£º
+// ä¸€äº›é”®å€¼ï¼š
 #define KEYCODE_END               35
 #define KEYCODE_HOME              36
 #define KEYCODE_CTRL_C            0x03
-#define KEYCODE_BACKSPACE         0x08   //¼üÅÌµÄ»ØÍË¼ü
-#define KEYCODE_TAB               '\t'   //¼üÅÌµÄtab¼ü
+#define KEYCODE_BACKSPACE         0x08   //é”®ç›˜çš„å›é€€é”®
+#define KEYCODE_TAB               '\t'   //é”®ç›˜çš„tabé”®
 #define KEYCODE_NEWLINE           0x0A
-#define KEYCODE_ENTER             0x0D   //¼üÅÌµÄ»Ø³µ¼ü
+#define KEYCODE_ENTER             0x0D   //é”®ç›˜çš„å›è½¦é”®
 #define KEYCODE_ESC               0x1b
 
 
@@ -54,13 +54,13 @@
 
 #define NEED_CONFIRM MODIFY_MASK
 #define DONT_CONFIRM 0
-#define FUNC_CONFIRM (1U<<31) // stm32 flash µØÖ··¶Î§×î¸ßÎ»
+#define FUNC_CONFIRM (1U<<31) // stm32 flash åœ°å€èŒƒå›´æœ€é«˜ä½
 /*
 -----------------------------------------------------------------------
-	µ÷ÓÃºê shell_register_command(pstr,pfunc) ×¢²áÃüÁî
-	×¢²áÒ»¸öÃüÁîºÅµÄÍ¬Ê±»áĞÂ½¨Ò»¸öÓëÃüÁî¶ÔÓ¦µÄ¿ØÖÆ¿é
-	ÔÚ shell ×¢²áµÄº¯ÊıÀàĞÍÍ³Ò»Îª void(*cmd_fn_t)(void * arg); 
-	arg Îª¿ØÖÆÌ¨ÊäÈëÃüÁîºóËù¸úµÄ²ÎÊıÊäÈë
+	è°ƒç”¨å® shell_register_command(pstr,pfunc) æ³¨å†Œå‘½ä»¤
+	æ³¨å†Œä¸€ä¸ªå‘½ä»¤å·çš„åŒæ—¶ä¼šæ–°å»ºä¸€ä¸ªä¸å‘½ä»¤å¯¹åº”çš„æ§åˆ¶å—
+	åœ¨ shell æ³¨å†Œçš„å‡½æ•°ç±»å‹ç»Ÿä¸€ä¸º void(*cmd_fn_t)(void * arg); 
+	arg ä¸ºæ§åˆ¶å°è¾“å…¥å‘½ä»¤åæ‰€è·Ÿçš„å‚æ•°è¾“å…¥
 -----------------------------------------------------------------------
 */
 #define shell_register_command(name,func)\
@@ -70,7 +70,7 @@
 	}while(0)
 
 
-//×¢²áÒ»¸ö´øÑ¡ÏîÃüÁî£¬ĞèÒªÊäÈë [Y/N/y/n] ²ÅÖ´ĞĞ¶ÔÓ¦µÄÃüÁî
+//æ³¨å†Œä¸€ä¸ªå¸¦é€‰é¡¹å‘½ä»¤ï¼Œéœ€è¦è¾“å…¥ [Y/N/y/n] æ‰æ‰§è¡Œå¯¹åº”çš„å‘½ä»¤
 #define shell_register_confirm(name,func,info)\
 	do{\
 		static struct shellconfirm confirm = {.prompt = info}; \
@@ -79,19 +79,19 @@
 
 
 
-// ÒÔÏÂÎª shell_input_init() ËùÓÃºê
+// ä»¥ä¸‹ä¸º shell_input_init() æ‰€ç”¨å®
 #define MODIFY_SIGN (MODIFY_MASK|0x1)
 #define MODIFY_GETS (MODIFY_MASK|0x2)
 
-//ÀúÊ·ÒÅÁôÎÊÌâ£¬¼æÈİ¾É°æ±¾´úÂë
+//å†å²é—ç•™é—®é¢˜ï¼Œå…¼å®¹æ—§ç‰ˆæœ¬ä»£ç 
 #define SHELL_INPUT_INIT(...) shell_input_init(__VA_ARGS__)
 
 
-//»ñÈ¡Ò»¸öÃüÁîµÄ³¤¶È
+//è·å–ä¸€ä¸ªå‘½ä»¤çš„é•¿åº¦
 #define SHELL_CMD_LEN(pCommand)  (((pCommand)->ID >> 21) & 0x0000001F)
 
 
-//shell Èë¿Ú¶ÔÓ¦³ö¿Ú£¬´ÓÄÄÀïÊäÈëÔò´Ó¶ÔÓ¦µÄµØ·½Êä³ö
+//shell å…¥å£å¯¹åº”å‡ºå£ï¼Œä»å“ªé‡Œè¾“å…¥åˆ™ä»å¯¹åº”çš„åœ°æ–¹è¾“å‡º
 #define shell_input(shellin,buf,len) \
 	do{\
 		current_puts = (shellin)->puts;        \
@@ -109,16 +109,16 @@ enum INPUT_PARAMETER
 };
 
 
-// ÃüÁî¶ÔÓ¦µÄº¯ÊıÀàĞÍ£¬ÖÁÓÚÎªÊ²Ã´ÊäÈëÉè¼ÆÎª void *,ÎÒ²»¼ÇµÃÁË
+// å‘½ä»¤å¯¹åº”çš„å‡½æ•°ç±»å‹ï¼Œè‡³äºä¸ºä»€ä¹ˆè¾“å…¥è®¾è®¡ä¸º void *,æˆ‘ä¸è®°å¾—äº†
 typedef void (*cmd_fn_t)(void * arg);
 
 
 
-#ifdef USE_AVL_TREE     // ÃüÁîË÷ÒıÓÃavlÊ÷½øĞĞ²éÕÒÆ¥Åä
+#ifdef USE_AVL_TREE     // å‘½ä»¤ç´¢å¼•ç”¨avlæ ‘è¿›è¡ŒæŸ¥æ‰¾åŒ¹é…
 	#include "avltree.h"
 	typedef struct avl_node cmd_entry_t ;
 	typedef struct avl_root cmd_root_t ;
-#else                   // µ¥Á´±í½Úµã£¬ÓÃÀ´´®ÃüÁî
+#else                   // å•é“¾è¡¨èŠ‚ç‚¹ï¼Œç”¨æ¥ä¸²å‘½ä»¤
 	struct slist{struct slist * next;} ;
 	typedef struct slist cmd_entry_t ;
 	typedef struct slist cmd_root_t ;
@@ -126,51 +126,51 @@ typedef void (*cmd_fn_t)(void * arg);
 
 
 
-//ÃüÁî½á¹¹Ìå£¬ÓÃÓÚ×¢²áÆ¥ÅäÃüÁî
+//å‘½ä»¤ç»“æ„ä½“ï¼Œç”¨äºæ³¨å†ŒåŒ¹é…å‘½ä»¤
 typedef struct shellcommand
 {
-	cmd_entry_t   node; //ÃüÁîË÷Òı½ÓÈëµã£¬ÓÃÁ´±í»ò¶ş²æÊ÷¶ÔÃüÁî×÷¼¯ºÏ
-	char *		  name; //¼ÇÂ¼Ã¿ÌõÃüÁî×Ö·û´®µÄÄÚ´æµØÖ·
-	uint32_t	  ID;	//ÃüÁî±êÊ¶Âë
-	uint32_t	  fnaddr; //¼ÇÂ¼ÃüÁîº¯Êı cmd_fn_t ¶ÔÓ¦µÄÄÚ´æµØÖ·
+	cmd_entry_t   node; //å‘½ä»¤ç´¢å¼•æ¥å…¥ç‚¹ï¼Œç”¨é“¾è¡¨æˆ–äºŒå‰æ ‘å¯¹å‘½ä»¤ä½œé›†åˆ
+	char *		  name; //è®°å½•æ¯æ¡å‘½ä»¤å­—ç¬¦ä¸²çš„å†…å­˜åœ°å€
+	uint32_t	  ID;	//å‘½ä»¤æ ‡è¯†ç 
+	uint32_t	  fnaddr; //è®°å½•å‘½ä»¤å‡½æ•° cmd_fn_t å¯¹åº”çš„å†…å­˜åœ°å€
 }
 shellcmd_t;
 
 
-//´øÈ·ÈÏÑ¡ÏîµÄÃüÁî½á¹¹Ìå
+//å¸¦ç¡®è®¤é€‰é¡¹çš„å‘½ä»¤ç»“æ„ä½“
 typedef struct shellconfirm
 {
-	char * prompt ; //È·ÈÏÌáÊ¾ĞÅÏ¢
-	struct shellcommand  cmd;//¶ÔÓ¦µÄÃüÁîºÅÄÚ´æ
+	char * prompt ; //ç¡®è®¤æç¤ºä¿¡æ¯
+	struct shellcommand  cmd;//å¯¹åº”çš„å‘½ä»¤å·å†…å­˜
 }
 shellcfm_t ;
 
 
 
-// ½»»¥½á¹¹Ìå£¬Êı¾İµÄÊäÈëÊä³ö²»Ò»¶¨
+// äº¤äº’ç»“æ„ä½“ï¼Œæ•°æ®çš„è¾“å…¥è¾“å‡ºä¸ä¸€å®š
 typedef struct shell_input
 {
-	//Ö¸¶¨Êı¾İÁ÷ÊäÈë,³õÊ¼»¯Ä¬ÈÏÎª cmdline_gets() ,¼´ÃüÁîĞĞ
+	//æŒ‡å®šæ•°æ®æµè¾“å…¥,åˆå§‹åŒ–é»˜è®¤ä¸º cmdline_gets() ,å³å‘½ä»¤è¡Œ
 	void (*gets)(struct shell_input * , char * ,uint32_t );
 
-	//Ö¸¶¨Êı¾İÁ÷¶ÔÓ¦µÄÊä³ö½Ó¿Ú£¬´®¿Ú»òÕß telnet Êä³öµÈ
+	//æŒ‡å®šæ•°æ®æµå¯¹åº”çš„è¾“å‡ºæ¥å£ï¼Œä¸²å£æˆ–è€… telnet è¾“å‡ºç­‰
 	fmt_puts_t puts;
 
-	//app¿ÉÓÃ²ÎÊı£¬°®ÔõÃ´ÓÃ¾ÍÔõÃ´ÓÃ
+	//appå¯ç”¨å‚æ•°ï¼Œçˆ±æ€ä¹ˆç”¨å°±æ€ä¹ˆç”¨
 	void *  apparg;
 
-	//ÃüÁîĞĞÊäÈë·ûºÅ
+	//å‘½ä»¤è¡Œè¾“å…¥ç¬¦å·
 	char    sign[COMMANDLINE_MAX_LEN];
 
-	//ÃüÁîĞĞÏà¹ØµÄ²ÎÊı
-	char    cmdline[COMMANDLINE_MAX_LEN]; //ÃüÁîĞĞÄÚ´æ
-	uint8_t edit;    //µ±Ç°ÃüÁîĞĞ±à¼­Î»ÖÃ
-	uint8_t tail;    //µ±Ç°ÃüÁîĞĞÊäÈë½áÎ² tail
+	//å‘½ä»¤è¡Œç›¸å…³çš„å‚æ•°
+	char    cmdline[COMMANDLINE_MAX_LEN]; //å‘½ä»¤è¡Œå†…å­˜
+	uint8_t edit;    //å½“å‰å‘½ä»¤è¡Œç¼–è¾‘ä½ç½®
+	uint8_t tail;    //å½“å‰å‘½ä»¤è¡Œè¾“å…¥ç»“å°¾ tail
 
-	#if (COMMANDLINE_MAX_RECORD) //Èç¹û¶¨ÒåÁËÀúÊ·¼ÍÂ¼
-		uint8_t htywrt;  //ÀúÊ·¼ÇÂ¼Ğ´
-		uint8_t htyread; //ÀúÊ·¼ÇÂ¼¶Á
-		char    history[COMMANDLINE_MAX_RECORD][COMMANDLINE_MAX_LEN]; //ÀúÊ·¼ÇÂ¼ÄÚ´æ
+	#if (COMMANDLINE_MAX_RECORD) //å¦‚æœå®šä¹‰äº†å†å²çºªå½•
+		uint8_t htywrt;  //å†å²è®°å½•å†™
+		uint8_t htyread; //å†å²è®°å½•è¯»
+		char    history[COMMANDLINE_MAX_RECORD][COMMANDLINE_MAX_LEN]; //å†å²è®°å½•å†…å­˜
 	#endif
 }
 shellinput_t;
@@ -180,22 +180,22 @@ typedef	void (*shellgets_t)(struct shell_input * , char * ,uint32_t );
 
 /* Public variables ---------------------------------------------------------*/
 
-extern char DEFAULT_INPUTSIGN[]; // Ä¬ÈÏ½»»¥±êÖ¾
+extern char DEFAULT_INPUTSIGN[]; // é»˜è®¤äº¤äº’æ ‡å¿—
 
 
-/* Public function prototypes ¶ÔÍâ¿ÉÓÃ½Ó¿Ú -----------------------------------*/
+/* Public function prototypes å¯¹å¤–å¯ç”¨æ¥å£ -----------------------------------*/
 
-//×¢²áÃüÁî£¬Õâ¸öº¯ÊıÒ»°ã²»Ö±½Óµ÷ÓÃ£¬ÓÃºê shell_register_command() ¼ä½Óµ÷ÓÃ
+//æ³¨å†Œå‘½ä»¤ï¼Œè¿™ä¸ªå‡½æ•°ä¸€èˆ¬ä¸ç›´æ¥è°ƒç”¨ï¼Œç”¨å® shell_register_command() é—´æ¥è°ƒç”¨
 void _shell_register(struct shellcommand * newcmd,char * cmd_name, cmd_fn_t cmd_func,uint32_t comfirm);
 
-//Ä¬ÈÏÃüÁîĞĞÊäÈë¶Ë
+//é»˜è®¤å‘½ä»¤è¡Œè¾“å…¥ç«¯
 void cmdline_gets(struct shell_input * ,char * ,uint32_t );
 
-//½âÎöÃüÁîĞĞ²ÎÊıÏà¹Ø¹¦ÄÜº¯Êı
+//è§£æå‘½ä»¤è¡Œå‚æ•°ç›¸å…³åŠŸèƒ½å‡½æ•°
 int  cmdline_param(char * str,int * argv,uint32_t maxread);
 int  cmdline_strtok(char * str ,char ** argv ,uint32_t maxread);
 
-// ³õÊ¼»¯Ïà¹Øº¯Êı
+// åˆå§‹åŒ–ç›¸å…³å‡½æ•°
 void shell_init(char * defaultsign ,fmt_puts_t puts);
 void shell_input_init(struct shell_input * shellin , fmt_puts_t shellputs,...);
 

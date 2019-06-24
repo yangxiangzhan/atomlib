@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
   * @file           serial_console.c
-  * @author         ¹ÅÃ´Äş
+  * @author         å¤ä¹ˆå®
   * @brief          serial_console file
-                    ´®¿Ú¿ØÖÆÌ¨ÎÄ¼ş¡£ÎÄ¼ş²»Ö±½Ó²Ù×÷Ó²¼ş£¬ÒÀÚdserial_hal
+                    ä¸²å£æ§åˆ¶å°æ–‡ä»¶ã€‚æ–‡ä»¶ä¸ç›´æ¥æ“ä½œç¡¬ä»¶ï¼Œä¾èµ¿serial_hal
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -13,11 +13,11 @@
 /* Includes ---------------------------------------------------*/
 #include <string.h>
 #include <stdarg.h>
-#include <stdint.h> //¶¨ÒåÁËºÜ¶àÊı¾İÀàˆ¦
+#include <stdint.h> //å®šä¹‰äº†å¾ˆå¤šæ•°æ®ç±»å¿
 
 #include "stm32f1xx_hal.h" //for SCB->VTOR,FLASH_PAGE_SIZE
 
-#include "cmsis_os.h" // ÆôÓÃ freertos
+#include "cmsis_os.h" // å¯ç”¨ freertos
 
 #include "serial_hal.h"
 #include "serial_console.h"
@@ -26,7 +26,7 @@
 #include "containerof.h"
 #include "shell.h"
 #include "vim.h"
-//--------------------Ïà¹Øºê¶¨Òå¼°½á¹¹Ìå¶¨v-------------------
+//--------------------ç›¸å…³å®å®šä¹‰åŠç»“æ„ä½“å®šä¹¿-------------------
 osThreadId SerialConsoleTaskHandle;
 osSemaphoreId osSerialRxSemHandle;
 
@@ -47,11 +47,11 @@ const static char iap_logo[]=
 
 static const char division [] = "\r\n----------------------------\r\n";
 
-//------------------------------Ïà¹Øº¯ÊıÉùÃ÷------------------------------
+//------------------------------ç›¸å…³å‡½æ•°å£°æ˜------------------------------
 
 
 
-//------------------------------»ªÀöµÄ·Ö¸îÏß------------------------------
+//------------------------------åä¸½çš„åˆ†å‰²çº¿------------------------------
 
 /*
 	* for freertos;
@@ -158,11 +158,11 @@ void shell_erase_flash(void * arg)
 
 /** 
 	* @brief iap_gets  
-	*        iap Éı¼¶ÈÎÎñ£¬»ñÈ¡Êı¾İÁ÷²¢Ğ´Èëflash
-	*        ×¢£ºÓÉÓÚÔÚĞ´ flash µÄÊ±ºò£¬µ¥Æ¬»ú»áÍ£Ö¹¶ÁÈ¡ flash£¬¼´
-	*        ´úÂë²»»áÔËĞĞ¡£Èç¹ûÔÚĞ´ flash µÄÊ±ºòÓĞÖĞ¶Ï²úÉú£¬µ¥Æ¬»ú
-	*        ¿ÉÄÜ»áËÀ»ú¡£Ğ´ flash µÄÊ±ºò²»·Á°­ dma µÄ´«Êä£¬ËùÒÔ dma
-	*        ½ÓÊÕ»º³åÒª´óÒ»Ğ©£¬ÒªÔÚÏÂÒ»°üÊı¾İ½ÓÊÕÍêĞ´Íêµ±Ç°°üÊı¾İ
+	*        iap å‡çº§ä»»åŠ¡ï¼Œè·å–æ•°æ®æµå¹¶å†™å…¥flash
+	*        æ³¨ï¼šç”±äºåœ¨å†™ flash çš„æ—¶å€™ï¼Œå•ç‰‡æœºä¼šåœæ­¢è¯»å– flashï¼Œå³
+	*        ä»£ç ä¸ä¼šè¿è¡Œã€‚å¦‚æœåœ¨å†™ flash çš„æ—¶å€™æœ‰ä¸­æ–­äº§ç”Ÿï¼Œå•ç‰‡æœº
+	*        å¯èƒ½ä¼šæ­»æœºã€‚å†™ flash çš„æ—¶å€™ä¸å¦¨ç¢ dma çš„ä¼ è¾“ï¼Œæ‰€ä»¥ dma
+	*        æ¥æ”¶ç¼“å†²è¦å¤§ä¸€äº›ï¼Œè¦åœ¨ä¸‹ä¸€åŒ…æ•°æ®æ¥æ”¶å®Œå†™å®Œå½“å‰åŒ…æ•°æ®
 	* @param void
 	* @return NULL
 */
@@ -172,21 +172,21 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 	
 	shell->apparg = (void*)MODIFY_MASK;
 
-	for (iap.size = iap.addr + len ; iap.addr < iap.size ; iap.addr += 4)// f4 ¿ÉÒÔÒÔ word Ğ´Èë
+	for (iap.size = iap.addr + len ; iap.addr < iap.size ; iap.addr += 4)// f4 å¯ä»¥ä»¥ word å†™å…¥
 		iap_write_flash(iap.addr,*value++); 
 	
-	if ((iap.addr & (FLASH_PAGE_SIZE-1)) == 0)//Çå¿ÕÏÂÒ»Ò³
+	if ((iap.addr & (FLASH_PAGE_SIZE-1)) == 0)//æ¸…ç©ºä¸‹ä¸€é¡µ
 		iap_erase_flash(iap.addr ,1) ;
 	else
-		printl(".",1);//´òÓ¡Ò»¸öµãÒÔÊ¾Çå°×
+		printl(".",1);//æ‰“å°ä¸€ä¸ªç‚¹ä»¥ç¤ºæ¸…ç™½
 }
 
 
 
 /**
 	* @brief    shell_iap_command
-	*           ÃüÁîĞĞÏìÓ¦º¯Êı
-	* @param    arg  : ÃüÁîĞĞÄÚ´æÖ¸Õë
+	*           å‘½ä»¤è¡Œå“åº”å‡½æ•°
+	* @param    arg  : å‘½ä»¤è¡Œå†…å­˜æŒ‡é’ˆ
 	* @return   void
 */
 void shell_iap_command(void * arg)
@@ -195,17 +195,17 @@ void shell_iap_command(void * arg)
 
 	struct shell_input * shell = container_of(arg, struct shell_input, cmdline);
 	
-	shell->gets = iap_gets;//´®¿ÚÊı¾İÁ÷»ñÈ¡ÖÁ iap_gets
+	shell->gets = iap_gets;//ä¸²å£æ•°æ®æµè·å–è‡³ iap_gets
 
 	argc = cmdline_param((char*)arg,&erasesize,1);
 
 	iap.addr = (SCB->VTOR == FLASH_BASE) ? APP_ADDR : IAP_ADDR;
 	iap.size = (argc == 1) ? erasesize : 1 ;
 
-	//ÓÉÓÚÒªĞ´Íê×îºóÒ»°üÊı¾İ²ÅÄÜÉÏËø£¬ËùÒÔÉÏËø²»·ÅÔÚÕâ
+	//ç”±äºè¦å†™å®Œæœ€åä¸€åŒ…æ•°æ®æ‰èƒ½ä¸Šé”ï¼Œæ‰€ä»¥ä¸Šé”ä¸æ”¾åœ¨è¿™
 	iap_unlock_flash();
 	iap_erase_flash(iap.addr , iap.size);
-	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//ÇåÆÁ
+	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//æ¸…å±
 	serial_recv_reset(HAL_RX_BUF_SIZE/2);
 }
 
@@ -222,7 +222,7 @@ void task_SerialConsole(void const * argument)
 	
 	for(;;)
 	{
-		// µÈ´ıĞÅºÅÁ¿Ê±¼ä£¬ÔÚ iap Ä£Ê½ÖĞµÈ´ı³¬¹ı 1.6 s µÄÊ±¼äÊÓÎª iap ½ÓÊÕ½áÊø
+		// ç­‰å¾…ä¿¡å·é‡æ—¶é—´ï¼Œåœ¨ iap æ¨¡å¼ä¸­ç­‰å¾…è¶…è¿‡ 1.6 s çš„æ—¶é—´è§†ä¸º iap æ¥æ”¶ç»“æŸ
 		wait = serial_shell.apparg == (void*)MODIFY_MASK ? 1600 : osWaitForever;
 		
 		if (osOK == osSemaphoreWait(osSerialRxSemHandle,wait))
@@ -244,9 +244,9 @@ void task_SerialConsole(void const * argument)
 
 /**
 	* @brief    _syscfg_fgets
-	*          »ñÈ¡ syscfg ĞÅÏ¢£¬ÓÉ shell_into_edit µ÷ÓÃ
+	*          è·å– syscfg ä¿¡æ¯ï¼Œç”± shell_into_edit è°ƒç”¨
 	* @param
-	* @return   ³É¹¦ ·µ»ØVIM_FILE_OK
+	* @return   æˆåŠŸ è¿”å›VIM_FILE_OK
 */
 uint32_t _syscfg_fgets(char * fpath, char * fdata,uint16_t * fsize)
 {
@@ -266,7 +266,7 @@ uint32_t _syscfg_fgets(char * fpath, char * fdata,uint16_t * fsize)
 
 /**
 	* @brief    _syscfg_fputs
-	*          ¸üĞÂ syscfg ĞÅÏ¢£¬ÓÉ shell_into_edit µ÷ÓÃ
+	*          æ›´æ–° syscfg ä¿¡æ¯ï¼Œç”± shell_into_edit è°ƒç”¨
 	* @param
 	* @return   void
 */
@@ -279,8 +279,8 @@ void _syscfg_fputs(char * fpath, char * fdata,uint32_t fsize)
 
 /**
 	* @brief    _shell_edit_syscfg
-	*           ÃüÁîĞĞ±à¼­ syscfg ĞÅÏ¢
-	* @param    arg  ÃüÁîĞĞÄÚ´æ
+	*           å‘½ä»¤è¡Œç¼–è¾‘ syscfg ä¿¡æ¯
+	* @param    arg  å‘½ä»¤è¡Œå†…å­˜
 	* @return   void
 */
 void _shell_edit_syscfg(void * arg)
@@ -294,7 +294,7 @@ void serial_console_init(char * info)
 	hal_serial_init();
 
 	printk("\r\n");
-	color_printk(purple,"%s",info);//´òÓ¡¿ª»úĞÅÏ¢»òÕß¿ØÖÆÌ¨ĞÅÏ¢
+	color_printk(purple,"%s",info);//æ‰“å°å¼€æœºä¿¡æ¯æˆ–è€…æ§åˆ¶å°ä¿¡æ¯
 
 	shell_register_command("top"   ,task_list);
 	shell_register_command("ps"    ,task_runtime);
@@ -308,7 +308,7 @@ void serial_console_init(char * info)
 		shell_register_confirm("update-iap",shell_iap_command,"sure to update iap?");
 
 	osSemaphoreDef(osSerialRxSem);
-	osSerialRxSemHandle = osSemaphoreCreate(osSemaphore(osSerialRxSem), 1); //´´½¨ÖĞ¶ÏĞÅºÅâY
+	osSerialRxSemHandle = osSemaphoreCreate(osSemaphore(osSerialRxSem), 1); //åˆ›å»ºä¸­æ–­ä¿¡å·é‡¿
   
 	osThreadDef(SerialConsole, task_SerialConsole, osPriorityNormal, 0, 168+(sizeof(struct shell_input)/4));
 	SerialConsoleTaskHandle = osThreadCreate(osThread(SerialConsole), NULL);

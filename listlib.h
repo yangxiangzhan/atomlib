@@ -1,30 +1,30 @@
-// Ë«ÏòÁ´±íÎÄ¼þ£¬Ô´×Ô linux 
+// åŒå‘é“¾è¡¨æ–‡ä»¶ï¼Œæºè‡ª linux 
 #ifndef _LIST_HEAD_H
 #define _LIST_HEAD_H
 
 #include "containerof.h"
 
 
-// Ë«ÏòÁ´±í½Úµã
+// åŒå‘é“¾è¡¨èŠ‚ç‚¹
 struct list_head {
     struct list_head *next, *prev;
 };
 
-// ³õÊ¼»¯½Úµã£ºÉèÖÃname½ÚµãµÄÇ°¼Ì½ÚµãºÍºó¼Ì½Úµã¶¼ÊÇÖ¸Ïòname±¾Éí¡£
+// åˆå§‹åŒ–èŠ‚ç‚¹ï¼šè®¾ç½®nameèŠ‚ç‚¹çš„å‰ç»§èŠ‚ç‚¹å’ŒåŽç»§èŠ‚ç‚¹éƒ½æ˜¯æŒ‡å‘nameæœ¬èº«ã€‚
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
 
-// ¶¨Òå±íÍ·(½Úµã)£ºÐÂ½¨Ë«ÏòÁ´±í±íÍ·name£¬²¢ÉèÖÃnameµÄÇ°¼Ì½ÚµãºÍºó¼Ì½Úµã¶¼ÊÇÖ¸Ïòname±¾Éí¡£
+// å®šä¹‰è¡¨å¤´(èŠ‚ç‚¹)ï¼šæ–°å»ºåŒå‘é“¾è¡¨è¡¨å¤´nameï¼Œå¹¶è®¾ç½®nameçš„å‰ç»§èŠ‚ç‚¹å’ŒåŽç»§èŠ‚ç‚¹éƒ½æ˜¯æŒ‡å‘nameæœ¬èº«ã€‚
 #define LIST_HEAD(name) \
     struct list_head name = LIST_HEAD_INIT(name)
 
-// ³õÊ¼»¯½Úµã£º½«list½ÚµãµÄÇ°¼Ì½ÚµãºÍºó¼Ì½Úµã¶¼ÊÇÖ¸Ïòlist±¾Éí¡£
+// åˆå§‹åŒ–èŠ‚ç‚¹ï¼šå°†listèŠ‚ç‚¹çš„å‰ç»§èŠ‚ç‚¹å’ŒåŽç»§èŠ‚ç‚¹éƒ½æ˜¯æŒ‡å‘listæœ¬èº«ã€‚
 static inline void INIT_LIST_HEAD(struct list_head *list)
 {
     list->next = list;
     list->prev = list;
 }
 
-// Ìí¼Ó½Úµã£º½«new²åÈëµ½prevºÍnextÖ®¼ä¡£
+// æ·»åŠ èŠ‚ç‚¹ï¼šå°†newæ’å…¥åˆ°prevå’Œnextä¹‹é—´ã€‚
 static inline void __list_add(struct list_head *new,
                   struct list_head *prev,
                   struct list_head *next)
@@ -35,45 +35,45 @@ static inline void __list_add(struct list_head *new,
     prev->next = new;
 }
 
-// Ìí¼Ónew½Úµã£º½«newÌí¼Óµ½headÖ®ºó£¬ÊÇnew³ÆÎªheadµÄºó¼Ì½Úµã¡£
+// æ·»åŠ newèŠ‚ç‚¹ï¼šå°†newæ·»åŠ åˆ°headä¹‹åŽï¼Œæ˜¯newç§°ä¸ºheadçš„åŽç»§èŠ‚ç‚¹ã€‚
 static inline void list_add(struct list_head *new, struct list_head *head)
 {
     __list_add(new, head, head->next);
 }
 
-// Ìí¼Ónew½Úµã£º½«newÌí¼Óµ½headÖ®Ç°£¬¼´½«newÌí¼Óµ½Ë«Á´±íµÄÄ©Î²¡£
+// æ·»åŠ newèŠ‚ç‚¹ï¼šå°†newæ·»åŠ åˆ°headä¹‹å‰ï¼Œå³å°†newæ·»åŠ åˆ°åŒé“¾è¡¨çš„æœ«å°¾ã€‚
 static inline void list_add_tail(struct list_head *new, struct list_head *head)
 {
     __list_add(new, head->prev, head);
 }
 
-// ´ÓË«Á´±íÖÐÉ¾³ýentry½Úµã¡£
+// ä»ŽåŒé“¾è¡¨ä¸­åˆ é™¤entryèŠ‚ç‚¹ã€‚
 static inline void __list_del(struct list_head * prev, struct list_head * next)
 {
     next->prev = prev;
     prev->next = next;
 }
 
-// ´ÓË«Á´±íÖÐÉ¾³ýentry½Úµã¡£
+// ä»ŽåŒé“¾è¡¨ä¸­åˆ é™¤entryèŠ‚ç‚¹ã€‚
 static inline void list_del(struct list_head *entry)
 {
     __list_del(entry->prev, entry->next);
 }
 
-// ´ÓË«Á´±íÖÐÉ¾³ýentry½Úµã¡£
+// ä»ŽåŒé“¾è¡¨ä¸­åˆ é™¤entryèŠ‚ç‚¹ã€‚
 static inline void __list_del_entry(struct list_head *entry)
 {
     __list_del(entry->prev, entry->next);
 }
 
-// ´ÓË«Á´±íÖÐÉ¾³ýentry½Úµã£¬²¢½«entry½ÚµãµÄÇ°¼Ì½ÚµãºÍºó¼Ì½Úµã¶¼Ö¸Ïòentry±¾Éí¡£
+// ä»ŽåŒé“¾è¡¨ä¸­åˆ é™¤entryèŠ‚ç‚¹ï¼Œå¹¶å°†entryèŠ‚ç‚¹çš„å‰ç»§èŠ‚ç‚¹å’ŒåŽç»§èŠ‚ç‚¹éƒ½æŒ‡å‘entryæœ¬èº«ã€‚
 static inline void list_del_init(struct list_head *entry)
 {
     __list_del_entry(entry);
     INIT_LIST_HEAD(entry);
 }
 
-// ÓÃnew½ÚµãÈ¡´úold½Úµã
+// ç”¨newèŠ‚ç‚¹å–ä»£oldèŠ‚ç‚¹
 static inline void list_replace(struct list_head *old,
                 struct list_head *new)
 {
@@ -83,14 +83,14 @@ static inline void list_replace(struct list_head *old,
     new->prev->next = new;
 }
 
-// Ë«Á´±íÊÇ·ñÎª¿Õ
+// åŒé“¾è¡¨æ˜¯å¦ä¸ºç©º
 static inline int list_empty(const struct list_head *head)
 {
     return head->next == head;
 }
 
 
-// ±éÀúË«ÏòÁ´±í
+// éåŽ†åŒå‘é“¾è¡¨
 #define list_for_each(pos, head) \
     for (pos = (head)->next; pos != (head); pos = pos->next)
 

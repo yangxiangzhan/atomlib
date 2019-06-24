@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
   * @file           serial_hal.h
-  * @author         ¹ÅÃ´Äş
+  * @author         å¤ä¹ˆå®
   * @brief          serial_console file
-                    ´®¿Ú¿ØÖÆÌ¨Ó²¼şÍ·ÎÄ¼ş
+                    ä¸²å£æ§åˆ¶å°ç¡¬ä»¶å¤´æ–‡ä»¶
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -17,9 +17,9 @@
 #endif
 
 
-#define HAL_RX_PACKET_SIZE 4     //Ó²¼ş½ÓÊÕµ½µÄ»º³å¶ÓÁĞ£¬ÒÔÊı¾İ°üÎªµ¥Î»
-#define HAL_RX_BUF_SIZE    (512*2+1)  //Ó²¼ş½ÓÊÕ»º³åÇø
-#define HAL_TX_BUF_SIZE    512  //Ó²¼ş·¢ËÍ»º³åÇø
+#define HAL_RX_PACKET_SIZE 4     //ç¡¬ä»¶æ¥æ”¶åˆ°çš„ç¼“å†²é˜Ÿåˆ—ï¼Œä»¥æ•°æ®åŒ…ä¸ºå•ä½
+#define HAL_RX_BUF_SIZE    (512*2+1)  //ç¡¬ä»¶æ¥æ”¶ç¼“å†²åŒº
+#define HAL_TX_BUF_SIZE    512  //ç¡¬ä»¶å‘é€ç¼“å†²åŒº
 
 
 void serial_puts(char * buf,uint16_t len);

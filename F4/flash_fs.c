@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
   * @file           flash_fs.c
-  * @author         ¹ÅÃ´Äş
-  * @brief          ÔÚ stm32 Æ¬ÉÏ flash ÉÏ¹ÒÔØ littlefs ÎÄ¼şÏµÍ³
+  * @author         å¤ä¹ˆå®
+  * @brief          åœ¨ stm32 ç‰‡ä¸Š flash ä¸ŠæŒ‚è½½ littlefs æ–‡ä»¶ç³»ç»Ÿ
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -32,8 +32,8 @@
 
 
 /*
- * Ê¹ÓÃ¶¯Ì¬ÄÚ´æÊ±´ò¿ª´Ëºê¶¨Òå¡£
- * ĞèÒªĞŞ¸Ä "lfs_util.h" ÀïµÄ¶¯Ì¬ÄÚ´æ²Ù×÷º¯Êı
+ * ä½¿ç”¨åŠ¨æ€å†…å­˜æ—¶æ‰“å¼€æ­¤å®å®šä¹‰ã€‚
+ * éœ€è¦ä¿®æ”¹ "lfs_util.h" é‡Œçš„åŠ¨æ€å†…å­˜æ“ä½œå‡½æ•°
 */ 
 #define LFS_MALLOC 
 
@@ -139,24 +139,24 @@ int flash_erase(const struct lfs_config *c, lfs_block_t block)
 	uint32_t SectorError;
     FLASH_EraseInitTypeDef FlashEraseInit;
 
-	FlashEraseInit.TypeErase    = FLASH_TYPEERASE_SECTORS;       //²Á³ıÀàĞÍ£¬ÉÈÇø²Á³ı 
-	FlashEraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;      //µçÑ¹·¶Î§£¬VCC=2.7~3.6VÖ®¼ä!!
+	FlashEraseInit.TypeErase    = FLASH_TYPEERASE_SECTORS;       //æ“¦é™¤ç±»å‹ï¼Œæ‰‡åŒºæ“¦é™¤ 
+	FlashEraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;      //ç”µå‹èŒƒå›´ï¼ŒVCC=2.7~3.6Vä¹‹é—´!!
 
 	if (block == FLASH_SPECIAL_BLOCK)
 	{
-		FlashEraseInit.Sector       = 12; //ÉÈÇø
-		FlashEraseInit.NbSectors    = 5;  //²Á³ı 0x20000
+		FlashEraseInit.Sector       = 12; //æ‰‡åŒº
+		FlashEraseInit.NbSectors    = 5;  //æ“¦é™¤ 0x20000
 	}
 	else
 	if (block > FLASH_SPECIAL_BLOCK)
 	{
-		FlashEraseInit.Sector = 16 + block - FLASH_SPECIAL_BLOCK; //ÉÈÇø
-		FlashEraseInit.NbSectors = 1;  //Ò»´ÎÖ»²Á³ıÒ»¸öÉÈÇø
+		FlashEraseInit.Sector = 16 + block - FLASH_SPECIAL_BLOCK; //æ‰‡åŒº
+		FlashEraseInit.NbSectors = 1;  //ä¸€æ¬¡åªæ“¦é™¤ä¸€ä¸ªæ‰‡åŒº
 	}
 	else
 	{
-		FlashEraseInit.Sector = 12 - (FLASH_SPECIAL_BLOCK - block); //ÉÈÇø
-		FlashEraseInit.NbSectors = 1;  //Ò»´ÎÖ»²Á³ıÒ»¸öÉÈÇø
+		FlashEraseInit.Sector = 12 - (FLASH_SPECIAL_BLOCK - block); //æ‰‡åŒº
+		FlashEraseInit.NbSectors = 1;  //ä¸€æ¬¡åªæ“¦é™¤ä¸€ä¸ªæ‰‡åŒº
 	}
 
 	HAL_FLASH_Unlock();

@@ -3,7 +3,7 @@
 
 
 
-#define UPDATE_PACKAGE_AT_STM32_ADRR 0x08060000 //telnet/´®¿Ú Éı¼¶°ü´æ·ÅÎ»ÖÃ
+#define UPDATE_PACKAGE_AT_STM32_ADRR 0x08060000 //telnet/ä¸²å£ å‡çº§åŒ…å­˜æ”¾ä½ç½®
 
 
 
@@ -12,10 +12,10 @@
 #define SYSCFG_INFO_SIZE FLASH_PAGE_SIZE
 
 
-// stm32f429bit6 ramÆğÊ¼µØÖ·Îª 0x20000000 £¬´óĞ¡ 0x30000
-// stm32f103vet6 ramÆğÊ¼µØÖ·Îª 0x20000000 £¬´óĞ¡ 0x10000
-// Ö±½ÓÓÃ ram Çø¸ß×Ö¶ÎµÄµØÖ·×÷Îª½ø iap Ä£Ê½µÄ±êÖ¾Î»
-// ÔÚ app ÖĞ£¬ÏÈ¶Ô±êÖ¾Î»½øĞĞÖÃÎ»ÌáÊ¾£¬È»ºóÌø×ªµ½ iap 
+// stm32f429bit6 ramèµ·å§‹åœ°å€ä¸º 0x20000000 ï¼Œå¤§å° 0x30000
+// stm32f103vet6 ramèµ·å§‹åœ°å€ä¸º 0x20000000 ï¼Œå¤§å° 0x10000
+// ç›´æ¥ç”¨ ram åŒºé«˜å­—æ®µçš„åœ°å€ä½œä¸ºè¿› iap æ¨¡å¼çš„æ ‡å¿—ä½
+// åœ¨ app ä¸­ï¼Œå…ˆå¯¹æ ‡å¿—ä½è¿›è¡Œç½®ä½æç¤ºï¼Œç„¶åè·³è½¬åˆ° iap 
 #define IAP_FLAG_ADDR       0x2002FF00 
 
 #define IAP_UPDATE_CMD_FLAG 0x1234ABCD
@@ -35,7 +35,7 @@
 #define APP_CORRECT()     (0x20000000 == ((*(uint32_t *)(APP_ADDR))&0x2FFE0000))
 
 
-//------------------------------´®¿Ú IAP Ïà¹Ø------------------------------
+//------------------------------ä¸²å£ IAP ç›¸å…³------------------------------
 
 int iap_erase_flash(uint32_t eraseaddr,uint32_t erasesize);
 
@@ -53,7 +53,7 @@ void syscfg_erase(void);
 void syscfg_write(char * info , uint32_t len);
 
 
-//------------------------------¿ØÖÆÌ¨ÃüÁî------------------------------
+//------------------------------æ§åˆ¶å°å‘½ä»¤------------------------------
 
 void shell_reboot_command(void * arg);
 

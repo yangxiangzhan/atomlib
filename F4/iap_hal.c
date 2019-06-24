@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
   * @file           iap_hal.c
-  * @author         ¹ÅÃ´Äş
+  * @author         å¤ä¹ˆå®
   * @brief          serial_console file
-                    ÔÚÏßÉı¼¶¹¦ÄÜÓ²¼ş³éÏó²¿·Ö
+                    åœ¨çº¿å‡çº§åŠŸèƒ½ç¡¬ä»¶æŠ½è±¡éƒ¨åˆ†
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -18,14 +18,14 @@
 #include "iap_hal.h"
 
 
-//------------------------------´®¿Ú IAP Ïà¹Ø------------------------------
+//------------------------------ä¸²å£ IAP ç›¸å…³------------------------------
 
 
 
 /**
-	* @brief    iap_erase_sector console ²Á³ı flash Ä³¸öÉÈÇø
-	* @param    ¿Õ
-	* @return   £¨HAL_OK£©¼È0 ÎªÕı³££¬·ñÔò³ö´í
+	* @brief    iap_erase_sector console æ“¦é™¤ flash æŸä¸ªæ‰‡åŒº
+	* @param    ç©º
+	* @return   ï¼ˆHAL_OKï¼‰æ—¢0 ä¸ºæ­£å¸¸ï¼Œå¦åˆ™å‡ºé”™
 */
 int iap_erase_sector(uint32_t SECTOR , uint32_t NbSectors)
 {
@@ -33,10 +33,10 @@ int iap_erase_sector(uint32_t SECTOR , uint32_t NbSectors)
     FLASH_EraseInitTypeDef FlashEraseInit;
 	HAL_StatusTypeDef HAL_Status;
 	
-	FlashEraseInit.TypeErase    = FLASH_TYPEERASE_SECTORS;       //²Á³ıÀàĞÍ£¬ÉÈÇø²Á³ı 
-	FlashEraseInit.Sector       = SECTOR;                        //ÉÈÇø
-	FlashEraseInit.NbSectors    = NbSectors;                     //Ò»´ÎÖ»²Á³ıÒ»¸öÉÈÇø
-	FlashEraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;      //µçÑ¹·¶Î§£¬VCC=2.7~3.6VÖ®¼ä!!
+	FlashEraseInit.TypeErase    = FLASH_TYPEERASE_SECTORS;       //æ“¦é™¤ç±»å‹ï¼Œæ‰‡åŒºæ“¦é™¤ 
+	FlashEraseInit.Sector       = SECTOR;                        //æ‰‡åŒº
+	FlashEraseInit.NbSectors    = NbSectors;                     //ä¸€æ¬¡åªæ“¦é™¤ä¸€ä¸ªæ‰‡åŒº
+	FlashEraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;      //ç”µå‹èŒƒå›´ï¼ŒVCC=2.7~3.6Vä¹‹é—´!!
 	
 	HAL_Status = HAL_FLASHEx_Erase(&FlashEraseInit,&SectorError);
 	
@@ -50,11 +50,11 @@ int iap_get_flash_sector(uint32_t flashaddr,uint32_t * sector)
 	uint32_t SECTOR12 ;
 	uint32_t addr ;
 
-	if (flashaddr < 0x08000000 || flashaddr > 0x08200000)//stm32f429bi ÓĞ 2 M ¿Õ¼ä
+	if (flashaddr < 0x08000000 || flashaddr > 0x08200000)//stm32f429bi æœ‰ 2 M ç©ºé—´
 		return 1;
 
 	addr = flashaddr - 0x08000000;
-	if (addr > 0x100000)//12~23ÉÈÇø·Ö²¼Óë 0~11ÉÈÇø·Ö²¼Ò»Ñù
+	if (addr > 0x100000)//12~23æ‰‡åŒºåˆ†å¸ƒä¸ 0~11æ‰‡åŒºåˆ†å¸ƒä¸€æ ·
 	{
 		SECTOR12 = 12;
 		addr -= 0x100000;
@@ -62,12 +62,12 @@ int iap_get_flash_sector(uint32_t flashaddr,uint32_t * sector)
 	else
 		SECTOR12 = 0 ;
 
-	if ( addr < 0x10000) // 0~3 ÉÈÇøÃ¿Çø 0x4000 ´óĞ¡
+	if ( addr < 0x10000) // 0~3 æ‰‡åŒºæ¯åŒº 0x4000 å¤§å°
 		sectoraddr = addr / 0x4000 ;
 	else
-	if (addr < 0x20000) //ÉÈÇø 4 : 0x08010000 - 0x0801FFFF
+	if (addr < 0x20000) //æ‰‡åŒº 4 : 0x08010000 - 0x0801FFFF
 		sectoraddr = 4;
-	else                // 5~11 ÉÈÇøÃ¿Çø 0x20000 ´óĞ¡
+	else                // 5~11 æ‰‡åŒºæ¯åŒº 0x20000 å¤§å°
 		sectoraddr = 5 + (addr - 0x20000) / 0x20000 ;
 
 	*sector = sectoraddr += SECTOR12;
@@ -77,9 +77,9 @@ int iap_get_flash_sector(uint32_t flashaddr,uint32_t * sector)
 
 
 /**
-	* @brief    iap_erase_flash console ²Á³ı flash Ä³¸öµØÖ·ËùÔÚÉÈÇø
-	* @param    ËùĞè²Á³ıµÄµØÖ·
-	* @return   £¨HAL_OK£©¼È0 ÎªÕı³££¬·ñÔò³ö´í
+	* @brief    iap_erase_flash console æ“¦é™¤ flash æŸä¸ªåœ°å€æ‰€åœ¨æ‰‡åŒº
+	* @param    æ‰€éœ€æ“¦é™¤çš„åœ°å€
+	* @return   ï¼ˆHAL_OKï¼‰æ—¢0 ä¸ºæ­£å¸¸ï¼Œå¦åˆ™å‡ºé”™
 */
 int iap_erase_flash(uint32_t eraseaddr,uint32_t erasesize)
 {
@@ -107,9 +107,9 @@ int iap_erase_flash(uint32_t eraseaddr,uint32_t erasesize)
 
 
 /**
-	* @brief    vUsartHal_IAP_Write console Ğ´ flash
-	* @param    ¿Õ
-	* @return   £¨HAL_OK£©¼È0 ÎªÕı³££¬·ñÔò³ö´í
+	* @brief    vUsartHal_IAP_Write console å†™ flash
+	* @param    ç©º
+	* @return   ï¼ˆHAL_OKï¼‰æ—¢0 ä¸ºæ­£å¸¸ï¼Œå¦åˆ™å‡ºé”™
 */
 int iap_write_flash(uint32_t FlashAddr,uint32_t FlashData)
 {
@@ -119,21 +119,21 @@ int iap_write_flash(uint32_t FlashAddr,uint32_t FlashData)
 
 
 /**
-	* @brief    iap_lock_flash console ÉÏËø flash
-	* @param    ¿Õ
-	* @return   £¨HAL_OK£©¼È0 ÎªÕı³££¬·ñÔò³ö´í
+	* @brief    iap_lock_flash console ä¸Šé” flash
+	* @param    ç©º
+	* @return   ï¼ˆHAL_OKï¼‰æ—¢0 ä¸ºæ­£å¸¸ï¼Œå¦åˆ™å‡ºé”™
 */
 int iap_lock_flash(void)
 {
-	return HAL_FLASH_Lock();// 0 ÎªÕı³£
+	return HAL_FLASH_Lock();// 0 ä¸ºæ­£å¸¸
 }
 
 
 
 /**
-	* @brief    iap_unlock_flash console ½âËø flash
-	* @param    ¿Õ
-	* @return   £¨HAL_OK£©¼È0 ÎªÕı³££¬·ñÔò³ö´í
+	* @brief    iap_unlock_flash console è§£é” flash
+	* @param    ç©º
+	* @return   ï¼ˆHAL_OKï¼‰æ—¢0 ä¸ºæ­£å¸¸ï¼Œå¦åˆ™å‡ºé”™
 */
 int iap_unlock_flash(void)
 {
@@ -148,9 +148,9 @@ int iap_unlock_flash(void)
 
 
 /**
-	* @brief    syscfg_addr »ñÈ¡×îĞÂµÄ syscfg ÎÄ¼şµÄµØÖ·
-	* @param    ¿Õ
-	* @return   syscfg µØÖ·
+	* @brief    syscfg_addr è·å–æœ€æ–°çš„ syscfg æ–‡ä»¶çš„åœ°å€
+	* @param    ç©º
+	* @return   syscfg åœ°å€
 */
 uint32_t syscfg_addr(void)
 {
@@ -159,16 +159,16 @@ uint32_t syscfg_addr(void)
 	uint32_t *schs = (uint32_t *)SYSCFG_ADDR_MIN ;
 	uint32_t *sch ;
 
-	if (*schs == 0xffffffff)//Èç¹ûcfg Ò³ÃæÎŞÄÚÈİ£¬´´½¨ÄÚÈİ
+	if (*schs == 0xffffffff)//å¦‚æœcfg é¡µé¢æ— å†…å®¹ï¼Œåˆ›å»ºå†…å®¹
 	{
 		iap_unlock_flash();
 		iap_write_flash(SYSCFG_ADDR_MIN ,cfgindex);
-		iap_write_flash(SYSCFG_ADDR_MIN + 4 ,(*(uint32_t*)" \r\n"));//¼ÓÈë½áÊø·û
+		iap_write_flash(SYSCFG_ADDR_MIN + 4 ,(*(uint32_t*)" \r\n"));//åŠ å…¥ç»“æŸç¬¦
 		iap_lock_flash();
 		return (SYSCFG_ADDR_MIN);
 	}
 
-	while(sche - schs > 1) //¶ş·Ö·¨²éÕÒµ½×îĞÂµÄ syscfg ½áÎ²
+	while(sche - schs > 1) //äºŒåˆ†æ³•æŸ¥æ‰¾åˆ°æœ€æ–°çš„ syscfg ç»“å°¾
 	{
 		sch = schs + (sche - schs) / 2;
 		if (*sch == 0xffffffff)
@@ -177,10 +177,10 @@ uint32_t syscfg_addr(void)
 			schs = sch;
 	}
 
-	//ËÄ×Ö½Ú¶ÔÆëÄÚ´æ£¬»ØËİÕÒµ½ cfg: ¿ªÍ·
+	//å››å­—èŠ‚å¯¹é½å†…å­˜ï¼Œå›æº¯æ‰¾åˆ° cfg: å¼€å¤´
 	for (sch = schs ; sch >= (uint32_t*)SYSCFG_ADDR_MIN ; --sch)
 	{
-		if (cfgindex == (*sch)) //ÕÒµ½ÁË·µ»Ø´ËµØÖ·
+		if (cfgindex == (*sch)) //æ‰¾åˆ°äº†è¿”å›æ­¤åœ°å€
 			return (uint32_t)sch;
 	}
 
@@ -189,8 +189,8 @@ uint32_t syscfg_addr(void)
 
 
 /**
-	* @brief    erase_syscfg ²Á³ı syscfg µØÖ·ÇøÓòËùÓĞÊı¾İ
-	* @param    ¿Õ
+	* @brief    erase_syscfg æ“¦é™¤ syscfg åœ°å€åŒºåŸŸæ‰€æœ‰æ•°æ®
+	* @param    ç©º
 	* @return   void
 */
 void syscfg_erase(void)
@@ -203,8 +203,8 @@ void syscfg_erase(void)
 
 
 /**
-	* @brief    write_syscfg Ğ´Èë syscfg Êı¾İ
-	* @param    ¿Õ
+	* @brief    write_syscfg å†™å…¥ syscfg æ•°æ®
+	* @param    ç©º
 	* @return  
 */
 void syscfg_write(char * info , uint32_t len)
@@ -214,10 +214,10 @@ void syscfg_write(char * info , uint32_t len)
 	uint32_t *schs = (uint32_t *)SYSCFG_ADDR_MIN;
 	uint32_t *sch  = NULL;
 
-	if( *schs == 0xffffffff) //Èç¹ûÇøÓòÄÚÎ´ÓĞ config ĞÅÏ¢
+	if( *schs == 0xffffffff) //å¦‚æœåŒºåŸŸå†…æœªæœ‰ config ä¿¡æ¯
 		goto WRITE_SYSCONFIG;
 
-	while( sche - schs > 1)//¶ş·Ö·¨²éÕÒµ½×îĞÂµÄ syscfg ½áÎ²
+	while( sche - schs > 1)//äºŒåˆ†æ³•æŸ¥æ‰¾åˆ°æœ€æ–°çš„ syscfg ç»“å°¾
 	{
 		sch = schs + (sche - schs) / 2;
 		if ( *sch == 0xffffffff)
@@ -226,15 +226,15 @@ void syscfg_write(char * info , uint32_t len)
 			schs = sch;
 	}
 
-	if ( (uint32_t)sche + len > SYSCFG_ADDR_MAX)//Ê£Óà¿Õ¼ä²»×ãÒÔĞ´ÕâÒ»°üÊı¾İ
+	if ( (uint32_t)sche + len > SYSCFG_ADDR_MAX)//å‰©ä½™ç©ºé—´ä¸è¶³ä»¥å†™è¿™ä¸€åŒ…æ•°æ®
 	{
-		syscfg_erase();       //Çå¿Õ syscfg ÇøÓò
-		sch = (uint32_t *)SYSCFG_ADDR_MIN;//´ÓÍ·¿ªÊ¼Ğ´
+		syscfg_erase();       //æ¸…ç©º syscfg åŒºåŸŸ
+		sch = (uint32_t *)SYSCFG_ADDR_MIN;//ä»å¤´å¼€å§‹å†™
 	}
 	else
 		sch = sche;
 
-WRITE_SYSCONFIG: //Ğ´Èë syscfg Êı¾İ
+WRITE_SYSCONFIG: //å†™å…¥ syscfg æ•°æ®
 
 	iap_unlock_flash();
 

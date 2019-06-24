@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
   * @file           vim.c
-  * @author         ¹ÅÃ´Äş
-  * @brief          ÎÄ±¾±à¼­Æ÷£¬ÒÀÀµ shell.h/shell.c
+  * @author         å¤ä¹ˆå®
+  * @brief          æ–‡æœ¬ç¼–è¾‘å™¨ï¼Œä¾èµ– shell.h/shell.c
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -11,7 +11,7 @@
   */
 /* Includes ---------------------------------------------------*/
 #include <string.h>
-#include <stdint.h> //¶¨ÒåÁËºÜ¶àÊı¾İÀàĞÍ
+#include <stdint.h> //å®šä¹‰äº†å¾ˆå¤šæ•°æ®ç±»å‹
 #include "shell.h"
 #include "vim.h"
 
@@ -26,30 +26,30 @@ enum VIM_STATE
 
 struct vim_edit_buf
 {
-	vim_fputs_t fputs; //ÎÄ¼şÊä³ö
-	char *      fpath; //ÃüÁîĞĞÊäÈëµÄ±à¼­ÎÄ¼şÃû
-	char *      edit;  //µ±Ç°±à¼­Î»ÖÃ
-	uint16_t    rowmax;//ÎÄ¼ş¹²ÓĞ¼¸ĞĞ
-	uint16_t    rows;  //ÎÄ¼ş¹â±êËùÔÚĞĞÎ»ÖÃ
-	uint16_t    cols;  //ÎÄ¼ş¹â±êËùÔÚÁĞÎ»ÖÃ
-	uint16_t    tail;  //ÎÄ¼şÎ²²¿Î»ÖÃ
-	char  editbuf[VIM_MAX_EDIT]; //ÎÄ¼ş±à¼­ÄÚ´æ 
-	char  printbuf[VIM_MAX_EDIT];//ÎÄ¼ş´òÓ¡ÖĞ×ªÄÚ´æ
+	vim_fputs_t fputs; //æ–‡ä»¶è¾“å‡º
+	char *      fpath; //å‘½ä»¤è¡Œè¾“å…¥çš„ç¼–è¾‘æ–‡ä»¶å
+	char *      edit;  //å½“å‰ç¼–è¾‘ä½ç½®
+	uint16_t    rowmax;//æ–‡ä»¶å…±æœ‰å‡ è¡Œ
+	uint16_t    rows;  //æ–‡ä»¶å…‰æ ‡æ‰€åœ¨è¡Œä½ç½®
+	uint16_t    cols;  //æ–‡ä»¶å…‰æ ‡æ‰€åœ¨åˆ—ä½ç½®
+	uint16_t    tail;  //æ–‡ä»¶å°¾éƒ¨ä½ç½®
+	char  editbuf[VIM_MAX_EDIT]; //æ–‡ä»¶ç¼–è¾‘å†…å­˜ 
+	char  printbuf[VIM_MAX_EDIT];//æ–‡ä»¶æ‰“å°ä¸­è½¬å†…å­˜
 	char  option;
 	char  state;
 };
 
 /* Private macro ------------------------------------------------------------*/
 
-//#define VIM_USE_HEAP  //¿ª¹Øºê£¬ÊÇ·ñÊ¹ÓÃ¶ÑÄÚ´æ£¬ÆÁ±ÎµôÔòÊ¹ÓÃ¾²Ì¬ÄÚ´æ
+//#define VIM_USE_HEAP  //å¼€å…³å®ï¼Œæ˜¯å¦ä½¿ç”¨å †å†…å­˜ï¼Œå±è”½æ‰åˆ™ä½¿ç”¨é™æ€å†…å­˜
 
-#ifdef  VIM_USE_HEAP  //Èç¹ûÊ¹ÓÃ¶ÑÄÚ´æ£¬ĞèÒªÌá¹© VIM_MALLOC ºÍ VIM_FREE 
+#ifdef  VIM_USE_HEAP  //å¦‚æœä½¿ç”¨å †å†…å­˜ï¼Œéœ€è¦æä¾› VIM_MALLOC å’Œ VIM_FREE 
 
 	#include "heaplib.h"
 	#define VIM_MALLOC(bytes) MALLOC(bytes)
 	#define VIM_FREE(buf)     FREE(buf)
 	
-#else //Ê¹ÓÃ¾²Ì¬±äÁ¿µÄÇé¿ö
+#else //ä½¿ç”¨é™æ€å˜é‡çš„æƒ…å†µ
 
 	static struct vim_edit_buf vimsbuf = {0};
 	#define VIM_MALLOC(bytes)  ((vimsbuf.fputs == NULL)?((void*)(&vimsbuf)):NULL)
@@ -71,79 +71,79 @@ static const char editing_title[] = "Editing...press ESC to quit";
 
 /**
 	* @brief    cursor_up
-	*           ±à¼­Æ÷ÏìÓ¦ÉÏ¼ıÍ·
-	* @param    vim  ±à¼­ÄÚ´æ
+	*           ç¼–è¾‘å™¨å“åº”ä¸Šç®­å¤´
+	* @param    vim  ç¼–è¾‘å†…å­˜
 	* @return   void
 */
 static void cursor_up(struct vim_edit_buf * vimedit)
 {				
-	if (vimedit->rows > 1) { //Èç¹û±à¼­ËùÔÚÎ»ÖÃÎªµÚÒ»ĞĞ£¬Ôò²»½øĞĞÏìÓ¦
+	if (vimedit->rows > 1) { //å¦‚æœç¼–è¾‘æ‰€åœ¨ä½ç½®ä¸ºç¬¬ä¸€è¡Œï¼Œåˆ™ä¸è¿›è¡Œå“åº”
 	
-		char   * ptr = vimedit->edit; //µ±Ç°±à¼­Î»ÖÃ
+		char   * ptr = vimedit->edit; //å½“å‰ç¼–è¾‘ä½ç½®
 		uint32_t cnt;
 		
 		if ((--vimedit->rows) > 1) {
-			for ( ; *  ptr   != '\n' ; --ptr ); //»Øµ½ÉÏÒ»ĞĞ½áÎ²´¦µÄ'\n'
-			for ( ; *(ptr-1) != '\n' ; --ptr ); //ÉÏÒ»ĞĞ¿ªÍ·
+			for ( ; *  ptr   != '\n' ; --ptr ); //å›åˆ°ä¸Šä¸€è¡Œç»“å°¾å¤„çš„'\n'
+			for ( ; *(ptr-1) != '\n' ; --ptr ); //ä¸Šä¸€è¡Œå¼€å¤´
 		}
-		else {//Èç¹ûÏÖÔÚÊÇµÚ¶şĞĞ£¬Ôò»Øµ½µÚÒ»ĞĞËùÔÚÎ»ÖÃ
+		else {//å¦‚æœç°åœ¨æ˜¯ç¬¬äºŒè¡Œï¼Œåˆ™å›åˆ°ç¬¬ä¸€è¡Œæ‰€åœ¨ä½ç½®
 			ptr = vimedit->editbuf;
 		}
 
-		for (cnt = 1;cnt < vimedit->cols ;++cnt) { //¼ÆËãµ±Ç°ĞĞµÄÁĞÎ»ÖÃ
-			if (*ptr == '\r' || *ptr == '\n')      //µ±Ç°ĞĞ±ÈÏÂÒ»ĞĞ¶Ì£¬ÔòÃ»ÓĞ°ì·¨»Øµ½ÏÂÒ»ĞĞËùÔÚµÄÁĞÎ»ÖÃ
+		for (cnt = 1;cnt < vimedit->cols ;++cnt) { //è®¡ç®—å½“å‰è¡Œçš„åˆ—ä½ç½®
+			if (*ptr == '\r' || *ptr == '\n')      //å½“å‰è¡Œæ¯”ä¸‹ä¸€è¡ŒçŸ­ï¼Œåˆ™æ²¡æœ‰åŠæ³•å›åˆ°ä¸‹ä¸€è¡Œæ‰€åœ¨çš„åˆ—ä½ç½®
 				break;
 			else
 				++ptr;
 		}
 		
 		vimedit->cols = cnt;
-		vimedit->edit = ptr; //¸üĞÂµ±Ç°±à¼­Î»ÖÃ
-		printk("\033[%d;%dH",vimedit->rows + 1,vimedit->cols); //´òÓ¡¹â±êÎ»ÖÃ
+		vimedit->edit = ptr; //æ›´æ–°å½“å‰ç¼–è¾‘ä½ç½®
+		printk("\033[%d;%dH",vimedit->rows + 1,vimedit->cols); //æ‰“å°å…‰æ ‡ä½ç½®
 	}
 }
 
 
 /**
 	* @brief    cursor_down
-	*           ±à¼­Æ÷ÏìÓ¦ÏÂ¼ıÍ·
-	* @param    vim  ±à¼­ÄÚ´æ
+	*           ç¼–è¾‘å™¨å“åº”ä¸‹ç®­å¤´
+	* @param    vim  ç¼–è¾‘å†…å­˜
 	* @return   void
 */
 static void cursor_down(struct vim_edit_buf * vimedit)
 {
-	if (vimedit->rows < vimedit->rowmax){	 //Èç¹ûµ±Ç°ĞĞ²»ÊÇÎÄ±¾×îºóÒ»ĞĞ£¬ÏìÓ¦ÏÂ¼ıÍ·
+	if (vimedit->rows < vimedit->rowmax){	 //å¦‚æœå½“å‰è¡Œä¸æ˜¯æ–‡æœ¬æœ€åä¸€è¡Œï¼Œå“åº”ä¸‹ç®­å¤´
 	
 		char   * ptr = vimedit->edit;
 		uint32_t cnt;
 		
-		while( *ptr++ != '\n'  );//ÏÂÒ»ĞĞ¿ªÍ·´¦
+		while( *ptr++ != '\n'  );//ä¸‹ä¸€è¡Œå¼€å¤´å¤„
 		
 		for (cnt = 1; cnt < vimedit->cols ; ++cnt) {
-			if ( *ptr == '\r' || *ptr == '\0' || *ptr == '\n')//±ÈÉÏÒ»ĞĞ¶ÌÊ±£¬ÎŞ·¨ÒÆ¶¯¹â±êÖÁÔ­À´µÄÁĞÎ»ÖÃ
+			if ( *ptr == '\r' || *ptr == '\0' || *ptr == '\n')//æ¯”ä¸Šä¸€è¡ŒçŸ­æ—¶ï¼Œæ— æ³•ç§»åŠ¨å…‰æ ‡è‡³åŸæ¥çš„åˆ—ä½ç½®
 				break;
 			else
 				++ptr;
 		}
 
 		printl(vimedit->edit,ptr - vimedit->edit);
-		++vimedit->rows;    //¸üĞÂĞĞÊı
-		vimedit->cols = cnt;//¸üĞĞÁĞÊı
-		vimedit->edit = ptr;//¸üĞÂµ±Ç°±à¼­Î»ÖÃ
+		++vimedit->rows;    //æ›´æ–°è¡Œæ•°
+		vimedit->cols = cnt;//æ›´è¡Œåˆ—æ•°
+		vimedit->edit = ptr;//æ›´æ–°å½“å‰ç¼–è¾‘ä½ç½®
 	}
 }
 
 
 /**
 	* @brief    cursor_right
-	*           ±à¼­Æ÷ÏìÓ¦ÓÒ¼ıÍ·
-	* @param    vim  ±à¼­ÄÚ´æ
+	*           ç¼–è¾‘å™¨å“åº”å³ç®­å¤´
+	* @param    vim  ç¼–è¾‘å†…å­˜
 	* @return   void
 */
 static void cursor_right(struct vim_edit_buf * vimedit)
 {
 	char * edit = vimedit->edit;
-	if (*edit == '\r' || *edit == '\0' || *edit == '\n')//ĞĞÄ©Î²
+	if (*edit == '\r' || *edit == '\0' || *edit == '\n')//è¡Œæœ«å°¾
 		return ;
 	
 	++vimedit->cols;
@@ -154,13 +154,13 @@ static void cursor_right(struct vim_edit_buf * vimedit)
 
 /**
 	* @brief    cursor_left
-	*           ±à¼­Æ÷ÏìÓ¦×ó¼ıÍ·
-	* @param    vim  ±à¼­ÄÚ´æ
+	*           ç¼–è¾‘å™¨å“åº”å·¦ç®­å¤´
+	* @param    vim  ç¼–è¾‘å†…å­˜
 	* @return   void
 */
 static void cursor_left(struct vim_edit_buf * vimedit)
 {
-	if (vimedit->edit == vimedit->editbuf || vimedit->cols < 2)//ĞĞ¿ªÍ·
+	if (vimedit->edit == vimedit->editbuf || vimedit->cols < 2)//è¡Œå¼€å¤´
 		return;
 	
 	--vimedit->edit;
@@ -171,20 +171,20 @@ static void cursor_left(struct vim_edit_buf * vimedit)
 
 /**
 	* @brief    cursor_move
-	*           ±à¼­Æ÷ÏìÓ¦¼ıÍ·
-	* @param    vim  ±à¼­ÄÚ´æ
+	*           ç¼–è¾‘å™¨å“åº”ç®­å¤´
+	* @param    vim  ç¼–è¾‘å†…å­˜
 	* @return   void
 */
 static void cursor_move(struct vim_edit_buf * vimedit , char arrow)
 {
 	switch( arrow ) {
-		case 'A':cursor_up(vimedit);break; //ÉÏ¼ıÍ·
+		case 'A':cursor_up(vimedit);break; //ä¸Šç®­å¤´
 
-		case 'B':cursor_down(vimedit);break;//ÏÂ¼ıÍ·
+		case 'B':cursor_down(vimedit);break;//ä¸‹ç®­å¤´
 
-		case 'C':cursor_right(vimedit);break;//ÓÒ¼ıÍ·
+		case 'C':cursor_right(vimedit);break;//å³ç®­å¤´
 
-		case 'D':cursor_left(vimedit);break;//×ó¼ıÍ·
+		case 'D':cursor_left(vimedit);break;//å·¦ç®­å¤´
 		
 		default : return ;
 	}
@@ -193,101 +193,101 @@ static void cursor_move(struct vim_edit_buf * vimedit , char arrow)
 
 /**
 	* @brief    vim_backspace
-	*           ±à¼­Æ÷»ØÉ¾Ò»¸ö×Ö·û
-	* @param    vim  ±à¼­ÄÚ´æ
+	*           ç¼–è¾‘å™¨å›åˆ ä¸€ä¸ªå­—ç¬¦
+	* @param    vim  ç¼–è¾‘å†…å­˜
 	* @return   void
 */
 static void vim_backspace(struct vim_edit_buf * vim)
 {
 	char * print = vim->printbuf;
-	char * edit = vim->edit;     //µ±Ç°±à¼­Î»ÖÃ
-	char * tail = &vim->editbuf[vim->tail];//Ô­±à¼­Çø½áÎ²; 
+	char * edit = vim->edit;     //å½“å‰ç¼–è¾‘ä½ç½®
+	char * tail = &vim->editbuf[vim->tail];//åŸç¼–è¾‘åŒºç»“å°¾; 
 	
-	//if (*(vim->edit-1) != '\n') //Èç¹ûµ±Ç°±à¼­Î»ÖÃ²»ÊÇĞĞ¿ªÍ·
-	if (vim->cols != 1) {  //Èç¹ûµ±Ç°±à¼­Î»ÖÃ²»ÊÇĞĞ¿ªÍ·
+	//if (*(vim->edit-1) != '\n') //å¦‚æœå½“å‰ç¼–è¾‘ä½ç½®ä¸æ˜¯è¡Œå¼€å¤´
+	if (vim->cols != 1) {  //å¦‚æœå½“å‰ç¼–è¾‘ä½ç½®ä¸æ˜¯è¡Œå¼€å¤´
 	
 		char * copy = vim->edit;
 		
-		//ÕÒµ½µ±Ç°ĞĞ½áÊøÎ»ÖÃ£¬²¢¸´ÖÆµ½´òÓ¡ÄÚ´æÖĞ
+		//æ‰¾åˆ°å½“å‰è¡Œç»“æŸä½ç½®ï¼Œå¹¶å¤åˆ¶åˆ°æ‰“å°å†…å­˜ä¸­
 		for (*print++ = '\b' ; *copy != '\r' && *copy && *copy != '\n' ; *print++ = *copy++);
 		
-		*print++ = ' '; //¸²¸Çµ±Ç°ĞĞ×îºóÒ»¸ö×Ö·ûÏÔÊ¾
-		*print++ = '\b'; //¹â±ê»ØÏÔ
+		*print++ = ' '; //è¦†ç›–å½“å‰è¡Œæœ€åä¸€ä¸ªå­—ç¬¦æ˜¾ç¤º
+		*print++ = '\b'; //å…‰æ ‡å›æ˜¾
 		
-		//¼ÆËã¹â±ê»ØÍË¸öÊı
+		//è®¡ç®—å…‰æ ‡å›é€€ä¸ªæ•°
 		for (uint32_t cnt = copy - vim->edit ; cnt-- ;*print++ = '\b' );
 		
-		//Èç abUcd ÖĞÉ¾³ıU£¬ĞèÒª×óÒÆcd£¬²¢´òÓ¡Á½¸ö '\b' Ê¹¹â±ê»Øµ½ ab ´¦
+		//å¦‚ abUcd ä¸­åˆ é™¤Uï¼Œéœ€è¦å·¦ç§»cdï¼Œå¹¶æ‰“å°ä¸¤ä¸ª '\b' ä½¿å…‰æ ‡å›åˆ° ab å¤„
 		for (copy = edit - 1 ; edit < tail ; *copy++ = *edit++);
 		
 		--vim->cols;
 		--vim->edit;
 		--vim->tail;
-		vim->editbuf[vim->tail] = 0;//Ä©¶ËÌí¼Ó×Ö·û´®½áÊø·û
+		vim->editbuf[vim->tail] = 0;//æœ«ç«¯æ·»åŠ å­—ç¬¦ä¸²ç»“æŸç¬¦
 		printl(vim->printbuf,print - vim->printbuf);
 	}
-	else {//µ±Ç°±à¼­Î»ÖÃÊÇĞĞ¿ªÍ·£¬»ØÍËÒ»ĞĞ
+	else {//å½“å‰ç¼–è¾‘ä½ç½®æ˜¯è¡Œå¼€å¤´ï¼Œå›é€€ä¸€è¡Œ
 	
-		char * prevlines ; //µ±Ç°±à¼­µãÉÏÒ»ĞĞµÄ¿ªÍ·
-		char * prevlinee ; //µ±Ç°±à¼­µãÉÏÒ»ĞĞµÄ½áÎ²
+		char * prevlines ; //å½“å‰ç¼–è¾‘ç‚¹ä¸Šä¸€è¡Œçš„å¼€å¤´
+		char * prevlinee ; //å½“å‰ç¼–è¾‘ç‚¹ä¸Šä¸€è¡Œçš„ç»“å°¾
 		
-		if (vim->rows > 2) //µ±Ç°±à¼­ĞĞ²»ÊÇµÚ¶şĞĞ
-			for (prevlines = edit-1 ; *(prevlines-1) != '\n' ; --prevlines);//»Øµ½ÉÏÒ»ĞĞ¿ªÍ·
+		if (vim->rows > 2) //å½“å‰ç¼–è¾‘è¡Œä¸æ˜¯ç¬¬äºŒè¡Œ
+			for (prevlines = edit-1 ; *(prevlines-1) != '\n' ; --prevlines);//å›åˆ°ä¸Šä¸€è¡Œå¼€å¤´
 		else
-			prevlines = vim->editbuf; //»Øµ½µÚÒ»ĞĞ¿ªÍ·
+			prevlines = vim->editbuf; //å›åˆ°ç¬¬ä¸€è¡Œå¼€å¤´
 
-		//ÕÒµ½ÉÏÒ»ĞĞ½áÎ²´¦£¬ÒÑÖªÓĞÏÂÒ»ĞĞ£¬²»ĞèÒªÅĞ¶Ï \0
+		//æ‰¾åˆ°ä¸Šä¸€è¡Œç»“å°¾å¤„ï¼Œå·²çŸ¥æœ‰ä¸‹ä¸€è¡Œï¼Œä¸éœ€è¦åˆ¤æ–­ \0
 		for (prevlinee = prevlines ; *prevlinee != '\r' && *prevlinee != '\n' ; ++prevlinee);
 
-		//¿ØÖÆÌ¨Çå¿Õ±à¼­µãËùÔÚĞĞÒÔ¼°ºóÃæËùÓĞµÄÄÚÈİÏÔÊ¾
+		//æ§åˆ¶å°æ¸…ç©ºç¼–è¾‘ç‚¹æ‰€åœ¨è¡Œä»¥åŠåé¢æ‰€æœ‰çš„å†…å®¹æ˜¾ç¤º
 		for(uint32_t i = vim->rows ; i <= vim->rowmax ; ++i )
 			printl((char*)clearline , sizeof(clearline)-1);
 
-		//°Ñµ±Ç°±à¼­µãÄÚÈİ¿¼µ½ÉÏÒ»ĞĞ½áÎ²
+		//æŠŠå½“å‰ç¼–è¾‘ç‚¹å†…å®¹è€ƒåˆ°ä¸Šä¸€è¡Œç»“å°¾
 		//memcpy(prevlinee, edit ,tail - edit);
 		for (char * copy = prevlinee ; edit < tail ; *copy++ = *edit++);
 		
 		vim->rowmax -= 1;
 		vim->rows -= 1;
-		vim->tail -= (vim->edit - prevlinee);//¸üĞÂ±à¼­Î²²¿£¬ÊÊÓ¦ '\r\n'
-		vim->edit  = prevlinee ;             //¸üĞÂµ±Ç°±à¼­Î»ÖÃÎªÉÏÒ»ĞĞ½áÎ²
-		vim->cols  = prevlinee-prevlines+1;  //¸üĞÂµ±Ç°ÁĞÎ»ÖÃÎªÉÏÒ»ĞĞ½áÎ²
-		vim->editbuf[vim->tail] = 0; //Ä©¶ËÌí¼Ó×Ö·û´®½áÊø·û
+		vim->tail -= (vim->edit - prevlinee);//æ›´æ–°ç¼–è¾‘å°¾éƒ¨ï¼Œé€‚åº” '\r\n'
+		vim->edit  = prevlinee ;             //æ›´æ–°å½“å‰ç¼–è¾‘ä½ç½®ä¸ºä¸Šä¸€è¡Œç»“å°¾
+		vim->cols  = prevlinee-prevlines+1;  //æ›´æ–°å½“å‰åˆ—ä½ç½®ä¸ºä¸Šä¸€è¡Œç»“å°¾
+		vim->editbuf[vim->tail] = 0; //æœ«ç«¯æ·»åŠ å­—ç¬¦ä¸²ç»“æŸç¬¦
 		
-		printk("\033[%d;%dH",vim->rows+1,vim->cols);//¹â±ê»Øµ½±à¼­µãÎ»ÖÃ
-		printl(vim->edit,strlen(vim->edit));        //´òÓ¡Ê£ÓàÄÚÈİ
-		printk("\033[%d;%dH",vim->rows+1,vim->cols);//¹â±êÔÙ´Î»Øµ½±à¼­µãÎ»ÖÃ
+		printk("\033[%d;%dH",vim->rows+1,vim->cols);//å…‰æ ‡å›åˆ°ç¼–è¾‘ç‚¹ä½ç½®
+		printl(vim->edit,strlen(vim->edit));        //æ‰“å°å‰©ä½™å†…å®¹
+		printk("\033[%d;%dH",vim->rows+1,vim->cols);//å…‰æ ‡å†æ¬¡å›åˆ°ç¼–è¾‘ç‚¹ä½ç½®
 	}
 }
 
 
 /**
 	* @brief    vim_insert_char
-	*           ±à¼­Æ÷²åÈëÒ»¸öÆÕÍ¨×Ö·û
-	* @param    vim  ±à¼­ÄÚ´æ
-	* @param    ascii Ëù²åÈë×Ö·û
+	*           ç¼–è¾‘å™¨æ’å…¥ä¸€ä¸ªæ™®é€šå­—ç¬¦
+	* @param    vim  ç¼–è¾‘å†…å­˜
+	* @param    ascii æ‰€æ’å…¥å­—ç¬¦
 	* @return   void
 */
 static void vim_insert_char(struct vim_edit_buf * vim,char ascii)
 {
 	char * print = vim->printbuf ;
-	char * tail = &vim->editbuf[vim->tail];//tail Ëù´¦Î»ÖÃÊÇ×Ö·û´®½áÊø·ûµÄÎ»ÖÃ
+	char * tail = &vim->editbuf[vim->tail];//tail æ‰€å¤„ä½ç½®æ˜¯å­—ç¬¦ä¸²ç»“æŸç¬¦çš„ä½ç½®
 	char * copy = vim->edit;
 
-	//¼ÆËãĞèÒª´òÓ¡µÄ×Ö·û´®£¬ÕÒµ½µ±Ç°ĞĞ½áÊøÎ»ÖÃ
+	//è®¡ç®—éœ€è¦æ‰“å°çš„å­—ç¬¦ä¸²ï¼Œæ‰¾åˆ°å½“å‰è¡Œç»“æŸä½ç½®
 	for (*print++ = ascii; *copy != '\r' && *copy != '\n' && *copy ; *print++ = *copy++);
 	
-	//¼ÆËãµ±Ç°ĞĞĞèÒª»ØÍËµÄ¹â±êÊı
+	//è®¡ç®—å½“å‰è¡Œéœ€è¦å›é€€çš„å…‰æ ‡æ•°
 	for (uint32_t cnt = copy - vim->edit ; cnt-- ; *print++ = '\b');
 	
-	//Èç abcd ÖĞÔÚbc²åÈëU£¬ĞèÒªÓÒÒÆcd£¬²¢´òÓ¡Á½¸ö '\b' Ê¹¹â±ê»Øµ½ abU ´¦
+	//å¦‚ abcd ä¸­åœ¨bcæ’å…¥Uï¼Œéœ€è¦å³ç§»cdï¼Œå¹¶æ‰“å°ä¸¤ä¸ª '\b' ä½¿å…‰æ ‡å›åˆ° abU å¤„
 	for (copy = tail - 1; copy >= vim->edit ; *tail-- = *copy--);
 	
-	*vim->edit = ascii;  //²åÈë×Ö·û
+	*vim->edit = ascii;  //æ’å…¥å­—ç¬¦
 	++vim->edit;
 	++vim->cols;
 	++vim->tail;
-	vim->editbuf[vim->tail] = 0; //Ä©¶ËÌí¼Ó×Ö·û´®½áÊø·û
+	vim->editbuf[vim->tail] = 0; //æœ«ç«¯æ·»åŠ å­—ç¬¦ä¸²ç»“æŸç¬¦
 	printl(vim->printbuf,print - vim->printbuf);
 }
 
@@ -295,32 +295,32 @@ static void vim_insert_char(struct vim_edit_buf * vim,char ascii)
 
 /**
 	* @brief    vim_insert_newline
-	*           ±à¼­Æ÷²åÈë»»ĞĞ·û/»Ø³µ·û
-	* @param    vim  ±à¼­ÄÚ´æ
-	* @param    ascii Ëù²åÈë×Ö·û
+	*           ç¼–è¾‘å™¨æ’å…¥æ¢è¡Œç¬¦/å›è½¦ç¬¦
+	* @param    vim  ç¼–è¾‘å†…å­˜
+	* @param    ascii æ‰€æ’å…¥å­—ç¬¦
 	* @return   void
 */
 static void vim_insert_newline(struct vim_edit_buf * vim)
 {
-	char * tail = &vim->editbuf[vim->tail];//tail Ëù´¦Î»ÖÃÊÇ×Ö·û´®½áÊø·ûµÄÎ»ÖÃ
+	char * tail = &vim->editbuf[vim->tail];//tail æ‰€å¤„ä½ç½®æ˜¯å­—ç¬¦ä¸²ç»“æŸç¬¦çš„ä½ç½®
 	char * copy ;
 	
-	//Çå¿Õ´ËĞĞÒÔ¼°ºóÃæËùÓĞÄÚÈİ
+	//æ¸…ç©ºæ­¤è¡Œä»¥åŠåé¢æ‰€æœ‰å†…å®¹
 	for(uint32_t i = vim->rows ; i <= vim->rowmax ; ++i )
 		printl((char*)clearline,sizeof(clearline)-1);
 	
-	printk("\033[%d;%dH",vim->rows+1,1);//¹â±ê»Øµ½µ±Ç°±à¼­ĞĞ¿ªÍ·
+	printk("\033[%d;%dH",vim->rows+1,1);//å…‰æ ‡å›åˆ°å½“å‰ç¼–è¾‘è¡Œå¼€å¤´
 
 	if (vim->rows > 1)
 		for (copy=vim->edit ; *(copy-1) != '\n' ; --copy);
 	else
 		copy = vim->editbuf;
 	
-	printl(copy,vim->edit-copy); //´òÓ¡ÖÁµ±Ç°±à¼­Î»ÖÃ
+	printl(copy,vim->edit-copy); //æ‰“å°è‡³å½“å‰ç¼–è¾‘ä½ç½®
 
-	tail += 1;//ĞÂµÄÎ²²¿
+	tail += 1;//æ–°çš„å°¾éƒ¨
 
-	// µ±Ç°±à¼­Î»ÖÃºóÒÆÁ½¸ö×Ö½Ú¿Õ¼ä
+	// å½“å‰ç¼–è¾‘ä½ç½®åç§»ä¸¤ä¸ªå­—èŠ‚ç©ºé—´
 	for (copy = tail-2 ; copy >= vim->edit ; *tail-- = *copy--) ;
 	
 	*vim->edit++ = '\r';
@@ -329,12 +329,12 @@ static void vim_insert_newline(struct vim_edit_buf * vim)
 	vim->rows += 1;
 	vim->cols  = 1;
 	vim->rowmax += 1;
-	vim->editbuf[vim->tail] = 0; //Ä©¶ËÌí¼Ó×Ö·û´®½áÊø·û
+	vim->editbuf[vim->tail] = 0; //æœ«ç«¯æ·»åŠ å­—ç¬¦ä¸²ç»“æŸç¬¦
 	
 	tail = &vim->editbuf[vim->tail] - 1;
 	copy = (vim->edit - 2);
 	
-	printl(copy,tail-copy); //´òÓ¡ÖÁµ±Ç°±à¼­Î»ÖÃ
+	printl(copy,tail-copy); //æ‰“å°è‡³å½“å‰ç¼–è¾‘ä½ç½®
 	printk("\033[%d;%dH",vim->rows+1,1);
 }
 
@@ -342,16 +342,16 @@ static void vim_insert_newline(struct vim_edit_buf * vim)
 
 /**
 	* @brief    vim_insert_newline
-	*           ±à¼­¹ı³Ì½ÓÊÕ×Ö·û
-	* @param    vim  ±à¼­ÄÚ´æ
-	* @param    data Ëù½ÓÊÕ×Ö·û
+	*           ç¼–è¾‘è¿‡ç¨‹æ¥æ”¶å­—ç¬¦
+	* @param    vim  ç¼–è¾‘å†…å­˜
+	* @param    data æ‰€æ¥æ”¶å­—ç¬¦
 	* @return   void
 */
 static void vim_edit_getchar(struct vim_edit_buf * vim,char data)
 {
 
 	if (KEYCODE_CTRL_C == data || KEYCODE_TAB == data ||
-		KEYCODE_END == data || KEYCODE_HOME == data ) { //Ò»Ğ©ÌØ±ğµÄ×Ö·û¹ıÂË
+		KEYCODE_END == data || KEYCODE_HOME == data ) { //ä¸€äº›ç‰¹åˆ«çš„å­—ç¬¦è¿‡æ»¤
 		return ;
 	}
 
@@ -360,37 +360,37 @@ static void vim_edit_getchar(struct vim_edit_buf * vim,char data)
 			vim_backspace(vim);
 	}
 	else
-	if (vim->tail < VIM_MAX_EDIT/2) {//²åÈë×Ö·û
-		if ('\r' == data || '\n' == data ) //²åÈë»»ĞĞ·û
+	if (vim->tail < VIM_MAX_EDIT/2) {//æ’å…¥å­—ç¬¦
+		if ('\r' == data || '\n' == data ) //æ’å…¥æ¢è¡Œç¬¦
 			vim_insert_newline(vim);
 		else
-			vim_insert_char(vim , data);   //²åÈëÆÕÍ¨×Ö·û
+			vim_insert_char(vim , data);   //æ’å…¥æ™®é€šå­—ç¬¦
 	}
 }
 
 /**
 	* @brief    vim_edit
-	*           ¼üÅÌÊı¾İÁ÷Èë
-	* @param    vim  ±à¼­ÄÚ´æ
+	*           é”®ç›˜æ•°æ®æµå…¥
+	* @param    vim  ç¼–è¾‘å†…å­˜
 	* @return   void
 */
 static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len)
 {
 	struct vim_edit_buf * vimedit = (struct vim_edit_buf *)shell->apparg ;
 
-	switch(vimedit->state) {   //×´Ì¬»ú
-		case VIM_READ_ONLY:    //ÎÄ±¾Ö»¶Á¹ı³Ì
-			if (*buf == 'i') { //¼üÅÌÊäÈë 'i'
-				vimedit->state = VIM_EDITING;//½øÈë±à¼­Ä£Ê½
-				printk("\033[%d;%dH\033[2K\r\t",1,1);//¹â±ê»Øµ½µÚÒ»ĞĞ²¢Çå¿ÕµÚÒ»ĞĞ
-				printl((char*)editing_title,sizeof(editing_title)-1); //´òÓ¡ÌáÊ¾ĞÅÏ¢
-				printk("\033[%d;%dH",vimedit->rows + 1,vimedit->cols);//»Ö¸´¹â±êÎ»ÖÃ
+	switch(vimedit->state) {   //çŠ¶æ€æœº
+		case VIM_READ_ONLY:    //æ–‡æœ¬åªè¯»è¿‡ç¨‹
+			if (*buf == 'i') { //é”®ç›˜è¾“å…¥ 'i'
+				vimedit->state = VIM_EDITING;//è¿›å…¥ç¼–è¾‘æ¨¡å¼
+				printk("\033[%d;%dH\033[2K\r\t",1,1);//å…‰æ ‡å›åˆ°ç¬¬ä¸€è¡Œå¹¶æ¸…ç©ºç¬¬ä¸€è¡Œ
+				printl((char*)editing_title,sizeof(editing_title)-1); //æ‰“å°æç¤ºä¿¡æ¯
+				printk("\033[%d;%dH",vimedit->rows + 1,vimedit->cols);//æ¢å¤å…‰æ ‡ä½ç½®
 			}
 			else
 			if (*buf == ':') {
 				vimedit->option = 0;
 				vimedit->state = VIM_COMMAND;
-				printk("\033[%d;%dH\033[2K\r(w/q):",1,1);//¹â±ê»Øµ½µÚÒ»ĞĞ²¢Çå¿ÕµÚÒ»ĞĞ
+				printk("\033[%d;%dH\033[2K\r(w/q):",1,1);//å…‰æ ‡å›åˆ°ç¬¬ä¸€è¡Œå¹¶æ¸…ç©ºç¬¬ä¸€è¡Œ
 			}
 			else
 			if ( buf[0] == '\033' && len > 1 && buf[1] == '[' ) {
@@ -398,16 +398,16 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 			}
 			break;
 			
-		case VIM_EDITING: //ÎÄ±¾±à¼­¹ı³Ì
+		case VIM_EDITING: //æ–‡æœ¬ç¼–è¾‘è¿‡ç¨‹
 			if (*buf == '\033') {
 				if ( len > 1 && buf[1] == '[' ) {
-					cursor_move(vimedit,buf[2]);//Èç¹ûÊÇ¼ıÍ·ÊäÈë
+					cursor_move(vimedit,buf[2]);//å¦‚æœæ˜¯ç®­å¤´è¾“å…¥
 				}
 				else {
-					vimedit->state = VIM_READ_ONLY; //Èç¹ûÊÇµ¥°´¼ü Esc £¬»Øµ½Ö»¶ÁÄ£Ê½
-					printk("\033[%d;%dH\033[2K\r",1,1);//¹â±ê»Øµ½µÚÒ»ĞĞ²¢Çå¿ÕµÚÒ»ĞĞ
-					printk("\t%s",waiting_title);      //´òÓ¡ÌáÊ¾ĞÅÏ¢
-					printk("\033[%d;%dH",vimedit->rows + 1,vimedit->cols);//»Ö¸´¹â±êÎ»ÖÃ
+					vimedit->state = VIM_READ_ONLY; //å¦‚æœæ˜¯å•æŒ‰é”® Esc ï¼Œå›åˆ°åªè¯»æ¨¡å¼
+					printk("\033[%d;%dH\033[2K\r",1,1);//å…‰æ ‡å›åˆ°ç¬¬ä¸€è¡Œå¹¶æ¸…ç©ºç¬¬ä¸€è¡Œ
+					printk("\t%s",waiting_title);      //æ‰“å°æç¤ºä¿¡æ¯
+					printk("\033[%d;%dH",vimedit->rows + 1,vimedit->cols);//æ¢å¤å…‰æ ‡ä½ç½®
 				}
 			}
 			else {
@@ -415,7 +415,7 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 			}
 			break;
 			
-		case VIM_COMMAND: //µÈ´ıÃüÁî
+		case VIM_COMMAND: //ç­‰å¾…å‘½ä»¤
 			if (*buf == 'q' ||*buf == 'w') {
 				vimedit->state  = VIM_QIUT;
 				vimedit->option = *buf;
@@ -423,22 +423,22 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 			}
 			else
 			if (*buf == '\033' ) { //&& len == 1) 
-				vimedit->state = VIM_READ_ONLY;  //½øÈëÖ»¶ÁÄ£Ê½
+				vimedit->state = VIM_READ_ONLY;  //è¿›å…¥åªè¯»æ¨¡å¼
 				vimedit->edit = vimedit->editbuf;
 				vimedit->cols = 1;
 				vimedit->rows = 1;
-				printk("\033[2K\r\t%s\r\n",waiting_title);//´òÓ¡ÌáÊ¾ĞÅÏ¢
+				printk("\033[2K\r\t%s\r\n",waiting_title);//æ‰“å°æç¤ºä¿¡æ¯
 			}
 			break;
 			
-		case VIM_QIUT:   //µÈ´ıÍË³ö
-			if (*buf == KEYCODE_BACKSPACE || *buf == 0x7f) { //»ØÍË¼ü
+		case VIM_QIUT:   //ç­‰å¾…é€€å‡º
+			if (*buf == KEYCODE_BACKSPACE || *buf == 0x7f) { //å›é€€é”®
 				vimedit->state  = VIM_COMMAND;
 				printl("\b \b",3);
 			}
 			else
-			if (*buf == '\r' || *buf == '\n') { //»Ø³µÈ·ÈÏ
-				if ('w' == vimedit->option)//ÊäÈë±£´æ£¬ÔòÊä³ö´ËÎÄ¼ş
+			if (*buf == '\r' || *buf == '\n') { //å›è½¦ç¡®è®¤
+				if ('w' == vimedit->option)//è¾“å…¥ä¿å­˜ï¼Œåˆ™è¾“å‡ºæ­¤æ–‡ä»¶
 					vimedit->fputs(vimedit->fpath,vimedit->editbuf,vimedit->tail);
 				VIM_FREE(vimedit);
 				shell->apparg = NULL;
@@ -447,11 +447,11 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 			}
 			else
 			if (*buf == '\033' ) { //&& len == 1)
-				vimedit->state = VIM_READ_ONLY;  //½øÈëÖ»¶ÁÄ£Ê½
+				vimedit->state = VIM_READ_ONLY;  //è¿›å…¥åªè¯»æ¨¡å¼
 				vimedit->edit = vimedit->editbuf;
 				vimedit->cols = 1;
 				vimedit->rows = 1;
-				printk("\033[2K\r\t%s\r\n",waiting_title);//´òÓ¡ÌáÊ¾ĞÅÏ¢
+				printk("\033[2K\r\t%s\r\n",waiting_title);//æ‰“å°æç¤ºä¿¡æ¯
 			}
 			break;
 
@@ -463,10 +463,10 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 
 /**
 	* @brief    shell_into_edit
-	*           µ±Ç°ÊäÈë½øÈëÎÄ±¾±à¼­Ä£Ê½
-	* @param    shell  ĞèÒª½øĞĞÎÄ±¾±à¼­µÄ shell ½»»¥
-	* @param    fgets  »ñÈ¡±à¼­ÎÄ±¾Êı¾İÔ´µÄ½Ó¿Ú
-	* @param    fputs  ¸üĞÂÎÄ±¾Êı¾İÔ´µÄ½Ó¿Ú
+	*           å½“å‰è¾“å…¥è¿›å…¥æ–‡æœ¬ç¼–è¾‘æ¨¡å¼
+	* @param    shell  éœ€è¦è¿›è¡Œæ–‡æœ¬ç¼–è¾‘çš„ shell äº¤äº’
+	* @param    fgets  è·å–ç¼–è¾‘æ–‡æœ¬æ•°æ®æºçš„æ¥å£
+	* @param    fputs  æ›´æ–°æ–‡æœ¬æ•°æ®æºçš„æ¥å£
 	* @return   void
 */
 void shell_into_edit(struct shell_input * shell,vim_fgets_t fgets ,vim_fputs_t fputs)
@@ -480,18 +480,18 @@ void shell_into_edit(struct shell_input * shell,vim_fgets_t fgets ,vim_fputs_t f
 		return ;
 	}
 
-	cmdline_strtok(shell->cmdline,argv,2);//ÌáÈ¡Â·¾¶ĞÅÏ¢,Â·¾¶Ãû³ÆÎªµÚ¶ş¸ö²ÎÊı
+	cmdline_strtok(shell->cmdline,argv,2);//æå–è·¯å¾„ä¿¡æ¯,è·¯å¾„åç§°ä¸ºç¬¬äºŒä¸ªå‚æ•°
 	
 	edit = (struct vim_edit_buf *)(shell->apparg);
-	edit->fpath = argv[1]; //Â·¾¶Ãû³ÆÎªµÚ¶ş¸ö²ÎÊı
+	edit->fpath = argv[1]; //è·¯å¾„åç§°ä¸ºç¬¬äºŒä¸ªå‚æ•°
 
-	//³¢ÊÔ´ò¿ª£¬Èç¹ûÊ§°ÜÔò·µ»Ø
+	//å°è¯•æ‰“å¼€ï¼Œå¦‚æœå¤±è´¥åˆ™è¿”å›
 	if (VIM_FILE_OK !=  fgets(edit->fpath,&edit->editbuf[0],&edit->tail)) {
 		VIM_FREE(shell->apparg);
 		return ;
 	}
 	
-	shell->gets = shell_vim_gets; //ÖØ¶¨ÒåÊı¾İÁ÷ÊäÈë,±à¼­ÎÄ¼şÄ£Ê½
+	shell->gets = shell_vim_gets; //é‡å®šä¹‰æ•°æ®æµè¾“å…¥,ç¼–è¾‘æ–‡ä»¶æ¨¡å¼
 	if (default_puts == shell->puts)
 		default_puts = NULL;
 	
@@ -504,13 +504,13 @@ void shell_into_edit(struct shell_input * shell,vim_fgets_t fgets ,vim_fputs_t f
 	edit->rows   = 1;
 	edit->rowmax = 1;
 
-	//É¨ÃèÎÄ¼ş¹²ÓĞ¼¸ĞĞ
+	//æ‰«ææ–‡ä»¶å…±æœ‰å‡ è¡Œ
 	for (char * editbuf = edit->editbuf ; *editbuf ; ++editbuf) {
 		if (*editbuf == '\n')
 			++edit->rowmax;
 	}
 
-	//Çå¿ÕÆÁÄ»£¬²¢´òÓ¡ÎÄ±¾ÄÚÈİ
+	//æ¸…ç©ºå±å¹•ï¼Œå¹¶æ‰“å°æ–‡æœ¬å†…å®¹
 	printk("\033[2J\033[%d;%dH",1,1);
 	printk("\t%s\r\n%s",waiting_title,edit->editbuf);
 	printk("\033[%d;%dH",2,1);

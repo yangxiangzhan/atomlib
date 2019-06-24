@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
   * @file            OS.c
-  * @author         ¹ÅÃ´Äþ
-  * @brief           OS file .ÓÃÐ­³ÌÄ£ÄâÒ»¸ö¼òµ¥µÄ²Ù×÷ÏµÍ³
+  * @author         å¤ä¹ˆå®
+  * @brief           OS file .ç”¨åç¨‹æ¨¡æ‹Ÿä¸€ä¸ªç®€å•çš„æ“ä½œç³»ç»Ÿ
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -16,27 +16,27 @@
 #include "tasklib.h"
 
 
-// ÏµÍ³ÔËÐÐÒ»¸öÈÎÎñ
+// ç³»ç»Ÿè¿è¡Œä¸€ä¸ªä»»åŠ¡
 #define OS_call(task) \
 		do{if(TASK_EXITED == (task)->func((task)->arg)) list_del_init(&((task)->list_node));}while(0)
 	
 
-struct list_head       OS_scheduler_list = {&OS_scheduler_list,&OS_scheduler_list};//ÏµÍ³µ÷¶ÈÁ´±íÈë¿Ú
-struct protothread *   OS_current_task = NULL;//ÏµÍ³µ±Ç°ÔËÐÐµÄÈÎÎñ
-volatile unsigned long OS_current_time = 0;     //ÏµÍ³Ê±¼ä£¬ms
+struct list_head       OS_scheduler_list = {&OS_scheduler_list,&OS_scheduler_list};//ç³»ç»Ÿè°ƒåº¦é“¾è¡¨å…¥å£
+struct protothread *   OS_current_task = NULL;//ç³»ç»Ÿå½“å‰è¿è¡Œçš„ä»»åŠ¡
+volatile unsigned long OS_current_time = 0;     //ç³»ç»Ÿæ—¶é—´ï¼Œms
 
 
 
-volatile unsigned char nevents = 0; //Î´´¦ÀíÊÂ¼þ¸öÊý
-volatile unsigned char fevent = 0;  //ÊÂ¼þ¶ÓÁÐÏÂ±ê
-struct protothread *events[OS_CONF_NUMEVENTS]; //ÊÂ¼þ¶ÓÁÐ
+volatile unsigned char nevents = 0; //æœªå¤„ç†äº‹ä»¶ä¸ªæ•°
+volatile unsigned char fevent = 0;  //äº‹ä»¶é˜Ÿåˆ—ä¸‹æ ‡
+struct protothread *events[OS_CONF_NUMEVENTS]; //äº‹ä»¶é˜Ÿåˆ—
 
 
 /** 
-	* @brief OS_create_task :×¢²áÒ»¸ö  task
-	* @param TaskFunc      : Task ¶ÔÓ¦µÄÖ´ÐÐº¯ÊýÖ¸Õë
-	* @param task          : Task ¶ÔÓ¦µÄÈÎÎñ¿ØÖÆ½á¹¹Ìå
-	* @param pTaskName     : Task Ãû
+	* @brief OS_create_task :æ³¨å†Œä¸€ä¸ª  task
+	* @param TaskFunc      : Task å¯¹åº”çš„æ‰§è¡Œå‡½æ•°æŒ‡é’ˆ
+	* @param task          : Task å¯¹åº”çš„ä»»åŠ¡æŽ§åˆ¶ç»“æž„ä½“
+	* @param pTaskName     : Task å
 	*
 	* @return NULL
 */
@@ -50,17 +50,17 @@ void OS_task_create(ros_task_t *task,const char * name, int (*start_rtn)(void*),
 		task->init = TASK_IS_INITIALIZED;
 	}
 
-	if (list_empty(&task->list_node))//Èç¹ûÈÎÎñÒÑÔÚÔËÐÐ£¬²»ÖØ¸´×¢²á
+	if (list_empty(&task->list_node))//å¦‚æžœä»»åŠ¡å·²åœ¨è¿è¡Œï¼Œä¸é‡å¤æ³¨å†Œ
 	{
-		list_add_tail(&task->list_node, &OS_scheduler_list);//¼ÓÈëµ÷¶ÈÁ´±íÄ©¶Ë
+		list_add_tail(&task->list_node, &OS_scheduler_list);//åŠ å…¥è°ƒåº¦é“¾è¡¨æœ«ç«¯
 		task->lc   = 0;
 		task->dly  = 0;
 		task->post = 0;
-		task->func = start_rtn;//ÈÎÎñÖ´ÐÐº¯Êý
+		task->func = start_rtn;//ä»»åŠ¡æ‰§è¡Œå‡½æ•°
 		task->arg  = arg;
 		
 		#ifdef  OS_USE_ID_AND_NAME
-			task->name = name;	 //ÈÎÎñÃû
+			task->name = name;	 //ä»»åŠ¡å
 			task->ID = IDcnt;
 		#endif
 		
@@ -83,26 +83,26 @@ void OS_scheduler(void)
 	
 	list_for_each_safe(SchedulerListThisNode,SchedulerListNextNode,&OS_scheduler_list)
 	{
-		//»ñÈ¡µ±Ç°Á´±í½Úµã¶ÔÓ¦µÄÈÎÎñ¿ØÖÆ¿éÖ¸Õë
+		//èŽ·å–å½“å‰é“¾è¡¨èŠ‚ç‚¹å¯¹åº”çš„ä»»åŠ¡æŽ§åˆ¶å—æŒ‡é’ˆ
 		OS_current_task = list_entry(SchedulerListThisNode,struct protothread,list_node); 
 		
-		if (OS_current_task->dly)//ÐÝÃßÆÚÄÚµÄÈÎÎñ²»Ö´ÐÐ£¬ËùÒÔÆäÈÎÎñÊ±¼ä±»¶³½á£¬Ö±µ½µ½´ïÊ±¼äµã
+		if (OS_current_task->dly)//ä¼‘çœ æœŸå†…çš„ä»»åŠ¡ä¸æ‰§è¡Œï¼Œæ‰€ä»¥å…¶ä»»åŠ¡æ—¶é—´è¢«å†»ç»“ï¼Œç›´åˆ°åˆ°è¾¾æ—¶é—´ç‚¹
 		{
 			if (OS_current_time - OS_current_task->time < OS_current_task->dly) 
-				continue; //µ±È»Õâ¸ö continue Ò²»áÌø¹ý post ÊÂ¼þ´¦Àí£¬ÕâÃ´´¦ÀíÒª¿¼ÂÇÒ»ÏÂ
+				continue; //å½“ç„¶è¿™ä¸ª continue ä¹Ÿä¼šè·³è¿‡ post äº‹ä»¶å¤„ç†ï¼Œè¿™ä¹ˆå¤„ç†è¦è€ƒè™‘ä¸€ä¸‹
 			else
 				OS_current_task->dly = 0;
 		}
 			
-		OS_call(OS_current_task);//Ö´ÐÐÁ´±íÖÐµÄÈÎÎñ
+		OS_call(OS_current_task);//æ‰§è¡Œé“¾è¡¨ä¸­çš„ä»»åŠ¡
 
-		if (nevents) //´¦Àí post ÊÂ¼þ
+		if (nevents) //å¤„ç† post äº‹ä»¶
 		{
 			OS_current_task = events[fevent];
 			fevent = (fevent + 1) & OS_NUMEVENTS_MASK;
 			nevents--;
 			
-			OS_current_task->post = 0;//Çå³ý´ËÊÂ¼þµÄ post ±êÖ¾£¬Èç´Ë²Å¿ÉÒÔ·´¸´post
+			OS_current_task->post = 0;//æ¸…é™¤æ­¤äº‹ä»¶çš„ post æ ‡å¿—ï¼Œå¦‚æ­¤æ‰å¯ä»¥åå¤post
 			if (OS_current_task->init == TASK_IS_INITIALIZED)
 				OS_call(OS_current_task);
 		}

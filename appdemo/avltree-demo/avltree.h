@@ -1,8 +1,8 @@
 /**
 ******************************************************************************
 * @file           avltree.c
-* @author         ¹ÅÃ´Äş
-* @brief          avltree file. Æ½ºâ¶ş²æÊ÷µÄÊµÏÖ
+* @author         å¤ä¹ˆå®
+* @brief          avltree file. å¹³è¡¡äºŒå‰æ ‘çš„å®ç°
 ******************************************************************************
 *
 * COPYRIGHT(c) 2018 GoodMorning
@@ -12,21 +12,21 @@
 #ifndef __AVL_TREE_H__
 #define __AVL_TREE_H__
 
-/* Public macro (¹²ÓĞºê)------------------------------------------------------------*/
+/* Public macro (å…±æœ‰å®)------------------------------------------------------------*/
 
-//ÒòÎªÒ»°ãÀ´ËµÓÃµ½Æ½ºâ¶ş²æÊ÷¶¼±È½ÏÉÙ½øĞĞ½ÚµãÉ¾³ı£¬ËùÒÔÕâ²¿·Ö´úÂëÊÇºóÃæÌí¼ÓµÄ£¬Ğ´µÄ²»ÊÇºÜÖ±¹Û£¬ËùÒÔ³ı·ÇÓĞ±ØÒª£¬·ñÔò¿ÉÒÔ²»Ê¹ÓÃ
+//å› ä¸ºä¸€èˆ¬æ¥è¯´ç”¨åˆ°å¹³è¡¡äºŒå‰æ ‘éƒ½æ¯”è¾ƒå°‘è¿›è¡ŒèŠ‚ç‚¹åˆ é™¤ï¼Œæ‰€ä»¥è¿™éƒ¨åˆ†ä»£ç æ˜¯åé¢æ·»åŠ çš„ï¼Œå†™çš„ä¸æ˜¯å¾ˆç›´è§‚ï¼Œæ‰€ä»¥é™¤éæœ‰å¿…è¦ï¼Œå¦åˆ™å¯ä»¥ä¸ä½¿ç”¨
 #define USE_DELETE_NODE
 
 //------------------------------------------------------------------
 #ifndef offsetof
-	#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)// »ñÈ¡"MEMBER³ÉÔ±"ÔÚ"½á¹¹ÌåTYPE"ÖĞµÄÎ»ÖÃÆ«ÒÆ
+	#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)// è·å–"MEMBERæˆå‘˜"åœ¨"ç»“æ„ä½“TYPE"ä¸­çš„ä½ç½®åç§»
 #endif
 
 #ifndef container_of
-	#ifndef __GNUC__ //GNUC °üº¬´Ëºê¶¨Òå
-		// ¸ù¾İ"½á¹¹Ìå(type)±äÁ¿"ÖĞµÄ"Óò³ÉÔ±±äÁ¿(member)µÄÖ¸Õë(ptr)"À´»ñÈ¡Ö¸ÏòÕû¸ö½á¹¹Ìå±äÁ¿µÄÖ¸Õë
+	#ifndef __GNUC__ //GNUC åŒ…å«æ­¤å®å®šä¹‰
+		// æ ¹æ®"ç»“æ„ä½“(type)å˜é‡"ä¸­çš„"åŸŸæˆå‘˜å˜é‡(member)çš„æŒ‡é’ˆ(ptr)"æ¥è·å–æŒ‡å‘æ•´ä¸ªç»“æ„ä½“å˜é‡çš„æŒ‡é’ˆ
 		#define container_of(ptr, type, member)  ((type*)((char*)ptr - offsetof(type, member)))
-		// ´Ëºê¶¨ÒåÔ­ÎÄÎª GNU C ËùĞ´£¬ÈçÏÂ£¬ÓĞĞ©±àÒëÆ÷Ö»Ö§³Ö ANSI C /C99 µÄ£¬ËùÒÔ×÷ÒÔÉÏĞŞ¸Ä
+		// æ­¤å®å®šä¹‰åŸæ–‡ä¸º GNU C æ‰€å†™ï¼Œå¦‚ä¸‹ï¼Œæœ‰äº›ç¼–è¯‘å™¨åªæ”¯æŒ ANSI C /C99 çš„ï¼Œæ‰€ä»¥ä½œä»¥ä¸Šä¿®æ”¹
 	#else
 		#define container_of(ptr, type, member) ({          \
 		const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
@@ -35,25 +35,25 @@
 #endif
 //------------------------------------------------------------------
 
-// »ñÈ¡½Úµã r µÄ¸¸½Úµã
+// è·å–èŠ‚ç‚¹ r çš„çˆ¶èŠ‚ç‚¹
 #define avl_parent(r) ((struct avl_node *)((r)->avl_parent & (~3)))
 
 //------------------------------------------------------------------
 
-#define avl_scale(r)    ((r)->avl_parent & 3) //»ñÈ¡ avl ½ÚµãµÄÆ½ºâÒò×Ó£¬ÖµÈçÏÂ
-#define AVL_BALANCED    0 //½ÚµãÆ½ºâ
-#define AVL_TILT_RIGHT  1 //½ÚµãÓÒ±ß±È×ó±ß¸ß£¬ÓÃ 0b01 ±íÊ¾£¬ÓÒÇã
-#define AVL_TILT_LEFT   2 //½Úµã×ó±ß±ÈÓÒ±ß¸ß£¬ÓÃ 0b10 ±íÊ¾£¬×óÇã
+#define avl_scale(r)    ((r)->avl_parent & 3) //è·å– avl èŠ‚ç‚¹çš„å¹³è¡¡å› å­ï¼Œå€¼å¦‚ä¸‹
+#define AVL_BALANCED    0 //èŠ‚ç‚¹å¹³è¡¡
+#define AVL_TILT_RIGHT  1 //èŠ‚ç‚¹å³è¾¹æ¯”å·¦è¾¹é«˜ï¼Œç”¨ 0b01 è¡¨ç¤ºï¼Œå³å€¾
+#define AVL_TILT_LEFT   2 //èŠ‚ç‚¹å·¦è¾¹æ¯”å³è¾¹é«˜ï¼Œç”¨ 0b10 è¡¨ç¤ºï¼Œå·¦å€¾
 
 
-// ½ÚµãµÄÆ½ºâÒò×ÓÉèÖÃ ----------------------------------------------
-//ÉèÖÃ avl ½ÚµãÎªÆ½ºâ½Úµã
+// èŠ‚ç‚¹çš„å¹³è¡¡å› å­è®¾ç½® ----------------------------------------------
+//è®¾ç½® avl èŠ‚ç‚¹ä¸ºå¹³è¡¡èŠ‚ç‚¹
 #define avl_set_balanced(r)   do {((r)->avl_parent) &= (~3);}while(0)
 
-//ÉèÖÃ avl ½ÚµãÎªÓÒÇã½Úµã
+//è®¾ç½® avl èŠ‚ç‚¹ä¸ºå³å€¾èŠ‚ç‚¹
 #define avl_set_tilt_right(r) do {(r)->avl_parent=(((r)->avl_parent & ~3)|AVL_TILT_RIGHT);} while (0)
 
-//ÉèÖÃ avl ½ÚµãÎª×óÇã½Úµã
+//è®¾ç½® avl èŠ‚ç‚¹ä¸ºå·¦å€¾èŠ‚ç‚¹
 #define avl_set_tilt_left(r)  do {(r)->avl_parent=(((r)->avl_parent & ~3)|AVL_TILT_LEFT);} while (0)
 
 //------------------------------------------------------------------
@@ -62,14 +62,14 @@
 
 /* Public types ------------------------------------------------------------*/
 
-struct avl_node // avl ½Úµã
+struct avl_node // avl èŠ‚ç‚¹
 {
     unsigned long  avl_parent; 
     struct avl_node *avl_left;
     struct avl_node *avl_right;
 };
 
-struct avl_root // avl Ê÷¸ù
+struct avl_root // avl æ ‘æ ¹
 {
     struct avl_node *avl_node;
 };
@@ -78,9 +78,9 @@ struct avl_root // avl Ê÷¸ù
 
 /* Public variables ---------------------------------------------------------*/
 
-/* Public function prototypes ¶ÔÍâ¿ÉÓÃ½Ó¿Ú -----------------------------------*/
+/* Public function prototypes å¯¹å¤–å¯ç”¨æ¥å£ -----------------------------------*/
 
-// ÉèÖÃ avl ½ÚµãµÄ¸¸½ÚµãÎª p
+// è®¾ç½® avl èŠ‚ç‚¹çš„çˆ¶èŠ‚ç‚¹ä¸º p
 static inline void avl_set_parent(struct avl_node *avl, struct avl_node *p)
 {
     avl->avl_parent = (avl->avl_parent & 3) | (unsigned long)p;

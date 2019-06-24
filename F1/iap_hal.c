@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
   * @file           iap_hal.c
-  * @author         ¹ÅÃ´Äþ
+  * @author         å¤ä¹ˆå®
   * @brief          serial_console file
-                    ÔÚÏßÉý¼¶¹¦ÄÜÓ²¼þ³éÏó²¿·Ö
+                    åœ¨çº¿å‡çº§åŠŸèƒ½ç¡¬ä»¶æŠ½è±¡éƒ¨åˆ†
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -22,15 +22,15 @@
 #define SYSCFG_ADDR_MAX  (APP_ADDR-4)
 #define SYSCFG_ADDR_MIN  (APP_ADDR-SYSCFG_INFO_SIZE)
 
-//------------------------------´®¿Ú IAP Ïà¹Ø------------------------------
+//------------------------------ä¸²å£ IAP ç›¸å…³------------------------------
 
 
 
 
 /**
-	* @brief    iap_erase_flash console ²Á³ý flash Ä³¸öµØÖ·ËùÔÚÉÈÇø
-	* @param    ËùÐè²Á³ýµÄµØÖ·
-	* @return   £¨HAL_OK£©¼È0 ÎªÕý³££¬·ñÔò³ö´í
+	* @brief    iap_erase_flash console æ“¦é™¤ flash æŸä¸ªåœ°å€æ‰€åœ¨æ‰‡åŒº
+	* @param    æ‰€éœ€æ“¦é™¤çš„åœ°å€
+	* @return   ï¼ˆHAL_OKï¼‰æ—¢0 ä¸ºæ­£å¸¸ï¼Œå¦åˆ™å‡ºé”™
 */
 int iap_erase_flash(uint32_t eraseaddr,uint32_t erasesize)
 {
@@ -52,9 +52,9 @@ int iap_erase_flash(uint32_t eraseaddr,uint32_t erasesize)
 
 
 /**
-	* @brief    vUsartHal_IAP_Write console Ð´ flash
-	* @param    ¿Õ
-	* @return   £¨HAL_OK£©¼È0 ÎªÕý³££¬·ñÔò³ö´í
+	* @brief    vUsartHal_IAP_Write console å†™ flash
+	* @param    ç©º
+	* @return   ï¼ˆHAL_OKï¼‰æ—¢0 ä¸ºæ­£å¸¸ï¼Œå¦åˆ™å‡ºé”™
 */
 int iap_write_flash(uint32_t FlashAddr,uint32_t FlashData)
 {
@@ -65,21 +65,21 @@ int iap_write_flash(uint32_t FlashAddr,uint32_t FlashData)
 
 
 /**
-	* @brief    iap_lock_flash console ÉÏËø flash
-	* @param    ¿Õ
-	* @return   £¨HAL_OK£©¼È0 ÎªÕý³££¬·ñÔò³ö´í
+	* @brief    iap_lock_flash console ä¸Šé” flash
+	* @param    ç©º
+	* @return   ï¼ˆHAL_OKï¼‰æ—¢0 ä¸ºæ­£å¸¸ï¼Œå¦åˆ™å‡ºé”™
 */
 int iap_lock_flash(void)
 {
-	return HAL_FLASH_Lock();// 0 ÎªÕý³£
+	return HAL_FLASH_Lock();// 0 ä¸ºæ­£å¸¸
 }
 
 
 
 /**
-	* @brief    iap_unlock_flash console ½âËø flash
-	* @param    ¿Õ
-	* @return   £¨HAL_OK£©¼È0 ÎªÕý³££¬·ñÔò³ö´í
+	* @brief    iap_unlock_flash console è§£é” flash
+	* @param    ç©º
+	* @return   ï¼ˆHAL_OKï¼‰æ—¢0 ä¸ºæ­£å¸¸ï¼Œå¦åˆ™å‡ºé”™
 */
 int iap_unlock_flash(void)
 {
@@ -89,8 +89,8 @@ int iap_unlock_flash(void)
 
 
 /**
-	* @brief    vSystemReboot Ó²¼þÖØÆô
-	* @param    ¿Õ
+	* @brief    vSystemReboot ç¡¬ä»¶é‡å¯
+	* @param    ç©º
 	* @return  
 */
 void shell_reboot_command(void * arg)
@@ -104,9 +104,9 @@ void shell_reboot_command(void * arg)
 
 
 /**
-	* @brief    syscfg_addr »ñÈ¡×îÐÂµÄ syscfg ÎÄ¼þµÄµØÖ·
-	* @param    ¿Õ
-	* @return   syscfg µØÖ·
+	* @brief    syscfg_addr èŽ·å–æœ€æ–°çš„ syscfg æ–‡ä»¶çš„åœ°å€
+	* @param    ç©º
+	* @return   syscfg åœ°å€
 */
 uint32_t syscfg_addr(void)
 {
@@ -115,16 +115,16 @@ uint32_t syscfg_addr(void)
 	uint32_t *schs = (uint32_t *)SYSCFG_ADDR_MIN ;
 	uint32_t *sch ;
 
-	if (*schs == 0xffffffff)//Èç¹ûcfg Ò³ÃæÎÞÄÚÈÝ£¬´´½¨ÄÚÈÝ
+	if (*schs == 0xffffffff)//å¦‚æžœcfg é¡µé¢æ— å†…å®¹ï¼Œåˆ›å»ºå†…å®¹
 	{
 		iap_unlock_flash();
 		iap_write_flash(SYSCFG_ADDR_MIN ,cfgindex);
-		iap_write_flash(SYSCFG_ADDR_MIN + 4 ,(*(uint32_t*)" \r\n"));//¼ÓÈë½áÊø·û
+		iap_write_flash(SYSCFG_ADDR_MIN + 4 ,(*(uint32_t*)" \r\n"));//åŠ å…¥ç»“æŸç¬¦
 		iap_lock_flash();
 		return (SYSCFG_ADDR_MIN);
 	}
 
-	while(sche - schs > 1) //¶þ·Ö·¨²éÕÒµ½×îÐÂµÄ syscfg ½áÎ²
+	while(sche - schs > 1) //äºŒåˆ†æ³•æŸ¥æ‰¾åˆ°æœ€æ–°çš„ syscfg ç»“å°¾
 	{
 		sch = schs + (sche - schs) / 2;
 		if (*sch == 0xffffffff)
@@ -133,10 +133,10 @@ uint32_t syscfg_addr(void)
 			schs = sch;
 	}
 
-	//ËÄ×Ö½Ú¶ÔÆëÄÚ´æ£¬»ØËÝÕÒµ½ cfg: ¿ªÍ·
+	//å››å­—èŠ‚å¯¹é½å†…å­˜ï¼Œå›žæº¯æ‰¾åˆ° cfg: å¼€å¤´
 	for (sch = schs ; sch >= (uint32_t*)SYSCFG_ADDR_MIN ; --sch)
 	{
-		if (cfgindex == (*sch)) //ÕÒµ½ÁË·µ»Ø´ËµØÖ·
+		if (cfgindex == (*sch)) //æ‰¾åˆ°äº†è¿”å›žæ­¤åœ°å€
 			return (uint32_t)sch;
 	}
 
@@ -145,8 +145,8 @@ uint32_t syscfg_addr(void)
 
 
 /**
-	* @brief    erase_syscfg ²Á³ý syscfg µØÖ·ÇøÓòËùÓÐÊý¾Ý
-	* @param    ¿Õ
+	* @brief    erase_syscfg æ“¦é™¤ syscfg åœ°å€åŒºåŸŸæ‰€æœ‰æ•°æ®
+	* @param    ç©º
 	* @return   void
 */
 void syscfg_erase(void)
@@ -159,8 +159,8 @@ void syscfg_erase(void)
 
 
 /**
-	* @brief    write_syscfg Ð´Èë syscfg Êý¾Ý
-	* @param    ¿Õ
+	* @brief    write_syscfg å†™å…¥ syscfg æ•°æ®
+	* @param    ç©º
 	* @return  
 */
 void syscfg_write(char * info , uint32_t len)
@@ -170,10 +170,10 @@ void syscfg_write(char * info , uint32_t len)
 	uint32_t *schs = (uint32_t *)SYSCFG_ADDR_MIN;
 	uint32_t *sch  = NULL;
 
-	if( *schs == 0xffffffff) //Èç¹ûÇøÓòÄÚÎ´ÓÐ config ÐÅÏ¢
+	if( *schs == 0xffffffff) //å¦‚æžœåŒºåŸŸå†…æœªæœ‰ config ä¿¡æ¯
 		goto WRITE_SYSCONFIG;
 
-	while( sche - schs > 1)//¶þ·Ö·¨²éÕÒµ½×îÐÂµÄ syscfg ½áÎ²
+	while( sche - schs > 1)//äºŒåˆ†æ³•æŸ¥æ‰¾åˆ°æœ€æ–°çš„ syscfg ç»“å°¾
 	{
 		sch = schs + (sche - schs) / 2;
 		if ( *sch == 0xffffffff)
@@ -182,15 +182,15 @@ void syscfg_write(char * info , uint32_t len)
 			schs = sch;
 	}
 
-	if ( (uint32_t)sche + len > SYSCFG_ADDR_MAX)//Ê£Óà¿Õ¼ä²»×ãÒÔÐ´ÕâÒ»°üÊý¾Ý
+	if ( (uint32_t)sche + len > SYSCFG_ADDR_MAX)//å‰©ä½™ç©ºé—´ä¸è¶³ä»¥å†™è¿™ä¸€åŒ…æ•°æ®
 	{
-		syscfg_erase();       //Çå¿Õ syscfg ÇøÓò
-		sch = (uint32_t *)SYSCFG_ADDR_MIN;//´ÓÍ·¿ªÊ¼Ð´
+		syscfg_erase();       //æ¸…ç©º syscfg åŒºåŸŸ
+		sch = (uint32_t *)SYSCFG_ADDR_MIN;//ä»Žå¤´å¼€å§‹å†™
 	}
 	else
 		sch = sche;
 
-WRITE_SYSCONFIG: //Ð´Èë syscfg Êý¾Ý
+WRITE_SYSCONFIG: //å†™å…¥ syscfg æ•°æ®
 
 	iap_unlock_flash();
 

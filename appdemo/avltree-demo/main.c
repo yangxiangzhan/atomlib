@@ -11,9 +11,9 @@
 
 
 
-#define TEST_MAX  200//²âÊÔµãÊı
+#define TEST_MAX  200//æµ‹è¯•ç‚¹æ•°
 
-#define DEBUG_INSERT      //Ìí¼Ó¹ı³Ì´òÓ¡
+#define DEBUG_INSERT      //æ·»åŠ è¿‡ç¨‹æ‰“å°
 
 
 #ifdef DEBUG_INSERT
@@ -28,24 +28,24 @@
 
 typedef struct mydata
 {
-	uint32_t myvalue;	//Ê÷Öµ
-	struct avl_node avlnode;//½Úµã
+	uint32_t myvalue;	//æ ‘å€¼
+	struct avl_node avlnode;//èŠ‚ç‚¹
 }
 mydata_t;
 
 
-struct avl_root mydata_root = { NULL };//Ê÷¸ù
+struct avl_root mydata_root = { NULL };//æ ‘æ ¹
 struct mydata   mydata_buf[TEST_MAX] = {0};
 
 uint32_t myvalue_record[TEST_MAX] = { 0 };
 
-uint16_t allnum = 0; //Ä¿Ç°¹²ÓĞ¼¸¸öµã
+uint16_t allnum = 0; //ç›®å‰å…±æœ‰å‡ ä¸ªç‚¹
 
 /**
 	* @brief    mydata_insert
-	*           °Ñ insertdata ²åÈë avl Ê÷
-	* @param    ËùĞè²åÈëÊ÷µÄ½á¹¹ÌåÖ¸Õë
-	* @return   ³É¹¦·µ»Ø0£¬½ÚµãÒÑÔÚÊ÷ÉÏ·µ»Ø -1
+	*           æŠŠ insertdata æ’å…¥ avl æ ‘
+	* @param    æ‰€éœ€æ’å…¥æ ‘çš„ç»“æ„ä½“æŒ‡é’ˆ
+	* @return   æˆåŠŸè¿”å›0ï¼ŒèŠ‚ç‚¹å·²åœ¨æ ‘ä¸Šè¿”å› -1
 */
 static int mydata_insert(struct mydata * insertdata)
 {
@@ -89,16 +89,16 @@ static int mydata_insert(struct mydata * insertdata)
 
 /**
 	* @brief    mydata_search
-	*           ¸ù¾İ¼üÖµ¶Ô avl Ê÷½øĞĞËÑË÷
-	* @param    searchvalue Öµ
-	* @return   ËÑË÷³É¹¦·µ»Ø¼üÖµËùÔÚ½á¹¹ÌåÖ¸Õë£¬·ñÔò·µ»Ø NULL
+	*           æ ¹æ®é”®å€¼å¯¹ avl æ ‘è¿›è¡Œæœç´¢
+	* @param    searchvalue å€¼
+	* @return   æœç´¢æˆåŠŸè¿”å›é”®å€¼æ‰€åœ¨ç»“æ„ä½“æŒ‡é’ˆï¼Œå¦åˆ™è¿”å› NULL
 */
 static struct mydata *mydata_search(uint32_t searchvalue)
 {
 	struct avl_root *root = &mydata_root;
-	struct avl_node *node = root->avl_node;//´Ó¸ù½Úµã¿ªÊ¼ËÑË÷
+	struct avl_node *node = root->avl_node;//ä»æ ¹èŠ‚ç‚¹å¼€å§‹æœç´¢
 
-	while (node) //Îª NULL ¼´ËÑË÷½áÊø
+	while (node) //ä¸º NULL å³æœç´¢ç»“æŸ
 	{
 		struct mydata *treedata = container_of(node, struct mydata, avlnode);
 
@@ -121,9 +121,9 @@ static struct mydata *mydata_search(uint32_t searchvalue)
 
 /**
 	* @brief    tree_deep
-	*           µİ¹é»ñÈ¡¶ş²æÊ÷¸ß¶È
-	* @param    ¶ş²æÊ÷½Úµã
-	* @return   ¶ş²æÊ÷¸ß¶È
+	*           é€’å½’è·å–äºŒå‰æ ‘é«˜åº¦
+	* @param    äºŒå‰æ ‘èŠ‚ç‚¹
+	* @return   äºŒå‰æ ‘é«˜åº¦
 */
 int tree_deep(struct avl_node *node)
 {
@@ -140,14 +140,14 @@ int tree_deep(struct avl_node *node)
 
 /**
 	* @brief    tree_deep
-	*           »ñÈ¡µÚ ideep ²ãµÄµÚ iwidth ¸ö½Úµã
+	*           è·å–ç¬¬ ideep å±‚çš„ç¬¬ iwidth ä¸ªèŠ‚ç‚¹
 	        9       
 		  /   \
 		 5     15
 		/ \   /  \
-	   4   6 12  16   15 ÎªµÚ¶ş²ãµÚ¶ş¸ö½Úµã £¬12 ÎªµÚÈı²ãµÚÈı¸ö½Úµã	   
-	* @param    ¶ş²æÊ÷¸ù½Úµã
-	* @return   ¶ş²æÊ÷½ÚµãÖ¸Õë£¬»ò NULL
+	   4   6 12  16   15 ä¸ºç¬¬äºŒå±‚ç¬¬äºŒä¸ªèŠ‚ç‚¹ ï¼Œ12 ä¸ºç¬¬ä¸‰å±‚ç¬¬ä¸‰ä¸ªèŠ‚ç‚¹	   
+	* @param    äºŒå‰æ ‘æ ¹èŠ‚ç‚¹
+	* @return   äºŒå‰æ ‘èŠ‚ç‚¹æŒ‡é’ˆï¼Œæˆ– NULL
 */
 struct avl_node * get_tree_node(const struct avl_root *root, int ideep, int iwidth)
 {
@@ -172,8 +172,8 @@ struct avl_node * get_tree_node(const struct avl_root *root, int ideep, int iwid
 
 /**
 	* @brief    print_mytree
-	*           ´òÓ¡¶ş²æÊ÷
-	* @param    ¶ş²æÊ÷¸ù½Úµã
+	*           æ‰“å°äºŒå‰æ ‘
+	* @param    äºŒå‰æ ‘æ ¹èŠ‚ç‚¹
 	* @return   void
 */
 void print_mytree(const struct avl_root *root)
@@ -184,8 +184,8 @@ void print_mytree(const struct avl_root *root)
 	uint32_t spacesum;
 
 	int spacec;
-	int linec; //ÏÂ»®Ïß¼ÆÊı
-	int emptyc; //ÏÂ»®Ïß¼ÆÊı
+	int linec; //ä¸‹åˆ’çº¿è®¡æ•°
+	int emptyc; //ä¸‹åˆ’çº¿è®¡æ•°
 	int widthc;
 	int widthmax;
 
@@ -202,7 +202,7 @@ void print_mytree(const struct avl_root *root)
 		linec = (emptyc / 2 > 0) ? (emptyc * 3 - 4) : 0;
 		
 		if (linec)
-			spacec = (emptyc > 0) ? (emptyc * 6 + 3) : 1; //¿Õ¸ñÊı
+			spacec = (emptyc > 0) ? (emptyc * 6 + 3) : 1; //ç©ºæ ¼æ•°
 		else
 			spacec = (emptyc > 0) ? 7 : 1;
 		
@@ -256,7 +256,7 @@ void build_mytree(uint16_t nodenum)
 	
 	if ( allnum < nodenum )
 	{
-		while(allnum < nodenum) //Ëæ»úÌí¼ÓÑùµãÖ±µ½ÑùµãÊıÎª nodenum
+		while(allnum < nodenum) //éšæœºæ·»åŠ æ ·ç‚¹ç›´åˆ°æ ·ç‚¹æ•°ä¸º nodenum
 		{
 			uint32_t rand_value = rand() % 1000;
 			myvalue_record[allnum] = rand_value;
@@ -273,7 +273,7 @@ void build_mytree(uint16_t nodenum)
 	else
 	{
 		printf("delete nodes:\r\n");
-		while (allnum > nodenum) //Ëæ»úÉ¾³ıÑùµãÖ±µ½ÑùµãÊıÎª nodenum
+		while (allnum > nodenum) //éšæœºåˆ é™¤æ ·ç‚¹ç›´åˆ°æ ·ç‚¹æ•°ä¸º nodenum
 		{
 			int count = 0;
 			uint32_t del_index = rand() % (--allnum);
@@ -305,14 +305,14 @@ void build_mytree(uint16_t nodenum)
 
 
 
-//±©Á¦²âÊÔ£¬Ëæ»úÌí¼Ó TEST_MAX ¸öÑùµãÔÙ½øĞĞËæ»úÉ¾³ı
+//æš´åŠ›æµ‹è¯•ï¼Œéšæœºæ·»åŠ  TEST_MAX ä¸ªæ ·ç‚¹å†è¿›è¡Œéšæœºåˆ é™¤
 int main(void)
 {
 	struct mydata * data_node;
 	
 	srand((int)time(0));
 	
-	/* ±©Á¦²âÊÔ£¬Ëæ»úÌí¼ÓÑùµãÔÙ½øĞĞËæ»úÉ¾³ı
+	/* æš´åŠ›æµ‹è¯•ï¼Œéšæœºæ·»åŠ æ ·ç‚¹å†è¿›è¡Œéšæœºåˆ é™¤
 	build_mytree(100);
 	build_mytree(50);
 	build_mytree(150);
@@ -322,7 +322,7 @@ int main(void)
 	build_mytree(180);
 	build_mytree(20);
 	
-	print_mytree(&mydata_root); //´òÓ¡Ê£ÏÂµÄÊ÷
+	print_mytree(&mydata_root); //æ‰“å°å‰©ä¸‹çš„æ ‘
 	
 	printf("\r\n\ttest delete:\r\n");
 
@@ -337,9 +337,9 @@ int main(void)
 		{
 			myvalue = 0 - myvalue;
 			printf("delete %d\r\n",myvalue);
-			data_node = mydata_search(myvalue); //ËÑË÷¼üÖµËùÔÚµÄ¶ş²æÊ÷½Úµã
+			data_node = mydata_search(myvalue); //æœç´¢é”®å€¼æ‰€åœ¨çš„äºŒå‰æ ‘èŠ‚ç‚¹
 
-			if (data_node != NULL)//Èç¹û¼üÖµÔÚÊ÷ÉÏ£¬É¾³ı
+			if (data_node != NULL)//å¦‚æœé”®å€¼åœ¨æ ‘ä¸Šï¼Œåˆ é™¤
 			{
 				avl_delete(&mydata_root, &data_node->avlnode);
 
@@ -370,7 +370,7 @@ int main(void)
 			else
 			{
 				printf("insert %d\r\n",myvalue);
-				print_mytree(&mydata_root); //´òÓ¡Ê£ÏÂµÄÊ÷
+				print_mytree(&mydata_root); //æ‰“å°å‰©ä¸‹çš„æ ‘
 				++allnum;
 			}
 		}

@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
   * @file           iap_hal.h
-  * @author         ¹ÅÃ´Äş
+  * @author         å¤ä¹ˆå®
   * @brief          serial_console file
-                    ´®¿Ú¿ØÖÆÌ¨ÎÄ¼ş¡£ÎÄ¼ş²»Ö±½Ó²Ù×÷Ó²¼ş£¬ÒÀÀµ serial_hal.c ºÍ iap_hal.c
+                    ä¸²å£æ§åˆ¶å°æ–‡ä»¶ã€‚æ–‡ä»¶ä¸ç›´æ¥æ“ä½œç¡¬ä»¶ï¼Œä¾èµ– serial_hal.c å’Œ iap_hal.c
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -14,10 +14,10 @@
 #define __IAP_BASE_H__
 
 /*
- *  °Ñ flash ´óÖÂ·ÖÎªËÄ²¿·Ö
+ *  æŠŠ flash å¤§è‡´åˆ†ä¸ºå››éƒ¨åˆ†
  *  IAP_ADDR         SYSCFG_ADDR    APP_ADDR  UPDATE_PACKAGE_AT_STM32_ADRR
  *  |--------------------|--------------|---------------|--------------|
- *   iap,¼´bootloader²¿·Ö    sysconfigĞÅÏ¢          app ²¿·Ö           ´æ´¢Éı¼¶°ü²¿·Ö
+ *   iap,å³bootloaderéƒ¨åˆ†    sysconfigä¿¡æ¯          app éƒ¨åˆ†           å­˜å‚¨å‡çº§åŒ…éƒ¨åˆ†
  *
  */
 
@@ -25,7 +25,7 @@
 
 #define UPDPKG_AT_MCU_ADDR           0x08060000
 
-#define UPDATE_PACKAGE_AT_STM32_ADRR UPDPKG_AT_MCU_ADDR //telnet/´®¿Ú Éı¼¶°ü´æ·ÅÎ»ÖÃ
+#define UPDATE_PACKAGE_AT_STM32_ADRR UPDPKG_AT_MCU_ADDR //telnet/ä¸²å£ å‡çº§åŒ…å­˜æ”¾ä½ç½®
 
 #define IAP_ADDR 0x08000000
 #define APP_ADDR 0x08020000
@@ -36,10 +36,10 @@
 #define SYSCFG_ADDR_MIN  (APP_ADDR-SYSCFG_INFO_SIZE)
 
 
-// stm32f429bit6 ramÆğÊ¼µØÖ·Îª 0x20000000 £¬´óĞ¡ 0x30000
-// stm32f103vet6 ramÆğÊ¼µØÖ·Îª 0x20000000 £¬´óĞ¡ 0x10000
-// Ö±½ÓÓÃ ram Çø¸ß×Ö¶ÎµÄµØÖ·×÷Îª½ø iap Ä£Ê½µÄ±êÖ¾Î»
-// ÔÚ app ÖĞ£¬ÏÈ¶Ô±êÖ¾Î»½øĞĞÖÃÎ»ÌáÊ¾£¬È»ºóÌø×ªµ½ iap 
+// stm32f429bit6 ramèµ·å§‹åœ°å€ä¸º 0x20000000 ï¼Œå¤§å° 0x30000
+// stm32f103vet6 ramèµ·å§‹åœ°å€ä¸º 0x20000000 ï¼Œå¤§å° 0x10000
+// ç›´æ¥ç”¨ ram åŒºé«˜å­—æ®µçš„åœ°å€ä½œä¸ºè¿› iap æ¨¡å¼çš„æ ‡å¿—ä½
+// åœ¨ app ä¸­ï¼Œå…ˆå¯¹æ ‡å¿—ä½è¿›è¡Œç½®ä½æç¤ºï¼Œç„¶åè·³è½¬åˆ° iap 
 #define IAP_FLAG_ADDR       0x2002FF00 
 
 #define IAP_UPDATE_CMD_FLAG 0x1234ABCD
@@ -60,7 +60,7 @@
 
 
 
-//------------------------------´®¿Ú IAP Ïà¹Ø------------------------------
+//------------------------------ä¸²å£ IAP ç›¸å…³------------------------------
 
 int iap_erase_flash(uint32_t eraseaddr,uint32_t erasesize);
 
@@ -77,7 +77,7 @@ void syscfg_erase(void);
 
 void syscfg_write(char * info , uint32_t len);
 
-//------------------------------¿ØÖÆÌ¨ÃüÁî------------------------------
+//------------------------------æ§åˆ¶å°å‘½ä»¤------------------------------
 
 void shell_reboot_command(void * arg);
 

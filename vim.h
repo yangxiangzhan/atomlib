@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
   * @file           vim.h
-  * @author         ¹ÅÃ´Äş
-  * @brief          ÎÄ±¾±à¼­Æ÷
+  * @author         å¤ä¹ˆå®
+  * @brief          æ–‡æœ¬ç¼–è¾‘å™¨
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -14,9 +14,9 @@
 #define _VIM_EDIT_
 
 
-/* Public macro (¹²ÓĞºê)---------------------------------------------------*/
+/* Public macro (å…±æœ‰å®)---------------------------------------------------*/
 
-//Á½¸ö×´Ì¬Á¿
+//ä¸¤ä¸ªçŠ¶æ€é‡
 #define VIM_FILE_OK    0
 #define VIM_FILE_ERROR 1
 
@@ -29,35 +29,35 @@
 
 /**
 	* @brief    vim_fgets
-	*           ±à¼­Æ÷´Ó fpath »ñÈ¡ÎÄ±¾ĞÅÏ¢½Ó¿Ú
-	* @param    fpath : ÎÄ¼şÂ·¾¶£¬ÃüÁîĞĞËùÊäÈëµÄÂ·¾¶
-	* @param    fdata : ´Ó fpath ÎÄ¼ş¶ÁÈ¡µÄÊı¾İÊä³ö
-	* @param    fsize : fpath ÎÄ¼ş×Ü´óĞ¡Êä³ö 
+	*           ç¼–è¾‘å™¨ä» fpath è·å–æ–‡æœ¬ä¿¡æ¯æ¥å£
+	* @param    fpath : æ–‡ä»¶è·¯å¾„ï¼Œå‘½ä»¤è¡Œæ‰€è¾“å…¥çš„è·¯å¾„
+	* @param    fdata : ä» fpath æ–‡ä»¶è¯»å–çš„æ•°æ®è¾“å‡º
+	* @param    fsize : fpath æ–‡ä»¶æ€»å¤§å°è¾“å‡º 
 	* @return   VIM_FILE_OK / VIM_FILE_ERROR
 */
 typedef uint32_t (*vim_fgets_t)(char * fpath, char * fdata,uint16_t * fsize);
 
 /**
 	* @brief    vim_fputs
-	*           ±à¼­Æ÷¶Ô fpath ÎÄ¼ş½øĞĞÊı¾İÊä³ö
-	* @param    fpath : ÎÄ¼şÂ·¾¶£¬ÃüÁîĞĞËùÊäÈëµÄÂ·¾¶
-	* @param    fdata : ½«Ğ´Èë fpath ÎÄ¼şµÄÊı¾İ
-	* @param    fsize : ½«Ğ´Èë fpath ÎÄ¼şµÄÊı¾İ´óĞ¡
+	*           ç¼–è¾‘å™¨å¯¹ fpath æ–‡ä»¶è¿›è¡Œæ•°æ®è¾“å‡º
+	* @param    fpath : æ–‡ä»¶è·¯å¾„ï¼Œå‘½ä»¤è¡Œæ‰€è¾“å…¥çš„è·¯å¾„
+	* @param    fdata : å°†å†™å…¥ fpath æ–‡ä»¶çš„æ•°æ®
+	* @param    fsize : å°†å†™å…¥ fpath æ–‡ä»¶çš„æ•°æ®å¤§å°
 	* @return   void
 */
 typedef void	 (*vim_fputs_t)(char * fpath, char * fdata,uint32_t fsize);
 
 
 
-/* Public function prototypes ¶ÔÍâ¿ÉÓÃ½Ó¿Ú -----------------------------------*/
+/* Public function prototypes å¯¹å¤–å¯ç”¨æ¥å£ -----------------------------------*/
 
 /**
 	* @brief    shell_into_edit
-	*           shell ½»»¥½øÈëÎÄ±¾±à¼­Ä£Ê½
-	*           ÒÑÖªÎÊÌâ£ºµ±¿ØÖÆÌ¨µÄÁĞĞ¡ÓÚÎÄ±¾µÄÁĞ£¬»áÓĞÎÊÌâ£¬¼´Ä³ĞĞÓĞ100×Ö·û£¬µ«¿ØÖÆÌ¨Ò»ĞĞÖ»ÄÜÏÔÊ¾80
-	* @param    shell : ½»»¥
-	* @param    fgets : »ñÈ¡ÎÄ±¾Êı¾İµÄÈë¿Ú
-	* @param    fputs : ÎÄ±¾±à¼­½áÊøµÄÊä³ö
+	*           shell äº¤äº’è¿›å…¥æ–‡æœ¬ç¼–è¾‘æ¨¡å¼
+	*           å·²çŸ¥é—®é¢˜ï¼šå½“æ§åˆ¶å°çš„åˆ—å°äºæ–‡æœ¬çš„åˆ—ï¼Œä¼šæœ‰é—®é¢˜ï¼Œå³æŸè¡Œæœ‰100å­—ç¬¦ï¼Œä½†æ§åˆ¶å°ä¸€è¡Œåªèƒ½æ˜¾ç¤º80
+	* @param    shell : äº¤äº’
+	* @param    fgets : è·å–æ–‡æœ¬æ•°æ®çš„å…¥å£
+	* @param    fputs : æ–‡æœ¬ç¼–è¾‘ç»“æŸçš„è¾“å‡º
 	* @return   void
 */
 void shell_into_edit(struct shell_input  * shell,vim_fgets_t fgets ,vim_fputs_t fputs);

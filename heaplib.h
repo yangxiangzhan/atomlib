@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
   * @file           heaplib.h
-  * @author         ��ô��
-  * @brief          �ڴ����ͷ�ļ������� heaplib.c Դ�� freertos �� heap_4.c 
-  *                 ��ͷ�ļ��ṩ heap_4.c ����ĺ궨�壬ʹ��������� freertos
-  *                 �����ʹ�á������޲���ϵͳ����Ҫ���ڴ�����ĵط���
+  * @author         古么宁
+  * @brief          内存管理头文件，其中 heaplib.c 源自 freertos 的 heap_4.c 
+  *                 此头文件提供 heap_4.c 所需的宏定义，使其可以脱离 freertos
+  *                 便可以使用。用于无操作系统但需要做内存管理的地方。
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -23,7 +23,7 @@
 #define portBYTE_ALIGNMENT			8
 
 
-//���Ӻ�֧�֣�ʹ�������� freertos
+//添加宏支持，使编译脱离 freertos
 #if portBYTE_ALIGNMENT == 32
 	#define portBYTE_ALIGNMENT_MASK ( 0x001f )
 #endif

@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
   * @file           serial_console.c
-  * @author         ¹ÅÃ´Äş
+  * @author         å¤ä¹ˆå®
   * @brief          serial_console file
-                    ´®¿Ú¿ØÖÆÌ¨ÎÄ¼ş¡£
+                    ä¸²å£æ§åˆ¶å°æ–‡ä»¶ã€‚
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -13,7 +13,7 @@
 /* Includes ---------------------------------------------------*/
 #include <string.h>
 #include <stdarg.h>
-#include <stdint.h> //¶¨ÒåÁËºÜ¶àÊı¾İÀàĞÍ
+#include <stdint.h> //å®šä¹‰äº†å¾ˆå¤šæ•°æ®ç±»å‹
 
 #include "tasklib.h"
 #include "iap_hal.h"
@@ -25,7 +25,7 @@
 
 #include "stm32f1xx_hal.h" //for SCB->VTOR
 
-//--------------------Ïà¹Øºê¶¨Òå¼°½á¹¹Ìå¶¨Òå--------------------
+//--------------------ç›¸å…³å®å®šä¹‰åŠç»“æ„ä½“å®šä¹‰--------------------
 
 #define SYSTEM_CONFIG_FILE 
 
@@ -54,17 +54,17 @@ static ros_task_t iap_timeout_task;
 static ros_task_t serial_console_task;
 
 static struct shell_input serial_shell;
-//------------------------------Ïà¹Øº¯ÊıÉùÃ÷------------------------------
+//------------------------------ç›¸å…³å‡½æ•°å£°æ˜------------------------------
 
 
 
 
-//------------------------------»ªÀöµÄ·Ö¸îÏß------------------------------
+//------------------------------åä¸½çš„åˆ†å‰²çº¿------------------------------
 
 
 
 /**
-	* @brief iap_check_complete iap Éı¼¶³¬Ê±ÅĞ¶ÏÈÎÎñ
+	* @brief iap_check_complete iap å‡çº§è¶…æ—¶åˆ¤æ–­ä»»åŠ¡
 	* @param void
 	* @return NULL
 */
@@ -73,27 +73,27 @@ static int iap_check_complete(void * arg)
 	struct shell_input * shell;
 	uint32_t filesize ;
 
-	TASK_BEGIN();     //ÈÎÎñ¿ªÊ¼
+	TASK_BEGIN();     //ä»»åŠ¡å¼€å§‹
 	
-	printk("loading");//¿ªÊ¼½ÓÊÕÊ±´òÓ¡ loading ½ø¶ÈÌõ
+	printk("loading");//å¼€å§‹æ¥æ”¶æ—¶æ‰“å° loading è¿›åº¦æ¡
 	
-	task_cond_wait(OS_current_time - iap.timestamp > 1600) ;//³¬Ê± 1.6 s ÎŞÊı¾İ°ü£¬±íÊ¾½ÓÊÕ½áÊø
+	task_cond_wait(OS_current_time - iap.timestamp > 1600) ;//è¶…æ—¶ 1.6 s æ— æ•°æ®åŒ…ï¼Œè¡¨ç¤ºæ¥æ”¶ç»“æŸ
 	
-	iap_lock_flash();   //ÓÉÓÚÒªĞ´Íê×îºóÒ»°üÊı¾İ²ÅÄÜÉÏËø£¬ËùÒÔÉÏËø·ÅÔÚ iap_check_complete ÖĞ
+	iap_lock_flash();   //ç”±äºè¦å†™å®Œæœ€åä¸€åŒ…æ•°æ®æ‰èƒ½ä¸Šé”ï¼Œæ‰€ä»¥ä¸Šé”æ”¾åœ¨ iap_check_complete ä¸­
 	
 	filesize = (SCB->VTOR == FLASH_BASE) ? (iap.addr-APP_ADDR):(iap.addr-IAP_ADDR);
 	
 	printk("\r\nupdate completed!\r\nupdate package size:%d byte\r\n",filesize);
 
 	shell = (struct shell_input*)arg;
-	shell->gets = cmdline_gets;       //»Ö¸´´®¿ÚÃüÁîĞĞÄ£Ê½
+	shell->gets = cmdline_gets;       //æ¢å¤ä¸²å£å‘½ä»¤è¡Œæ¨¡å¼
 
 	TASK_END();
 }
 
 
 /** 
-	* @brief serial_console_recv  ´®¿Ú¿ØÖÆÌ¨´¦ÀíÈÎÎñ£¬²»Ö±½Óµ÷ÓÃ
+	* @brief serial_console_recv  ä¸²å£æ§åˆ¶å°å¤„ç†ä»»åŠ¡ï¼Œä¸ç›´æ¥è°ƒç”¨
 	* @param void
 	* @return int 
 */
@@ -102,13 +102,13 @@ static int serial_console_recv(void * arg)
 	char  *  packet;
 	uint16_t pktlen ;
 
-	TASK_BEGIN();//ÈÎÎñ¿ªÊ¼
+	TASK_BEGIN();//ä»»åŠ¡å¼€å§‹
 	
 	while(1)
 	{
-		task_cond_wait(serial_rxpkt_queue_out(&packet,&pktlen));//µÈ´ı´®¿Ú½ÓÊÕ
+		task_cond_wait(serial_rxpkt_queue_out(&packet,&pktlen));//ç­‰å¾…ä¸²å£æ¥æ”¶
 
-		shell_input(&serial_shell,packet,pktlen);//Êı¾İÖ¡´«ÈëÓ¦ÓÃ²ã
+		shell_input(&serial_shell,packet,pktlen);//æ•°æ®å¸§ä¼ å…¥åº”ç”¨å±‚
 	}
 	
 	TASK_END();
@@ -118,11 +118,11 @@ static int serial_console_recv(void * arg)
 
 /** 
 	* @brief iap_gets  
-	*        iap Éı¼¶ÈÎÎñ£¬»ñÈ¡Êı¾İÁ÷²¢Ğ´Èëflash
-	*        ×¢£ºÓÉÓÚÔÚĞ´ flash µÄÊ±ºò£¬µ¥Æ¬»ú»áÍ£Ö¹¶ÁÈ¡ flash£¬¼´
-	*        ´úÂë²»»áÔËĞĞ¡£Èç¹ûÔÚĞ´ flash µÄÊ±ºòÓĞÖĞ¶Ï²úÉú£¬µ¥Æ¬»ú
-	*        ¿ÉÄÜ»áËÀ»ú¡£Ğ´ flash µÄÊ±ºò²»·Á°­ dma µÄ´«Êä£¬ËùÒÔ dma
-	*        ½ÓÊÕ»º³åÒª´óÒ»Ğ©£¬ÒªÔÚÏÂÒ»°üÊı¾İ½ÓÊÕÍêĞ´Íêµ±Ç°°üÊı¾İ
+	*        iap å‡çº§ä»»åŠ¡ï¼Œè·å–æ•°æ®æµå¹¶å†™å…¥flash
+	*        æ³¨ï¼šç”±äºåœ¨å†™ flash çš„æ—¶å€™ï¼Œå•ç‰‡æœºä¼šåœæ­¢è¯»å– flashï¼Œå³
+	*        ä»£ç ä¸ä¼šè¿è¡Œã€‚å¦‚æœåœ¨å†™ flash çš„æ—¶å€™æœ‰ä¸­æ–­äº§ç”Ÿï¼Œå•ç‰‡æœº
+	*        å¯èƒ½ä¼šæ­»æœºã€‚å†™ flash çš„æ—¶å€™ä¸å¦¨ç¢ dma çš„ä¼ è¾“ï¼Œæ‰€ä»¥ dma
+	*        æ¥æ”¶ç¼“å†²è¦å¤§ä¸€äº›ï¼Œè¦åœ¨ä¸‹ä¸€åŒ…æ•°æ®æ¥æ”¶å®Œå†™å®Œå½“å‰åŒ…æ•°æ®
 	* @param void
 	* @return NULL
 */
@@ -134,23 +134,23 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 	for (iap.size = iap.addr + len ; iap.addr < iap.size ; iap.addr += 4)
 		iap_write_flash(iap.addr,*value++); 
 
-	iap.timestamp = OS_current_time;//¸üĞÂÊ±¼ä´Á
+	iap.timestamp = OS_current_time;//æ›´æ–°æ—¶é—´æˆ³
 	
-	if ((iap.addr & (FLASH_PAGE_SIZE-1)) == 0)//Çå¿ÕÏÂÒ»Ò³
+	if ((iap.addr & (FLASH_PAGE_SIZE-1)) == 0)//æ¸…ç©ºä¸‹ä¸€é¡µ
 		iap_erase_flash(iap.addr ,1) ;
 	else
-	if (task_is_exited(&iap_timeout_task))//¿ªÊ¼½ÓÊÕºó´´½¨³¬Ê±ÈÎÎñ£¬ÅĞ¶Ï½ÓÊÕ½áÊø
+	if (task_is_exited(&iap_timeout_task))//å¼€å§‹æ¥æ”¶ååˆ›å»ºè¶…æ—¶ä»»åŠ¡ï¼Œåˆ¤æ–­æ¥æ”¶ç»“æŸ
 		task_create(&iap_timeout_task,NULL,iap_check_complete,shell);
 	else
-		printl(".",1);//´òÓ¡Ò»¸öµãÒÔÊ¾Çå°×
+		printl(".",1);//æ‰“å°ä¸€ä¸ªç‚¹ä»¥ç¤ºæ¸…ç™½
 }
 
 
 
 /**
 	* @brief    shell_iap_command
-	*           ÃüÁîĞĞÏìÓ¦º¯Êı
-	* @param    arg  : ÃüÁîĞĞÄÚ´æÖ¸Õë
+	*           å‘½ä»¤è¡Œå“åº”å‡½æ•°
+	* @param    arg  : å‘½ä»¤è¡Œå†…å­˜æŒ‡é’ˆ
 	* @return   void
 */
 void shell_iap_command(void * arg)
@@ -159,23 +159,23 @@ void shell_iap_command(void * arg)
 	
 	struct shell_input * shell = container_of(arg, struct shell_input, cmdline);
 	
-	if (shell != &serial_shell)  //·ÀÖ¹ÆäËû shell µ÷ÓÃ´ËÃüÁî£¬·ñÔò»á²Á³ıµô flash
+	if (shell != &serial_shell)  //é˜²æ­¢å…¶ä»– shell è°ƒç”¨æ­¤å‘½ä»¤ï¼Œå¦åˆ™ä¼šæ“¦é™¤æ‰ flash
 	{
 		printk("cannot update in this channal\r\n");
 		return ;
 	}
 	
-	shell->gets = iap_gets;//´®¿ÚÊı¾İÁ÷»ñÈ¡ÖÁ iap_gets
+	shell->gets = iap_gets;//ä¸²å£æ•°æ®æµè·å–è‡³ iap_gets
 	
 	argc = cmdline_param((char*)arg,&erasesize,1);
 	
 	iap.addr = (SCB->VTOR == FLASH_BASE) ? APP_ADDR : IAP_ADDR;
 	iap.size = (argc == 1) ? erasesize : 1 ;
 
-	//ÓÉÓÚÒªĞ´Íê×îºóÒ»°üÊı¾İ²ÅÄÜÉÏËø£¬ËùÒÔÉÏËø·ÅÔÚ iap_check_complete ÖĞ
+	//ç”±äºè¦å†™å®Œæœ€åä¸€åŒ…æ•°æ®æ‰èƒ½ä¸Šé”ï¼Œæ‰€ä»¥ä¸Šé”æ”¾åœ¨ iap_check_complete ä¸­
 	iap_unlock_flash();
 	iap_erase_flash(iap.addr , iap.size);
-	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//ÇåÆÁ
+	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//æ¸…å±
 	serial_recv_reset(HAL_RX_BUF_SIZE/2);
 }
 
@@ -201,7 +201,7 @@ void shell_erase_flash(void * arg)
 	else
 	{
 		uint32_t addr = argv[0];
-		uint32_t size = (argc == 1)? 1:argv[1];//Ä¬ÈÏ²Á³ıÒ»¸öÉÈÇø
+		uint32_t size = (argc == 1)? 1:argv[1];//é»˜è®¤æ“¦é™¤ä¸€ä¸ªæ‰‡åŒº
 		
 		if (iap_unlock_flash())
 		{
@@ -230,7 +230,7 @@ void shell_erase_flash(void * arg)
 #ifdef OS_USE_ID_AND_NAME
 /**
 	* @brief    shell_show_protothread
-	*           ÃüÁîĞĞÏìÓ¦º¯Êı,ÁĞ³öËùÓĞ protothread
+	*           å‘½ä»¤è¡Œå“åº”å‡½æ•°,åˆ—å‡ºæ‰€æœ‰ protothread
 	* @param
 	* @return   void
 */
@@ -254,7 +254,7 @@ void shell_show_protothread(void * arg)
 
 /**
 	* @brief    shell_kill_protothread
-	*           ÃüÁîĞĞÏìÓ¦º¯Êı,É¾³ıÄ³¸ö protothread
+	*           å‘½ä»¤è¡Œå“åº”å‡½æ•°,åˆ é™¤æŸä¸ª protothread
 	* @param
 	* @return   void
 */
@@ -288,9 +288,9 @@ void shell_kill_protothread(void * arg)
 
 /**
 	* @brief    _syscfg_fgets
-	*          »ñÈ¡ syscfg ĞÅÏ¢£¬ÓÉ shell_into_edit µ÷ÓÃ
+	*          è·å– syscfg ä¿¡æ¯ï¼Œç”± shell_into_edit è°ƒç”¨
 	* @param
-	* @return   ³É¹¦ ·µ»ØVIM_FILE_OK
+	* @return   æˆåŠŸ è¿”å›VIM_FILE_OK
 */
 uint32_t _syscfg_fgets(char * fpath, char * fdata,uint16_t * fsize)
 {
@@ -310,7 +310,7 @@ uint32_t _syscfg_fgets(char * fpath, char * fdata,uint16_t * fsize)
 
 /**
 	* @brief    _syscfg_fputs
-	*          ¸üĞÂ syscfg ĞÅÏ¢£¬ÓÉ shell_into_edit µ÷ÓÃ
+	*          æ›´æ–° syscfg ä¿¡æ¯ï¼Œç”± shell_into_edit è°ƒç”¨
 	* @param
 	* @return   void
 */
@@ -323,8 +323,8 @@ void _syscfg_fputs(char * fpath, char * fdata,uint32_t fsize)
 
 /**
 	* @brief    _shell_edit_syscfg
-	*           ÃüÁîĞĞ±à¼­ syscfg ĞÅÏ¢
-	* @param    arg  ÃüÁîĞĞÄÚ´æ
+	*           å‘½ä»¤è¡Œç¼–è¾‘ syscfg ä¿¡æ¯
+	* @param    arg  å‘½ä»¤è¡Œå†…å­˜
 	* @return   void
 */
 void _shell_edit_syscfg(void * arg)
@@ -339,13 +339,13 @@ void _shell_edit_syscfg(void * arg)
 
 /**
 	* @brief    serial_console_init
-	*           ³õÊ¼»¯´®¿Ú¿ØÖÆÌ¨
+	*           åˆå§‹åŒ–ä¸²å£æ§åˆ¶å°
 	* @param
 	* @return   void
 */
 void serial_console_init(char * info)
 {
-	hal_serial_init(); //ÏÈ³õÊ¼»¯Ó²¼ş²ã
+	hal_serial_init(); //å…ˆåˆå§‹åŒ–ç¡¬ä»¶å±‚
 	
 	SHELL_INPUT_INIT(&serial_shell,serial_puts);
 
@@ -370,9 +370,9 @@ void serial_console_init(char * info)
 	task_create(&serial_console_task,NULL,serial_console_recv,NULL);
 	
 	printk("\r\n");
-	color_printk(purple,"%s",info);//´òÓ¡¿ª»úĞÅÏ¢»òÕß¿ØÖÆÌ¨ĞÅÏ¢
+	color_printk(purple,"%s",info);//æ‰“å°å¼€æœºä¿¡æ¯æˆ–è€…æ§åˆ¶å°ä¿¡æ¯
 	
-	while(serial_busy()); //µÈ´ı´òÓ¡½áÊø
+	while(serial_busy()); //ç­‰å¾…æ‰“å°ç»“æŸ
 }
 
 
