@@ -10,8 +10,8 @@
 #define f4s_malloc(x)   malloc(x)
 #define f4s_free(x)     free(x)
 */
-#include "heaplib.h"
-//#include "FreeRTOS.h"
+//#include "heaplib.h"
+#include "FreeRTOS.h"
 #define f4s_malloc(x)   pvPortMalloc(x)
 #define f4s_free(x)     vPortFree(x)
 

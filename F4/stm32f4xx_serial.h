@@ -9,10 +9,10 @@
   *    和中断，仅选择引脚初始化和串口初始化即可。然后选择库为 LL 库。生成工程。
   * 2> 把 stm32f4xx_serial.c 和头文件加入工程，其中 stm32f4xx_serial_set.h 和
   *    stm32f4xx_serial_func.h 仅为 stm32f4xx_serial.c 内部使用，此头文件为所有对外
-  *    接口定义。
-  * 3> 在此头文件下，打开所需要用的串口宏 USE_USARTx 。有需要则在 stm32f4xx_serial.c 
+  *    接口定义。有需要则在 stm32f4xx_serial.c 
   *    修改串口配置参数，比如缓存大小，是否使能 DMA 等。
-  * 4> 在其他文件 include "stm32f4xx_serial.h" 后，调用 serial_open(&ttySx,...) ;
+  * 4> include "stm32f4xx_serial.h" ,在此头文件下，打开所需要用的串口宏 USE_USARTx 
+  *    后，调用 serial_open(&ttySx,...) ;
   *    打开串口后，便可调用 serial_write/serial_gets/serial_read 等函数进行操作。
   ******************************************************************************
   *

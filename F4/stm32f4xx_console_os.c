@@ -246,7 +246,7 @@ void task_SerialConsole(void const * argument)
 		}
 		else 
 		if (1 == console_iap) {   // 命令行输入 update 命令后进入 iap 模式
-			char * newbuf = f4s_malloc(FLASH_PAGE_SIZE * 2);
+			char * newbuf = f4s_malloc(2048 * 2);
 			if (!newbuf) {
 				printk("%s():cannot malloc.\r\n",__FUNCTION__);
 				console_iap = 0;
@@ -258,7 +258,7 @@ void task_SerialConsole(void const * argument)
 				iap.bufsize = *ttymax;
 				serial_close(ttyconsole);               // 关闭设备，重新打开
 				*ttybuf = newbuf;                       // 重定义设备接收缓存
-				*ttymax = FLASH_PAGE_SIZE ;             // 重定义设备接收缓存大小
+				*ttymax = 2048 ;                        // 重定义设备接收缓存大小
 				serial_open(ttyconsole,115200,8,'N',1); // 重新打开设备
 				iap_unlock_flash();
 				iap_erase_flash(iap.addr , iap.size);
@@ -281,13 +281,11 @@ void task_SerialConsole(void const * argument)
 				for ( ; iap.addr < iap.size ; iap.addr += 4) // f4 可以以 word 写入
 					iap_write_flash(iap.addr,*value++); 
 
-				if ((iap.addr & (FLASH_PAGE_SIZE-1)) == 0){   // 清空下一页
-					iap_erase_flash(iap.addr ,1) ;
+				if (datalen == 2048)
 					serial_write(ttyconsole,".",1,O_NOBLOCK);
-				}
-				else { 
+				else 
 					console_iap = 3; // 当接收到的包长不为 FLASH_PAGE_SIZE 则认为是最后一包数据
-				}
+				
 			}
 			else                  // 0 == datalen，无接收数据
 			if (++time > timeout) // 超时
