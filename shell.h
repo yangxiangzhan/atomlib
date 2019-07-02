@@ -93,11 +93,13 @@
 
 //shell 入口对应出口，从哪里输入则从对应的地方输出
 #define shell_input(shellin,buf,len) \
-	do{\
+do{\
+	if ((shellin)->gets) {\
 		current_puts = (shellin)->puts;        \
 		(shellin)->gets((shellin),(buf),(len));\
 		current_puts = default_puts;           \
-	}while(0)
+	}\
+}while(0)
 
 
 /* Public types ------------------------------------------------------------*/
@@ -131,8 +133,8 @@ typedef struct shellcommand
 {
 	cmd_entry_t   node; //命令索引接入点，用链表或二叉树对命令作集合
 	char *		  name; //记录每条命令字符串的内存地址
+	size_t  	  fnaddr; //记录命令函数 cmd_fn_t 对应的内存地址
 	uint32_t	  ID;	//命令标识码
-	uint32_t	  fnaddr; //记录命令函数 cmd_fn_t 对应的内存地址
 }
 shellcmd_t;
 

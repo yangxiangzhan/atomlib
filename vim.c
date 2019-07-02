@@ -175,7 +175,7 @@ static void cursor_left(struct vim_edit_buf * vimedit)
 	* @param    vim  编辑内存
 	* @return   void
 */
-static void cursor_move(struct vim_edit_buf * vimedit , char arrow)
+static int cursor_move(struct vim_edit_buf * vimedit , char arrow)
 {
 	switch( arrow ) {
 		case 'A':cursor_up(vimedit);break; //上箭头
@@ -186,8 +186,10 @@ static void cursor_move(struct vim_edit_buf * vimedit , char arrow)
 
 		case 'D':cursor_left(vimedit);break;//左箭头
 		
-		default : return ;
+		default : return -1;
 	}
+
+	return 0;
 }
 
 
@@ -377,7 +379,7 @@ static void vim_edit_getchar(struct vim_edit_buf * vim,char data)
 static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len)
 {
 	struct vim_edit_buf * vimedit = (struct vim_edit_buf *)shell->apparg ;
-
+	for ( ; len ; --len , ++buf)
 	switch(vimedit->state) {   //状态机
 		case VIM_READ_ONLY:    //文本只读过程
 			if (*buf == 'i') { //键盘输入 'i'
@@ -400,8 +402,13 @@ static void shell_vim_gets(struct shell_input * shell ,char * buf , uint32_t len
 			
 		case VIM_EDITING: //文本编辑过程
 			if (*buf == '\033') {
-				if ( len > 1 && buf[1] == '[' ) {
-					cursor_move(vimedit,buf[2]);//如果是箭头输入
+				if ( len > 2 && buf[1] == '[' ) {
+					if (0 == cursor_move(vimedit,buf[2])){//如果是箭头输入
+						len -= 2;
+						buf += 2;
+					}
+					else 
+						vim_edit_getchar(vimedit ,* buf);
 				}
 				else {
 					vimedit->state = VIM_READ_ONLY; //如果是单按键 Esc ，回到只读模式

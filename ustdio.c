@@ -267,7 +267,7 @@ int i_xtoa(char * strbuf,uint32_t value)
 	* @param    ...     不定参
 	* @return   void
 */
-void printk(char* fmt, ...)
+void printk(const char* fmt, ...)
 {
 	char * buf_head = fmt;
 	char * buf_tail = fmt;

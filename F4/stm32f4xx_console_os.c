@@ -19,22 +19,26 @@
 
 #include "cmsis_os.h" // 启用 freertos
 
-#include "serial_hal.h"
-#include "serial_console.h"
+
 #include "iap_hal.h"
 
 #include "containerof.h"
 #include "shell.h"
 #include "vim.h"
+
+#include "stm32f4xx_serial.h"
+#include "stm32f4xx_console.h"
+
 //--------------------相关宏定义及结构体定乿-------------------
-osThreadId SerialConsoleTaskHandle;
-osSemaphoreId osSerialRxSemHandle;
+osThreadId SerialConsoleTaskHandle; 
 
 
 static struct serial_iap
 {
 	uint32_t addr;
 	uint32_t size;
+	char *   databuf ;
+	uint32_t bufsize;
 }
 iap;
 
@@ -47,8 +51,15 @@ const static char iap_logo[]=
 
 static const char division [] = "\r\n----------------------------\r\n";
 
+// 正在进行串口升级 iap
+static volatile char console_iap = 0 ;
+
+static struct shell_input f4shell;
+
+serial_t * ttyconsole = NULL;
 //------------------------------相关函数声明------------------------------
 
+void task_SerialConsole(void const * argument);
 
 
 //------------------------------华丽的分割线------------------------------
@@ -59,7 +70,7 @@ static const char division [] = "\r\n----------------------------\r\n";
 	portCONFIGURE_TIMER_FOR_RUN_TIME_STATS	1
 	configUSE_TRACE_FACILITY 1
 	
-	STM32CUBEMX : RUN_TIME_STATS
+	STM32CUBEMX : CONFIGURE_TIMER_FOR_RUN_TIME_STATS , USE_TRACE_FACILITY ,USE_STATS_FORMATTING_FUNCTIONS
 
 #ifndef portCONFIGURE_TIMER_FOR_RUN_TIME_STATS
 		extern uint32_t iThreadRuntime;
@@ -72,7 +83,7 @@ void task_list(void * arg)
 	static const char title[] = "\r\nthread\t\tstate\tPrior\tstack\tID";
 	static const char descri[] = "B(block),R(ready),D(delete),S(suspended)\r\n";
 
-	char * tasklistbuf = (char *)pvPortMalloc(1024);
+	char * tasklistbuf = (char *)pvPortMalloc(2048);
 
 	osThreadList((uint8_t *)tasklistbuf);
 
@@ -90,7 +101,7 @@ void task_runtime(void * arg)
 {
 	static const char title[] = "\r\nthread\t\ttime\t\t%CPU";
 
-	char * tasklistbuf = (char *)pvPortMalloc(1024);
+	char * tasklistbuf = (char *)pvPortMalloc(2048);
 
 	vTaskGetRunTimeStats(tasklistbuf);
 
@@ -175,31 +186,6 @@ void shell_erase_flash(void * arg)
 
 
 
-
-/** 
-	* @brief iap_gets  
-	*        iap 升级任务，获取数据流并写入flash
-	*        注：由于在写 flash 的时候，单片机会停止读取 flash，即
-	*        代码不会运行。如果在写 flash 的时候有中断产生，单片机
-	*        可能会死机。写 flash 的时候不妨碍 dma 的传输，所以 dma
-	*        接收缓冲要大一些，要在下一包数据接收完写完当前包数据
-	* @param void
-	* @return NULL
-*/
-static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
-{
-	uint32_t * value = (uint32_t*)buf;
-	
-	shell->apparg = (void*)MODIFY_MASK;
-
-	for (iap.size = iap.addr + len ; iap.addr < iap.size ; iap.addr += 4)// f4 可以以 word 写入
-		iap_write_flash(iap.addr,*value++); 
-	
-	printl(".",1);//打印一个点以示清白
-}
-
-
-
 /**
 	* @brief    shell_iap_command
 	*           命令行响应函数
@@ -210,52 +196,129 @@ void shell_iap_command(void * arg)
 {
 	int argc , erasesize ;
 
-	struct shell_input * shell = container_of(arg, struct shell_input, cmdline);
+	struct shell_input * shell = container_of(arg, struct shell_input, cmdline);	
 	
-	shell->gets = iap_gets;//串口数据流获取至 iap_gets
+	if (shell != &f4shell) {
+		printk("cannot update at this channel.\r\n");
+		return ;
+	}
 
 	argc = cmdline_param((char*)arg,&erasesize,1);
 
 	iap.addr = (SCB->VTOR == FLASH_BASE) ? APP_ADDR : IAP_ADDR;
 	iap.size = (argc == 1) ? erasesize : 1 ;
-
-	//由于要写完最后一包数据才能上锁，所以上锁不放在这
-	iap_unlock_flash();
-	iap_erase_flash(iap.addr , iap.size);
-	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
-	serial_recv_reset(HAL_RX_BUF_SIZE/2);
+	console_iap = 1 ;
 }
+
+
+
+
+/**
+	* @brief    hal_usart_puts console 硬件层输出
+	* @param    空
+	* @return   空
+*/
+void f4shell_puts(const char * buf,uint16_t len)
+{
+	serial_write(ttyconsole,buf,len,O_NOBLOCK); 
+}
+
+
 
 
 void task_SerialConsole(void const * argument)
 {
-	struct shell_input serial_shell;
-	char *info ;
-	uint16_t len ;
-	uint32_t wait;
-	
-	SHELL_INPUT_INIT(&serial_shell,serial_puts);
-	
-	for(;;)
-	{
-		// 等待信号量时间，在 iap 模式中等待超过 1s 的时间视为 iap 接收结束
-		wait = serial_shell.apparg == (void*)MODIFY_MASK ? 1600 : osWaitForever;
-		
-		if (osOK == osSemaphoreWait(osSerialRxSemHandle,wait))
-		{
-			while(serial_rxpkt_queue_out(&info,&len))
-				shell_input(&serial_shell,info,len);
+	char *databuf ;
+	int   datalen ,timeout = 0, time = 0;
+	#define TIMEOUT_NO_RECV    15000   // 等待数据包超时
+	#define TIMEOUT_RECV       1600    // 最后一包数据超时判断
+
+	for ( ; ; ) {
+		if (0 == console_iap) {   // 正常的接收模式
+			datalen = serial_gets(ttyconsole,&databuf,O_BLOCK);
+			if (datalen > 0)
+				shell_input(&f4shell,databuf,datalen);//数据帧传入应用层
+			else 
+			if (datalen == 0)
+				osDelay(5);
+			else 
+				break;
 		}
-		else
-		{
-			iap_lock_flash();
+		else 
+		if (1 == console_iap) {   // 命令行输入 update 命令后进入 iap 模式
+			char * newbuf = f4s_malloc(FLASH_PAGE_SIZE * 2);
+			if (!newbuf) {
+				printk("%s():cannot malloc.\r\n",__FUNCTION__);
+				console_iap = 0;
+			}
+			else {
+				char ** ttybuf = (char **)&ttyconsole->rxbuf ;      // 记录原接收缓存区
+				uint16_t * ttymax = (uint16_t *)&ttyconsole->rxmax ;// 原接收缓存大小
+				iap.databuf = *ttybuf ;
+				iap.bufsize = *ttymax;
+				serial_close(ttyconsole);               // 关闭设备，重新打开
+				*ttybuf = newbuf;                       // 重定义设备接收缓存
+				*ttymax = FLASH_PAGE_SIZE ;             // 重定义设备接收缓存大小
+				serial_open(ttyconsole,115200,8,'N',1); // 重新打开设备
+				iap_unlock_flash();
+				iap_erase_flash(iap.addr , iap.size);
+				color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
+				timeout = TIMEOUT_NO_RECV; // 设置超时为 15s ，15s 内无数据接收则认为超时
+				console_iap = 2;           // 进入 iap 模式接收串口数据
+			}
+		}
+		else 
+		if (2 == console_iap) {   // iap 模式接收数据包
+			datalen = serial_gets(ttyconsole,&databuf,O_NOBLOCK); // 非阻塞模式接收串口数据
+			if (datalen > 0 ) {
+				uint32_t * value = (uint32_t*)databuf;
+				if (TIMEOUT_NO_RECV == timeout) { 
+					timeout = TIMEOUT_RECV;      // 接收到第一包数据，超时改为 1.6s ，即接收到最后一包后 1.6 内无数据则认为更新结束
+					serial_write(ttyconsole,"loading",7,O_NOBLOCK);
+				}
+				time = 0 ;      // 清空超时计数。
+				iap.size = iap.addr + datalen ;
+				for ( ; iap.addr < iap.size ; iap.addr += 4) // f4 可以以 word 写入
+					iap_write_flash(iap.addr,*value++); 
+
+				if ((iap.addr & (FLASH_PAGE_SIZE-1)) == 0){   // 清空下一页
+					iap_erase_flash(iap.addr ,1) ;
+					serial_write(ttyconsole,".",1,O_NOBLOCK);
+				}
+				else { 
+					console_iap = 3; // 当接收到的包长不为 FLASH_PAGE_SIZE 则认为是最后一包数据
+				}
+			}
+			else                  // 0 == datalen，无接收数据
+			if (++time > timeout) // 超时
+				console_iap = 3;
+			else 
+				osDelay(1);       // 1ms 后再读数据
+		}
+		else { // 3 == console_iap , iap 收尾工作
+			char ** ttybuf    = (char **)&ttyconsole->rxbuf ;   // 记录原接收缓存区
+			uint16_t * ttymax = (uint16_t *)&ttyconsole->rxmax ;// 原接收缓存大小
 			uint32_t filesize = (SCB->VTOR == FLASH_BASE) ? (iap.addr-APP_ADDR):(iap.addr-IAP_ADDR);
-			printk("\r\nupdate completed!\r\nupdate package size:%d byte\r\n",filesize);
-			serial_shell.gets = cmdline_gets ;
-			serial_shell.apparg = NULL;
+			
+			serial_close(ttyconsole);               // 关闭设备，重新打开
+			f4s_free(*ttybuf) ;                     // 释放在 第二步 申请的内存
+			*ttybuf = iap.databuf;                  // 恢复内存
+			*ttymax = iap.bufsize;                  // 恢复大小
+			serial_open(ttyconsole,115200,8,'N',1); // 重新打开设备
+
+			if (filesize)
+				printk("\r\nupdate completed!\r\nupdate package size:%d byte\r\n",filesize);
+			else 
+				printk("iap:recv timeout.\r\n");
+			iap_lock_flash();
+			console_iap = 0;
 		}
 	}
+
+	printk("%s() quit.\r\n",__FUNCTION__);
+	vTaskDelete(NULL);
 }
+
 
 
 /**
@@ -307,27 +370,37 @@ void _shell_edit_syscfg(void * arg)
 
 void serial_console_init(char * info)
 {
-	hal_serial_init();
+	ttyconsole = &ttyS1 ; // 控制台输出设备
 
-	printk("\r\n");
-	color_printk(purple,"%s",info);//打印开机信息或者控制台信息
+	serial_open(ttyconsole,115200,8,'N',1);
+	shell_input_init(&f4shell,f4shell_puts);
+
+	//printk("\r\n");
+	//color_printk(purple,"%s",info);//打印开机信息或者控制台信息
 
 	shell_register_command("top"   ,task_list);
 	shell_register_command("ps"    ,task_runtime);
 	shell_register_command("reboot",shell_reboot_command);
 	shell_register_command("syscfg",_shell_edit_syscfg);
 	shell_register_command("flash-erase",shell_erase_flash);
-	
-	if (SCB->VTOR == FLASH_BASE)
-		shell_register_command("update-app",shell_iap_command);	
-	else
-		shell_register_confirm("update-iap",shell_iap_command,"sure to update iap?");
 
-	osSemaphoreDef(osSerialRxSem);
-	osSerialRxSemHandle = osSemaphoreCreate(osSemaphore(osSerialRxSem), 1); //创建中断信号釿
-  
-	osThreadDef(SerialConsole, task_SerialConsole, osPriorityNormal, 0, 168+(sizeof(struct shell_input)/4));
-	SerialConsoleTaskHandle = osThreadCreate(osThread(SerialConsole), NULL);
+	if (ttyconsole->flag & FLAG_RX_DMA) { // 当接收为 DMA 模式下，注册在线升级命令
+		if (SCB->VTOR == FLASH_BASE)
+			shell_register_command("update-app",shell_iap_command);	
+		else
+			shell_register_confirm("update-iap",shell_iap_command,"sure to update iap?");
+	}
+
+	osThreadDef(SerialConsole, task_SerialConsole, osPriorityNormal, 0, 168);
+	SerialConsoleTaskHandle = osThreadCreate(osThread(SerialConsole), &f4shell);
 }
+
+
+void serial_console_deinit(void)
+{
+	serial_close(ttyconsole);
+}
+
+
 
 

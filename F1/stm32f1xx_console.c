@@ -20,10 +20,11 @@
 
 #include "shell.h"
 #include "vim.h"
-#include "serial_hal.h"
-#include "serial_console.h"
+
 
 #include "stm32f1xx_hal.h" //for SCB->VTOR
+#include "stm32f1xx_serial.h"
+#include "stm32f1xx_console.h"
 
 //--------------------相关宏定义及结构体定义--------------------
 
@@ -46,6 +47,8 @@ static struct serial_iap
 	uint32_t timestamp;
 	uint32_t addr;
 	uint32_t size;
+	char *  rxbuf;
+	uint16_t rxbufmax;
 }
 iap;
 
@@ -53,7 +56,10 @@ iap;
 static ros_task_t iap_timeout_task;
 static ros_task_t serial_console_task;
 
-static struct shell_input serial_shell;
+static struct shell_input f1shell;
+
+
+serial_t * ttyconsole = NULL;   //
 //------------------------------相关函数声明------------------------------
 
 
@@ -72,6 +78,8 @@ static int iap_check_complete(void * arg)
 {
 	struct shell_input * shell;
 	uint32_t filesize ;
+	char ** databuf ; 
+	uint16_t *datamax ;
 
 	TASK_BEGIN();     //任务开始
 	
@@ -83,11 +91,17 @@ static int iap_check_complete(void * arg)
 	
 	filesize = (SCB->VTOR == FLASH_BASE) ? (iap.addr-APP_ADDR):(iap.addr-IAP_ADDR);
 	
-	printk("\r\nupdate completed!\r\nupdate package size:%d byte\r\n",filesize);
-
 	shell = (struct shell_input*)arg;
 	shell->gets = cmdline_gets;       //恢复串口命令行模式
 
+	serial_close(ttyconsole);   // 关闭设备
+	f1s_free(ttyconsole->rxbuf);  // 释放内存
+	databuf = (char**)(&ttyconsole->rxbuf) ;
+	datamax = (uint16_t *)&ttyconsole->rxmax ;
+	*databuf = iap.rxbuf ;
+	*datamax = iap.rxbufmax;
+	serial_open(ttyconsole,115200,8,'N',1);
+	printk("\r\nupdate completed!\r\nupdate package size:%d byte\r\n",filesize);
 	TASK_END();
 }
 
@@ -103,12 +117,10 @@ static int serial_console_recv(void * arg)
 	uint16_t pktlen ;
 
 	TASK_BEGIN();//任务开始
-	
-	while(1)
-	{
-		task_cond_wait(serial_rxpkt_queue_out(&packet,&pktlen));//等待串口接收
 
-		shell_input(&serial_shell,packet,pktlen);//数据帧传入应用层
+	while(1) {
+		task_cond_wait(pktlen = serial_gets(ttyconsole,&packet,O_NOBLOCK));//等待串口接收
+		shell_input(&f1shell,packet,pktlen);//数据帧传入应用层
 	}
 	
 	TASK_END();
@@ -130,21 +142,20 @@ static void iap_gets(struct shell_input * shell ,char * buf , uint32_t len)
 {
 	uint32_t * value = (uint32_t*)buf;
 	
-	
 	for (iap.size = iap.addr + len ; iap.addr < iap.size ; iap.addr += 4)
 		iap_write_flash(iap.addr,*value++); 
-
+	
+	//printk("size=%d\r\n",len);
 	iap.timestamp = OS_current_time;//更新时间戳
 	
 	if ((iap.addr & (FLASH_PAGE_SIZE-1)) == 0)//清空下一页
-		iap_erase_flash(iap.addr ,1) ;
-	else
+		iap_erase_flash(iap.addr ,1) ;//printk("erase 0x%x\r\n",iap.addr);//
+//	else
 	if (task_is_exited(&iap_timeout_task))//开始接收后创建超时任务，判断接收结束
 		task_create(&iap_timeout_task,NULL,iap_check_complete,shell);
 	else
 		printl(".",1);//打印一个点以示清白
 }
-
 
 
 /**
@@ -159,12 +170,18 @@ void shell_iap_command(void * arg)
 	
 	struct shell_input * shell = container_of(arg, struct shell_input, cmdline);
 	
-	if (shell != &serial_shell)  //防止其他 shell 调用此命令，否则会擦除掉 flash
-	{
+	if (shell != &f1shell) { //防止其他 shell 调用此命令，否则会擦除掉 flash
 		printk("cannot update in this channal\r\n");
 		return ;
 	}
+
+	char * iapdata = f1s_malloc(FLASH_PAGE_SIZE*2);
+	if (!iapdata) {
+		printk("cannot malloc buffer for iap\r\n");
+		return ;
+	}
 	
+	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
 	shell->gets = iap_gets;//串口数据流获取至 iap_gets
 	
 	argc = cmdline_param((char*)arg,&erasesize,1);
@@ -175,8 +192,17 @@ void shell_iap_command(void * arg)
 	//由于要写完最后一包数据才能上锁，所以上锁放在 iap_check_complete 中
 	iap_unlock_flash();
 	iap_erase_flash(iap.addr , iap.size);
-	color_printk(light_green,"\033[2J\033[%d;%dH%s",0,0,iap_logo);//清屏
-	serial_recv_reset(HAL_RX_BUF_SIZE/2);
+
+	tcdrain(ttyconsole);
+
+	char ** databuf = (char **)&ttyconsole->rxbuf ;
+	uint16_t *  datamax = (uint16_t *)&ttyconsole->rxmax ;
+	serial_close(ttyconsole);       // 关闭设备，重新打开
+	iap.rxbuf = ttyconsole->rxbuf ;   // 记录原有的 buf
+	iap.rxbufmax = ttyconsole->rxmax ;// 记录原有的 max
+	*databuf = iapdata;
+	*datamax = FLASH_PAGE_SIZE ;
+	serial_open(ttyconsole,115200,8,'N',1); // 重新打开
 }
 
 
@@ -194,29 +220,24 @@ void shell_erase_flash(void * arg)
 
 	printk("erase flash ");
 
-	if (argc < 1)
-	{
+	if (argc < 1) {
 		printl((char*)tips,sizeof(tips)-1);
 	}
-	else
-	{
+	else {
 		uint32_t addr = argv[0];
 		uint32_t size = (argc == 1)? 1:argv[1];//默认擦除一个扇区
 		
-		if (iap_unlock_flash())
-		{
+		if (iap_unlock_flash()) {
 			color_printk(light_red,"error,cannot unlock flash\r\n");
 			return ;
 		}
 
-		if (iap_erase_flash(addr,size))
-		{
+		if (iap_erase_flash(addr,size)) {
 			color_printk(light_red,"error,cannot erase flash\r\n");
 			return ;
 		}
 		
-		if (iap_lock_flash())
-		{
+		if (iap_lock_flash()) {
 			color_printk(light_red,"error,cannot lock flash\r\n");
 			return ;
 		}
@@ -244,8 +265,7 @@ void shell_show_protothread(void * arg)
 
 	printk("\r\n\tID\t\tThread\r\n");
 
-	list_for_each(TaskListNode,&OS_scheduler_list)
-	{
+	list_for_each(TaskListNode,&OS_scheduler_list) {
 		pthread = list_entry(TaskListNode,struct protothread,list_node);
 		printk("\t%d\t\t%s\r\n",pthread->ID, pthread->name);
 	}
@@ -268,12 +288,10 @@ void shell_kill_protothread(void * arg)
 	if (1 != cmdline_param((char*)arg,&searchID,1))
 		return ;
 
-	list_for_each(search_list, &OS_scheduler_list)
-	{
+	list_for_each(search_list, &OS_scheduler_list) {
 		pthread = list_entry(search_list,struct protothread,list_node);
 
-		if (searchID == pthread->ID)
-		{
+		if (searchID == pthread->ID) {
 			task_cancel(pthread);
 			printk("\r\nKill %s\r\n",pthread->name);
 		}
@@ -338,6 +356,18 @@ void _shell_edit_syscfg(void * arg)
 
 
 /**
+	* @brief    hal_usart_puts console 硬件层输出
+	* @param    空
+	* @return   空
+*/
+void f1shell_puts(const char * buf,uint16_t len)
+{
+	serial_write(ttyconsole,buf,len,O_NOBLOCK);
+}
+
+
+
+/**
 	* @brief    serial_console_init
 	*           初始化串口控制台
 	* @param
@@ -345,11 +375,12 @@ void _shell_edit_syscfg(void * arg)
 */
 void serial_console_init(char * info)
 {
-	hal_serial_init(); //先初始化硬件层
-	
-	SHELL_INPUT_INIT(&serial_shell,serial_puts);
+	ttyconsole = &ttyS1 ; // 控制台输出设备
 
-	shell_register_command("reboot"  ,shell_reboot_command);
+	serial_open(ttyconsole,115200,8,'N',1);
+	shell_input_init(&f1shell,f1shell_puts);
+
+	shell_register_command("reboot"     ,shell_reboot_command);
 	shell_register_command("flash-erase",shell_erase_flash);
 	
 	if (SCB->VTOR == FLASH_BASE)
@@ -366,14 +397,20 @@ void serial_console_init(char * info)
 		shell_register_command("kill",shell_kill_protothread);
 	#endif
 	
-
 	task_create(&serial_console_task,NULL,serial_console_recv,NULL);
 	
-	printk("\r\n");
-	color_printk(purple,"%s",info);//打印开机信息或者控制台信息
-	
-	while(serial_busy()); //等待打印结束
+	if (info) {
+		f1shell_puts("\r\n",2);
+		f1shell_puts(info,strlen(info));//打印开机信息或者控制台信息
+		f1shell_puts("\r\n",2);
+//		for (int i = 0 ; ttyconsole->txtail ; i++) ;
+	}
 }
 
+
+void serial_console_deinit(void)
+{
+	serial_close(ttyconsole);
+}
 
 

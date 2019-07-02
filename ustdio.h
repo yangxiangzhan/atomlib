@@ -47,7 +47,7 @@
 
 /* Public types ------------------------------------------------------------*/
 
-typedef void (*fmt_puts_t)(char * strbuf,uint16_t len);//
+typedef void (*fmt_puts_t)(const char * strbuf,uint16_t len);//
 
 /* Public variables ---------------------------------------------------------*/
 
@@ -79,7 +79,7 @@ extern char  * default_color;
 /* Public function prototypes -----------------------------------------------*/
 
 
-void    printk(char* fmt, ...);
+void    printk(const char* fmt, ...);
 
 int sprintk(char * buffer ,const char * fmt , ...);
 

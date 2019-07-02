@@ -743,17 +743,18 @@ int cmdline_param(char * str,int * argv,uint32_t maxread)
 */
 void welcome_gets(struct shell_input * shellin,char * recv,uint32_t len)
 {
-	static const char minishelllogo[]= //打印一个欢迎页logo
-"\r\n\r\n\
-	 __  __  ____  _   _  ____\r\n\
-	|  \\/  ||_  _||  \\| ||_  _|COPYRIGHT(c):\r\n\
-	| |\\/| | _||_ | |\\\\ | _||_ GoodMorning\r\n\
-	|_|  |_||____||_| \\_||____|2019/01\r\n\
-	 ____  _   _  ____  _     _\r\n\
-	/ ___|| |_| || ___|| |   | |\r\n\
-	\\___ \\|  _  || __| | |__ | |__\r\n\
-	|____/|_| |_||____||____||____|\r\n\r\n";
-	printl((char*)minishelllogo,sizeof(minishelllogo)-1);
+	//打印一个欢迎页logo
+	static const char consolologo[] = "\r\n\
+  _____                        __\r\n\
+ / ____\\                      /\\ \\\r\n\
+/\\ \\___/   ____  ____  ____  _\\_\\ \\     ____\r\n\
+\\ \\ \\     / __ \\/ __ \\/ ___\\/ __ \\ \\   / __ \\\r\n\
+ \\ \\ \\___L\\ \\L\\ \\ \\/\\ \\____ \\ \\L\\ \\ \\_L\\  ___L\r\n\
+  \\ \\______\\____/\\_\\ \\_\\____/\\____/\\____\\____/\r\n\
+   \\/______/___/\\/_/\\/_/___/\\/___/\\/____/___/\r\n\
+    COPYRIGHT(c):GoodMorning		2019/06\r\n\r\n" ;
+
+	printl((char*)consolologo,sizeof(consolologo)-1);
 	shellin->gets = cmdline_gets;
 	cmdline_gets(shellin,recv,len);
 	return ;
