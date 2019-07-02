@@ -158,14 +158,14 @@ int serial_gets(serial_t *ttySx ,char ** databuf, int block )
 
 	// 接收到数据
 	if (ttySx->rxtail < ttySx->rxread) {        // 接收到数据，且数据包是在缓冲区最后一段
-		*databuf = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
 		datalen  = ttySx->rxend - ttySx->rxread ; 
+		*databuf = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
 		ttySx->rxread = 0 ;
 		ttySx->rxend = 0 ;
 	}
 	else { 
-		*databuf = &ttySx->rxbuf[ttySx->rxread];// 数据缓冲区
 		datalen = ttySx->rxtail - ttySx->rxread;// 当前包数据大小
+		*databuf = &ttySx->rxbuf[ttySx->rxread];// 数据缓冲区
 		ttySx->rxread = ttySx->rxtail ;         // 数据读更新
 	}
 	
@@ -216,8 +216,8 @@ int  serial_read(serial_t * ttySx ,void * databuf , int bufsize, int block )
 		MEMCPY(databuf,data,datalen);
 	}
 	else { // 接收到数据，且数据包是在缓冲区最后一段
-		char *data = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
 		datalen = ttySx->rxtail - ttySx->rxread;// 当前包数据大小
+		char *data = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
 		if (datalen > bufsize)
 			datalen = bufsize;
 		ttySx->rxread += datalen ;         // 数据读更新

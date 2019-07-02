@@ -77,6 +77,10 @@ typedef struct serial {
 	///< 串口初始化函数
 	void (*init)(uint32_t nspeed, uint32_t nbits, uint32_t nevent, uint32_t nstop) ;
 	void (*deinit)(void);      ///< 串口去初始化
+	void (*tx_lock)(void) ;
+	void (*tx_unlock)(void) ;
+	void (*rx_lock)(void) ;
+	void (*rx_unlock)(void) ;
 	char * const   rxbuf ;     ///< 串口接收缓冲区指针
 	char * const   txbuf ;     ///< 串口发送缓冲区首地址
 	const unsigned short txmax;///< 串口一包最大发送，一般为缓冲区大小
@@ -85,14 +89,15 @@ typedef struct serial {
 	void *         dma;        ///< 串口所在 dma
 	unsigned int   dma_rx;     ///< 串口 dma 发送所在流
 	unsigned int   dma_tx;     ///< 串口 dma 接收所在流
-	unsigned short txsize ;    ///< 串口当前发送包大小
-	unsigned short txtail ;    ///< 串口当前发送缓冲区尾部
-	unsigned short rxtail ;    ///< 串口当前接收缓冲区尾部
-	unsigned short rxread ;    ///< 串口未读数据头部
+
+	volatile unsigned short txsize ;    ///< 串口当前发送包大小
+	volatile unsigned short txtail ;    ///< 串口当前发送缓冲区尾部
+	volatile unsigned short rxtail ;    ///< 串口当前接收缓冲区尾部
+	volatile unsigned short rxread ;    ///< 串口未读数据头部
 	
 	// 串口在缓冲区最后一包数据包尾部。当 &rxbuf[rxtail] 后面内存不足以存放
 	// 一包数据 rxmax 大小时，rxtail 会清零，此时需要记下来当前包的大小
-	unsigned short rxend  ;
+	volatile unsigned short rxend  ;
 
 	// 使用 serial_read 函数时是否进行阻塞
 	// 阻塞：有操作系统时会等待信号量，无操作系统时会死循环

@@ -359,8 +359,8 @@ void serial_console_init(char * info)
 	//printk("\r\n");
 	//color_printk(purple,"%s",info);//打印开机信息或者控制台信息
 
-	shell_register_command("top"   ,task_list);
-	shell_register_command("ps"    ,task_runtime);
+	shell_register_command("ps"   ,task_list);
+	shell_register_command("top"    ,task_runtime);
 	shell_register_command("reboot",shell_reboot_command);
 	shell_register_command("syscfg",_shell_edit_syscfg);
 	shell_register_command("flash-erase",shell_erase_flash);

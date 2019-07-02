@@ -59,6 +59,10 @@
 #define _USART_FN(d,x)          _USART_FN_(d,x)
 #define USART_INIT_FN           _USART_FN(init,USARTn)
 #define USART_DEINIT_FN         _USART_FN(deinit,USARTn)
+#define USART_TXLOCK_FN           _USART_FN(txlock,USARTn)
+#define USART_TXUNLOCK_FN         _USART_FN(txunlocck,USARTn)
+#define USART_RXLOCK_FN           _USART_FN(rxlock,USARTn)
+#define USART_RXUNLOCK_FN         _USART_FN(rxunlocck,USARTn)
 
 
 #define _MALLOC_RXBUF_(x)       rxbuf##x

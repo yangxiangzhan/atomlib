@@ -198,9 +198,11 @@ int serial_write(serial_t *ttySx , const void * data , int datalen , int block )
 		return datalen;
 	}
 
+	ttySx->tx_lock();
 	int pkttail = ttySx->txtail;   //先获取当前尾部地址
 	int remain  = ttySx->txmax - pkttail;
 	int pktsize = (remain > datalen) ? datalen : remain;
+	ttySx->tx_unlock();
 
 	if (remain && datalen) {//当前发送缓存有空间
 		MEMCPY(&ttySx->txbuf[pkttail] , data , pktsize);//把数据包拷到缓存区中
@@ -251,19 +253,21 @@ int serial_gets(serial_t *ttySx ,char ** databuf , int block  )
 			return 0 ; // 非阻塞下无数据直接 return 0;
 		}
 	}
-
+	
+	ttySx->rx_lock();
 	// 接收到数据
 	if (ttySx->rxtail < ttySx->rxread) {        // 接收到数据，且数据包是在缓冲区最后一段
-		*databuf = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
 		datalen  = ttySx->rxend - ttySx->rxread ; 
+		*databuf = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
 		ttySx->rxread = 0 ;
 		ttySx->rxend = 0 ;
 	}
 	else { 
-		*databuf = &ttySx->rxbuf[ttySx->rxread];// 数据缓冲区
 		datalen = ttySx->rxtail - ttySx->rxread;// 当前包数据大小
+		*databuf = &ttySx->rxbuf[ttySx->rxread];// 数据缓冲区
 		ttySx->rxread = ttySx->rxtail ;         // 数据读更新
 	}
+	ttySx->rx_unlock();
 	
 	return datalen ;
 }
@@ -279,7 +283,7 @@ int serial_gets(serial_t *ttySx ,char ** databuf , int block  )
 int  serial_read(serial_t * ttySx ,void * databuf , int bufsize , int block )
 {
 	int datalen ;
-	
+	char * data = NULL;
 	if (!ttySx->hal)    // 未初始化的设备 ，返回 -1
 		return -1;
 
@@ -298,8 +302,9 @@ int  serial_read(serial_t * ttySx ,void * databuf , int bufsize , int block )
 		}
 	}
 
+	ttySx->rx_lock();
 	if (ttySx->rxread > ttySx->rxtail) {        // 接收到数据
-		char *data = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
+		data = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
 		if (ttySx->rxend > bufsize) {
 			datalen = bufsize ; 
 			ttySx->rxread += bufsize ;         // 数据读更新
@@ -310,17 +315,17 @@ int  serial_read(serial_t * ttySx ,void * databuf , int bufsize , int block )
 			ttySx->rxread = 0 ;
 			ttySx->rxend = 0 ;
 		}
-		MEMCPY(databuf,data,datalen);
 	}
 	else { // 接收到数据，且数据包是在缓冲区最后一段
-		char *data = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
+		data = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
 		datalen = ttySx->rxtail - ttySx->rxread;// 当前包数据大小
 		if (datalen > bufsize)
 			datalen = bufsize;
 		ttySx->rxread += datalen ;         // 数据读更新
-		MEMCPY(databuf,data,datalen);
 	}
+	ttySx->rx_unlock();
 	
+	MEMCPY(databuf,data,datalen);
 	return datalen ;
 }
 
