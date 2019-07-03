@@ -53,6 +53,11 @@ typedef struct serial {
 	void (*init)(uint32_t nspeed, uint32_t nbits, uint32_t nevent, uint32_t nstop) ;
 	
 	void (*deinit)(void);      ///< 串口去初始化
+	void (*tx_lock)(void) ;
+	void (*tx_unlock)(void) ;
+	void (*rx_lock)(void) ;
+	void (*rx_unlock)(void) ;
+	
 	char * const   rxbuf ;     ///< 串口接收缓冲区指针
 	char * const   txbuf ;     ///< 串口发送缓冲区首地址
 	const unsigned short txmax;///< 串口一包最大发送，一般为缓冲区大小

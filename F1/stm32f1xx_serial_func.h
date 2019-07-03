@@ -137,9 +137,54 @@ static void USART_DEINIT_FN(void)
 	#endif 
 }
 
+void USART_TXLOCK_FN(void)
+{
+	#if (DMATxEnable)
+		LL_DMA_DisableIT_TC(DMAx,DMA_TX_CHx);
+	#else 
+		LL_USART_DisableIT_TC(USARTx);
+	#endif 
+}
+
+
+void USART_TXUNLOCK_FN(void)
+{
+	#if (DMATxEnable)
+		LL_DMA_EnableIT_TC(DMAx,DMA_TX_CHx);
+	#else 
+		LL_USART_EnableIT_TC(USARTx);
+	#endif 
+}
+
+
+void USART_RXLOCK_FN(void)
+{
+	#if (DMARxEnable)
+		LL_DMA_DisableIT_TC(DMAx,DMA_RX_CHx);
+	#else 
+		LL_USART_DisableIT_TC(USARTx);
+	#endif 
+	LL_USART_DisableIT_IDLE(USARTx);
+}
+
+
+void USART_RXUNLOCK_FN(void)
+{
+	#if (DMARxEnable)
+		LL_DMA_EnableIT_TC(DMAx,DMA_RX_CHx);
+	#else 
+		LL_USART_EnableIT_RXNE(USARTx);
+	#endif 
+	LL_USART_EnableIT_IDLE(USARTx);
+}
+
 serial_t TTYSx = {
-	.init   = USART_INIT_FN ,
-	.deinit = USART_DEINIT_FN ,
+	.init      = USART_INIT_FN ,
+	.deinit    = USART_DEINIT_FN ,
+	.tx_lock   = USART_TXLOCK_FN,
+	.tx_unlock = USART_TXUNLOCK_FN,
+	.rx_lock   = USART_RXLOCK_FN,
+	.rx_unlock = USART_RXUNLOCK_FN,
 	.rxbuf  = TTYSxRXBUF ,
 	.txbuf  = TTYSxTXBUF ,
 	.txmax  = TX_BUF_SIZE,

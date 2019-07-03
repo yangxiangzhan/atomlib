@@ -156,6 +156,7 @@ int serial_gets(serial_t *ttySx ,char ** databuf, int block )
 		}
 	}
 
+	ttySx->rx_lock();
 	// 接收到数据
 	if (ttySx->rxtail < ttySx->rxread) {        // 接收到数据，且数据包是在缓冲区最后一段
 		datalen  = ttySx->rxend - ttySx->rxread ; 
@@ -168,6 +169,7 @@ int serial_gets(serial_t *ttySx ,char ** databuf, int block )
 		*databuf = &ttySx->rxbuf[ttySx->rxread];// 数据缓冲区
 		ttySx->rxread = ttySx->rxtail ;         // 数据读更新
 	}
+	ttySx->rx_unlock();
 	
 	return datalen ;
 }
@@ -181,12 +183,12 @@ int serial_gets(serial_t *ttySx ,char ** databuf, int block )
 */
 int  serial_read(serial_t * ttySx ,void * databuf , int bufsize, int block )
 {
-	int datalen ;
+	int datalen , readrx = ttySx->rxread;
 	
 	if (!ttySx->hal)    // 未初始化的设备 ，返回 -1
 		return -1;
 
-	if (ttySx->rxread == ttySx->rxtail) { // 接收缓冲区中无接收数据
+	if (readrx == ttySx->rxtail) { // 接收缓冲区中无接收数据
 		if ( O_NOBLOCK != block ) {
 			ttySx->flag |= FLAG_RX_BLOCK ;    // 标记当前设备为正在阻塞读
 			OS_SEM_WAIT(ttySx->rxsem) ;       // 如果是阻塞读，等待信号量
@@ -201,8 +203,9 @@ int  serial_read(serial_t * ttySx ,void * databuf , int bufsize, int block )
 		}
 	}
 
-	if (ttySx->rxread > ttySx->rxtail) {        // 接收到数据
-		char *data = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
+	
+	ttySx->rx_lock(); 
+	if (readrx > ttySx->rxtail) {        // 接收到数据
 		if (ttySx->rxend > bufsize) {
 			datalen = bufsize ; 
 			ttySx->rxread += bufsize ;         // 数据读更新
@@ -213,17 +216,16 @@ int  serial_read(serial_t * ttySx ,void * databuf , int bufsize, int block )
 			ttySx->rxread = 0 ;
 			ttySx->rxend = 0 ;
 		}
-		MEMCPY(databuf,data,datalen);
 	}
 	else { // 接收到数据，且数据包是在缓冲区最后一段
-		datalen = ttySx->rxtail - ttySx->rxread;// 当前包数据大小
-		char *data = &ttySx->rxbuf[ttySx->rxread];   // 数据缓冲区
+		datalen = ttySx->rxtail - ttySx->rxread;// 当前包数据大小 
 		if (datalen > bufsize)
 			datalen = bufsize;
-		ttySx->rxread += datalen ;         // 数据读更新
-		MEMCPY(databuf,data,datalen);
+		ttySx->rxread += datalen ;              // 数据读更新
 	}
+	ttySx->rx_unlock();
 	
+	MEMCPY(databuf,&ttySx->rxbuf[readrx],datalen);
 	return datalen ;
 }
 
