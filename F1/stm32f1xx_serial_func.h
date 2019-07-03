@@ -140,7 +140,8 @@ static void USART_DEINIT_FN(void)
 void USART_TXLOCK_FN(void)
 {
 	#if (DMATxEnable)
-		LL_DMA_DisableIT_TC(DMAx,DMA_TX_CHx);
+		//LL_DMA_DisableIT_TC(DMAx,DMA_TX_CHx);
+		NVIC_EnableIRQ(DMA_TX_IRQn);
 	#else 
 		LL_USART_DisableIT_TC(USARTx);
 	#endif 
@@ -150,7 +151,8 @@ void USART_TXLOCK_FN(void)
 void USART_TXUNLOCK_FN(void)
 {
 	#if (DMATxEnable)
-		LL_DMA_EnableIT_TC(DMAx,DMA_TX_CHx);
+		//LL_DMA_EnableIT_TC(DMAx,DMA_TX_CHx);
+		NVIC_EnableIRQ(DMA_TX_IRQn);
 	#else 
 		LL_USART_EnableIT_TC(USARTx);
 	#endif 
@@ -160,22 +162,26 @@ void USART_TXUNLOCK_FN(void)
 void USART_RXLOCK_FN(void)
 {
 	#if (DMARxEnable)
-		LL_DMA_DisableIT_TC(DMAx,DMA_RX_CHx);
+		NVIC_DisableIRQ(DMA_RX_IRQn);
+		//LL_DMA_DisableIT_TC(DMAx,DMA_RX_CHx);
 	#else 
 		LL_USART_DisableIT_TC(USARTx);
 	#endif 
-	LL_USART_DisableIT_IDLE(USARTx);
+	NVIC_DisableIRQ(USART_IRQn);
+	//LL_USART_DisableIT_IDLE(USARTx);
 }
 
 
 void USART_RXUNLOCK_FN(void)
 {
 	#if (DMARxEnable)
-		LL_DMA_EnableIT_TC(DMAx,DMA_RX_CHx);
+		NVIC_EnableIRQ(DMA_RX_IRQn);
+		//LL_DMA_EnableIT_TC(DMAx,DMA_RX_CHx);
 	#else 
-		LL_USART_EnableIT_RXNE(USARTx);
+		//LL_USART_EnableIT_RXNE(USARTx);
 	#endif 
-	LL_USART_EnableIT_IDLE(USARTx);
+	NVIC_EnableIRQ(USART_IRQn);
+	//LL_USART_EnableIT_IDLE(USARTx);
 }
 
 serial_t TTYSx = {

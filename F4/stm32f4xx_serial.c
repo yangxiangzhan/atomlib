@@ -205,12 +205,12 @@ int serial_write(serial_t *ttySx , const void * data , int datalen , int block )
 	if (remain && datalen) {//当前发送缓存有空间
 		MEMCPY(&ttySx->txbuf[pkttail] , data , pktsize);//把数据包拷到缓存区中
 		if (ttySx->flag & FLAG_TX_DMA) {                // dma 模式下发送
-			ttySx->tx_lock();
+			ttySx->tx_lock();                           // 修改全局变量，禁用中断。互斥
 			ttySx->txtail  = pkttail + pktsize;         // 更新尾部
 			ttySx->txsize += pktsize;                   // 设置当前包大小
-			ttySx->tx_unlock();
 			if (!LL_DMA_IsEnabledStream(ttySx->dma,ttySx->dma_tx))//开始发送
 				serial_send_pkt(ttySx);
+			ttySx->tx_unlock();
 		}
 		else  {
 			if (!ttySx->txtail){

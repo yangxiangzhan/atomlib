@@ -27,7 +27,7 @@
 /* ---- option (配置项) ---- */
 
 //命令数超过30条时可以考虑用平衡二叉树进行查找匹配
-//#define USE_AVL_TREE
+#define USE_AVL_TREE
 
 //命令带上参数的字符串输入最长记录长度
 #define COMMANDLINE_MAX_LEN     36     

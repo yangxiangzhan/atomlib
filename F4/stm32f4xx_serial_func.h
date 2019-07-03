@@ -139,6 +139,7 @@ static void USART_DEINIT_FN(void)
 	#endif 
 }
 
+#if 0
 void USART_TXLOCK_FN(void)
 {
 	#if (DMATxEnable)
@@ -179,7 +180,45 @@ void USART_RXUNLOCK_FN(void)
 	#endif 
 	LL_USART_EnableIT_IDLE(USARTx);
 }
+#else 
 
+void USART_TXLOCK_FN(void)
+{
+	#if (DMATxEnable)
+		NVIC_DisableIRQ(DMA_TX_IRQn);
+	#else 
+		NVIC_DisableIRQ(USART_IRQn); 
+	#endif 
+}
+
+
+void USART_TXUNLOCK_FN(void)
+{
+	#if (DMATxEnable)
+		NVIC_EnableIRQ(DMA_TX_IRQn);
+	#else 
+		NVIC_EnableIRQ(USART_IRQn); 
+	#endif 
+}
+
+
+void USART_RXLOCK_FN(void)
+{
+	#if (DMARxEnable)
+		NVIC_DisableIRQ(DMA_RX_IRQn); 
+	#endif 
+	NVIC_DisableIRQ(USART_IRQn); 
+}
+
+
+void USART_RXUNLOCK_FN(void)
+{
+	#if (DMARxEnable)
+		NVIC_EnableIRQ(DMA_RX_IRQn); 
+	#endif 
+	NVIC_EnableIRQ(USART_IRQn); 
+}
+#endif 
 
 
 serial_t TTYSx = {

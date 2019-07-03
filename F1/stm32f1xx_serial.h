@@ -66,10 +66,11 @@ typedef struct serial {
 	void *         dma;        ///< 串口所在 dma
 	unsigned int   dma_rx;     ///< 串口 dma 发送所在流
 	unsigned int   dma_tx;     ///< 串口 dma 接收所在流
-	unsigned short txsize ;    ///< 串口当前发送包大小
-	unsigned short txtail ;    ///< 串口当前发送缓冲区尾部
-	unsigned short rxtail ;    ///< 串口当前接收缓冲区尾部
-	unsigned short rxread ;    ///< 串口未读数据头部
+	
+	volatile unsigned short txsize ;    ///< 串口当前发送包大小
+	volatile unsigned short txtail ;    ///< 串口当前发送缓冲区尾部
+	volatile unsigned short rxtail ;    ///< 串口当前接收缓冲区尾部
+	volatile unsigned short rxread ;    ///< 串口未读数据头部
 	
 	// 串口在缓冲区最后一包数据包尾部。当 &rxbuf[rxtail] 后面内存不足以存放
 	// 一包数据 rxmax 大小时，rxtail 会清零，此时需要记下来当前包的大小
