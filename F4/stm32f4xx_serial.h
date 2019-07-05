@@ -1,19 +1,20 @@
 /**
   ******************************************************************************
-  * @file           stm32f4xx_serial.h
+  * @file           stm32f1xx_serial.h
   * @author         古么宁
   * @brief          串口驱动对外文件。
   * 使用步骤：
   * 1> 此驱动不包含引脚驱动，因为引脚有肯能被各种重定向。所以第一步是在 stm32cubemx 中
   *    把串口对应的引脚使能为串口的输入输出，使能 usart 。注意不需要使能 usart 的 dma
   *    和中断，仅选择引脚初始化和串口初始化即可。然后选择库为 LL 库。生成工程。
-  * 2> 把 stm32f4xx_serial.c 和头文件加入工程，其中 stm32f4xx_serial_set.h 和
-  *    stm32f4xx_serial_func.h 仅为 stm32f4xx_serial.c 内部使用，此头文件为所有对外
-  *    接口定义。有需要则在 stm32f4xx_serial.c 
-  *    修改串口配置参数，比如缓存大小，是否使能 DMA 等。
-  * 4> include "stm32f4xx_serial.h" ,在此头文件下，打开所需要用的串口宏 USE_USARTx 
-  *    后，调用 serial_open(&ttySx,...) ;
-  *    打开串口后，便可调用 serial_write/serial_gets/serial_read 等函数进行操作。
+  * 2> 把 stm32fxxx_serial.c 和头文件加入工程，其中 stm32fxxx_serial_set.h 和
+  *    stm32fxxx_serial_func.h 仅为 stm32fxxx_serial.c 内部使用。此头文件为所有对外
+  *    接口定义。
+  * 3> include "stm32fxxx_serial.h" ,在此头文件下，打开所需要用的串口宏 USE_USARTx 
+  *    后，调用 serial_open(&ttySx,...) ;打开串口后，便可调用 
+  *    serial_write/serial_gets/serial_read 等函数进行操作。
+  * 4> 有需要则在 stm32fxxx_serial.c  修改串口配置参数，比如缓存大小，是否使能 DMA 等。
+  *    
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -48,7 +49,6 @@
 		(x) = osSemaphoreCreate(osSemaphore(Rx), 1);\
 	}while(0)
 
-
 #else          ///< 无操作系统下，信号量相关被如下定义
 
 	typedef char serial_sem_t ;
@@ -56,6 +56,7 @@
 	#define OS_SEM_POST(x)   do{(x) = 1;}while(0)
 	#define OS_SEM_WAIT(x)   do{for(int i=0;!(x);i++);(x)=0;}while(0)
 	#define OS_SEM_DEINIT(x) OS_SEM_INIT(x)
+
 #endif 
 
 
@@ -77,10 +78,10 @@ typedef struct serial {
 	///< 串口初始化函数
 	void (*init)(uint32_t nspeed, uint32_t nbits, uint32_t nevent, uint32_t nstop) ;
 	void (*deinit)(void);      ///< 串口去初始化
-	void (*tx_lock)(void) ;
-	void (*tx_unlock)(void) ;
-	void (*rx_lock)(void) ;
-	void (*rx_unlock)(void) ;
+	void (*tx_lock)(void)  ;   ///< 发送上锁
+	void (*tx_unlock)(void);   ///< 发送解锁
+	void (*rx_lock)(void)  ;   ///< 接收上锁
+	void (*rx_unlock)(void);   ///< 接收解锁
 	char * const   rxbuf ;     ///< 串口接收缓冲区指针
 	char * const   txbuf ;     ///< 串口发送缓冲区首地址
 	const unsigned short txmax;///< 串口一包最大发送，一般为缓冲区大小
@@ -99,17 +100,7 @@ typedef struct serial {
 	// 一包数据 rxmax 大小时，rxtail 会清零，此时需要记下来当前包的大小
 	volatile unsigned short rxend  ;
 
-	// 使用 serial_read 函数时是否进行阻塞
-	// 阻塞：有操作系统时会等待信号量，无操作系统时会死循环
-	// 非阻塞：有数据则直接返回数据长度，否则直接返回0
-	//char         rxblock;
-
-	// 使用 serial_write 函数时是否进行阻塞
-	// 阻塞：直到硬件完全输出才从 serial_write 返回。
-	// 非阻塞：调用 serial_write 后马上返回，数据后续发送。
-	//char         txblock;
-
-	char         flag   ;
+	char         flag   ;    ///< 一些状态值
 
 	serial_sem_t rxsem   ;   ///< 信号量，表示缓冲区中有数据可读取 
 }

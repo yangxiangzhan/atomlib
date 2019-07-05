@@ -1,8 +1,20 @@
 /**
   ******************************************************************************
-  * @file           usart6_hal.c
-  * @author         goodmorning
-  * @brief          串口控制台底层硬件实现。
+  * @file           stm32f1xx_serial.c
+  * @author         古么宁
+  * @brief          基于 LL 库的串口驱动具体实现。
+  * 使用步骤：
+  * 1> 此驱动不包含引脚驱动，因为引脚有肯能被各种重定向。所以第一步是在 stm32cubemx 中
+  *    把串口对应的引脚使能为串口的输入输出，使能 usart 。注意不需要使能 usart 的 dma
+  *    和中断，仅选择引脚初始化和串口初始化即可。然后选择库为 LL 库。生成工程。
+  * 2> 把 stm32fxxx_serial.c 和头文件加入工程，其中 stm32fxxx_serial_set.h 和
+  *    stm32fxxx_serial_func.h 仅为 stm32fxxx_serial.c 内部使用。此头文件为所有对外
+  *    接口定义。
+  * 3> include "stm32fxxx_serial.h" ,在此头文件下，打开所需要用的串口宏 USE_USARTx 
+  *    后，调用 serial_open(&ttySx,...) ;打开串口后，便可调用 
+  *    serial_write/serial_gets/serial_read 等函数进行操作。
+  * 4> 有需要则在 stm32fxxx_serial.c  修改串口配置参数，比如缓存大小，是否使能 DMA 等。
+  *    
   ******************************************************************************
   *
   * COPYRIGHT(c) 2018 GoodMorning
@@ -13,9 +25,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "stm32f4xx_ll_bus.h"
-#include "stm32f4xx_ll_usart.h"
-#include "stm32f4xx_ll_dma.h"
+#include "stm32f4xx_ll_bus.h"  ///< LL 库必须依赖项
+#include "stm32f4xx_ll_usart.h"///< LL 库必须依赖项
+#include "stm32f4xx_ll_dma.h"  ///< LL 库必须依赖项
 
 #include "stm32f4xx_serial_set.h"  ///< 这个头文件仅供此 .c 文件内部使用
 #include "stm32f4xx_serial.h"
@@ -38,8 +50,8 @@ static inline void serial_send_pkt(serial_t * ttySx);
 	#define RX_BUF_SIZE             256      ///< 硬件接收缓冲区
 	#define TX_BUF_SIZE             512      ///< 硬件发送缓冲区
 
-	#define IRQnPRIORITY            7        ///< /< 串口相关中断的优先级
-	#define DMAxPRIORITY            6        ///< /< dma 相关中断的优先级
+	#define IRQnPRIORITY            7        ///< 串口相关中断的优先级
+	#define DMAxPRIORITY            6        ///< dma 相关中断的优先级
 	#define USART_DMA_CLOCK_INIT()  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA2)///< 跟 DMAx 对应
 
 	///<  这个头文件仅供此 .c 文件内部使用，此头文件展开会生成串口对应的中断函数和硬件初始化函数
@@ -60,8 +72,8 @@ static inline void serial_send_pkt(serial_t * ttySx);
 	#define RX_BUF_SIZE             256      ///< 硬件接收缓冲区
 	#define TX_BUF_SIZE             512      ///< 硬件发送缓冲区
 
-	#define IRQnPRIORITY            7        ///< /< 串口相关中断的优先级
-	#define DMAxPRIORITY            6        ///< /< dma 相关中断的优先级
+	#define IRQnPRIORITY            7        ///< 串口相关中断的优先级
+	#define DMAxPRIORITY            6        ///< dma 相关中断的优先级
 	#define USART_DMA_CLOCK_INIT()  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1)///< 跟 DMAx 对应
 
 	///<  这个头文件仅供此 .c 文件内部使用，此头文件展开会生成串口对应的中断函数和硬件初始化函数
@@ -82,8 +94,8 @@ static inline void serial_send_pkt(serial_t * ttySx);
 	#define RX_BUF_SIZE             256      ///< 硬件接收缓冲区
 	#define TX_BUF_SIZE             512      ///< 硬件发送缓冲区
 
-	#define IRQnPRIORITY            7        ///< /< 串口相关中断的优先级
-	#define DMAxPRIORITY            6        ///< /< dma 相关中断的优先级
+	#define IRQnPRIORITY            7        ///< 串口相关中断的优先级
+	#define DMAxPRIORITY            6        ///< dma 相关中断的优先级
 	#define USART_DMA_CLOCK_INIT()  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1)///< 跟 DMAx 对应
 
 	///<  这个头文件仅供此 .c 文件内部使用，此头文件展开会生成串口对应的中断函数和硬件初始化函数
@@ -105,8 +117,8 @@ static inline void serial_send_pkt(serial_t * ttySx);
 	#define RX_BUF_SIZE             256      ///< 硬件接收缓冲区
 	#define TX_BUF_SIZE             512      ///< 硬件发送缓冲区
 
-	#define IRQnPRIORITY            7        ///< /< 串口相关中断的优先级
-	#define DMAxPRIORITY            6        ///< /< dma 相关中断的优先级
+	#define IRQnPRIORITY            7        ///< 串口相关中断的优先级
+	#define DMAxPRIORITY            6        ///< dma 相关中断的优先级
 	#define USART_DMA_CLOCK_INIT()  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1)///< 跟 DMAx 对应
 
 	///<  这个头文件仅供此 .c 文件内部使用，此头文件展开会生成串口对应的中断函数和硬件初始化函数
@@ -127,8 +139,8 @@ static inline void serial_send_pkt(serial_t * ttySx);
 	#define RX_BUF_SIZE             256      ///< 硬件接收缓冲区
 	#define TX_BUF_SIZE             512      ///< 硬件发送缓冲区
 
-	#define IRQnPRIORITY            7        ///< /< 串口相关中断的优先级
-	#define DMAxPRIORITY            6        ///< /< dma 相关中断的优先级
+	#define IRQnPRIORITY            7        ///< 串口相关中断的优先级
+	#define DMAxPRIORITY            6        ///< dma 相关中断的优先级
 	#define USART_DMA_CLOCK_INIT()  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1)///< 跟 DMAx 对应
 
 	///<  这个头文件仅供此 .c 文件内部使用，此头文件展开会生成串口对应的中断函数和硬件初始化函数
@@ -229,7 +241,7 @@ int serial_write(serial_t *ttySx , const void * data , int datalen , int block )
   * @brief    直接读取串口设备的接收缓存区数据
   * @param    ttySx   : 串口设备
   * @param    databuf : 返回串口设备接收缓存数据包首地址
-  * @param    ...     : O_BLOCK/O_NOBLOCK 重定义是否阻塞，缺省则为 open 时的设置值
+  * @param    block   : O_BLOCK/O_NOBLOCK 是否阻塞
   * @return   接收缓存数据包长度
 */
 int serial_gets(serial_t *ttySx ,char ** databuf , int block  )
@@ -277,7 +289,7 @@ int serial_gets(serial_t *ttySx ,char ** databuf , int block  )
   * @param    ttySx   : 串口设备
   * @param    databuf : 读取数据内存
   * @param    bufsize : 读取数据内存总大小
-  * @param    ...     : O_BLOCK/O_NOBLOCK 重定义是否阻塞，缺省则为 open 时的设置值
+  * @param    block   : O_BLOCK/O_NOBLOCK 是否阻塞
   * @return   接收数据包长度
 */
 int  serial_read(serial_t * ttySx ,void * databuf , int bufsize , int block )
@@ -339,11 +351,7 @@ int  serial_read(serial_t * ttySx ,void * databuf , int bufsize , int block )
 */
 int serial_open(serial_t *ttySx , int speed, int bits, char event, float stop) 
 {
-	OS_SEM_INIT(ttySx->rxsem);
-//	ttySx->txblock = txblock ;
-//	ttySx->rxblock = rxblock ; 
-//	ttySx->txblock = 0 ;
-//	ttySx->rxblock = 0 ; 
+	OS_SEM_INIT(ttySx->rxsem); 
 	ttySx->txtail = 0;
 	ttySx->txsize = 0;
 	ttySx->rxtail = 0;
@@ -404,9 +412,7 @@ int serial_close(serial_t *ttySx)
 	ttySx->rxtail = 0;
 	ttySx->rxend  = 0;
 	ttySx->rxread = 0;
-	ttySx->hal    = 0;
-///	ttySx->rxblock = 0;
-//	ttySx->txblock = 0;
+	ttySx->hal    = 0; 
 	return 0;
 }
 

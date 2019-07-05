@@ -1,3 +1,27 @@
+/**
+  ******************************************************************************
+  * @file           stm32f1xx_serial.h
+  * @author         古么宁
+  * @brief          串口驱动对外文件。
+  * 使用步骤：
+  * 1> 此驱动不包含引脚驱动，因为引脚有肯能被各种重定向。所以第一步是在 stm32cubemx 中
+  *    把串口对应的引脚使能为串口的输入输出，使能 usart 。注意不需要使能 usart 的 dma
+  *    和中断，仅选择引脚初始化和串口初始化即可。然后选择库为 LL 库。生成工程。
+  * 2> 把 stm32fxxx_serial.c 和头文件加入工程，其中 stm32fxxx_serial_set.h 和
+  *    stm32fxxx_serial_func.h 仅为 stm32fxxx_serial.c 内部使用。此头文件为所有对外
+  *    接口定义。
+  * 3> include "stm32fxxx_serial.h" ,在此头文件下，打开所需要用的串口宏 USE_USARTx 
+  *    后，调用 serial_open(&ttySx,...) ;打开串口后，便可调用 
+  *    serial_write/serial_gets/serial_read 等函数进行操作。
+  * 4> 有需要则在 stm32fxxx_serial.c  修改串口配置参数，比如缓存大小，是否使能 DMA 等。
+  *    
+  ******************************************************************************
+  *
+  * COPYRIGHT(c) 2018 GoodMorning
+  *
+  ******************************************************************************
+  */
+/* Includes ---------------------------------------------------*/
 #ifndef _F1_SERIAL_H
 #define _F1_SERIAL_H
 
@@ -53,10 +77,10 @@ typedef struct serial {
 	void (*init)(uint32_t nspeed, uint32_t nbits, uint32_t nevent, uint32_t nstop) ;
 	
 	void (*deinit)(void);      ///< 串口去初始化
-	void (*tx_lock)(void) ;
-	void (*tx_unlock)(void) ;
-	void (*rx_lock)(void) ;
-	void (*rx_unlock)(void) ;
+	void (*tx_lock)(void)  ;   ///< 发送上锁
+	void (*tx_unlock)(void);   ///< 发送解锁
+	void (*rx_lock)(void)  ;   ///< 接收上锁
+	void (*rx_unlock)(void);   ///< 接收解锁
 	
 	char * const   rxbuf ;     ///< 串口接收缓冲区指针
 	char * const   txbuf ;     ///< 串口发送缓冲区首地址

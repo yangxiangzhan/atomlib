@@ -118,6 +118,12 @@ static void USART_INIT_FN(uint32_t nspeed, uint32_t nbits, uint32_t nevent, uint
 }
 
 
+/**
+  * @author   古么宁
+  * @brief    串口硬件配置取消。关闭中断
+  * @param    VOID
+  * @return   don't care
+*/
 static void USART_DEINIT_FN(void)
 {
 	NVIC_DisableIRQ(USART_IRQn);
@@ -139,49 +145,12 @@ static void USART_DEINIT_FN(void)
 	#endif 
 }
 
-#if 0
-void USART_TXLOCK_FN(void)
-{
-	#if (DMATxEnable)
-		LL_DMA_DisableIT_TC(DMAx,DMA_TX_STRMx);
-	#else 
-		LL_USART_DisableIT_TC(USARTx);
-	#endif 
-}
-
-
-void USART_TXUNLOCK_FN(void)
-{
-	#if (DMATxEnable)
-		LL_DMA_EnableIT_TC(DMAx,DMA_TX_STRMx);
-	#else 
-		LL_USART_EnableIT_TC(USARTx);
-	#endif 
-}
-
-
-void USART_RXLOCK_FN(void)
-{
-	#if (DMARxEnable)
-		LL_DMA_DisableIT_TC(DMAx,DMA_RX_STRMx);
-	#else 
-		LL_USART_DisableIT_TC(USARTx);
-	#endif 
-	LL_USART_DisableIT_IDLE(USARTx);
-}
-
-
-void USART_RXUNLOCK_FN(void)
-{
-	#if (DMARxEnable)
-		LL_DMA_EnableIT_TC(DMAx,DMA_RX_STRMx);
-	#else 
-		LL_USART_EnableIT_RXNE(USARTx);
-	#endif 
-	LL_USART_EnableIT_IDLE(USARTx);
-}
-#else 
-
+/**
+  * @author   古么宁
+  * @brief    串口硬件发送进入临界区，防止中断过程修改全局变量。
+  * @param    VOID
+  * @return   don't care
+*/
 void USART_TXLOCK_FN(void)
 {
 	#if (DMATxEnable)
@@ -191,7 +160,12 @@ void USART_TXLOCK_FN(void)
 	#endif 
 }
 
-
+/**
+  * @author   古么宁
+  * @brief    串口硬件发送退出临界区，防止中断过程修改全局变量。
+  * @param    VOID
+  * @return   don't care
+*/
 void USART_TXUNLOCK_FN(void)
 {
 	#if (DMATxEnable)
@@ -201,7 +175,12 @@ void USART_TXUNLOCK_FN(void)
 	#endif 
 }
 
-
+/**
+  * @author   古么宁
+  * @brief    串口硬件接收设置进入临界区，防止中断过程修改全局变量。
+  * @param    VOID
+  * @return   don't care
+*/
 void USART_RXLOCK_FN(void)
 {
 	#if (DMARxEnable)
@@ -210,7 +189,12 @@ void USART_RXLOCK_FN(void)
 	NVIC_DisableIRQ(USART_IRQn); 
 }
 
-
+/**
+  * @author   古么宁
+  * @brief    串口硬件接收设置退出临界区，防止中断过程修改全局变量。
+  * @param    VOID
+  * @return   don't care
+*/
 void USART_RXUNLOCK_FN(void)
 {
 	#if (DMARxEnable)
@@ -218,15 +202,14 @@ void USART_RXUNLOCK_FN(void)
 	#endif 
 	NVIC_EnableIRQ(USART_IRQn); 
 }
-#endif 
 
-
+// 生成一个对应的 ttySx , 并初始化其常量
 serial_t TTYSx = {
-	.init   = USART_INIT_FN ,
-	.deinit = USART_DEINIT_FN ,
-	.tx_lock = USART_TXLOCK_FN,
+	.init      = USART_INIT_FN ,
+	.deinit    = USART_DEINIT_FN ,
+	.tx_lock   = USART_TXLOCK_FN,
 	.tx_unlock = USART_TXUNLOCK_FN,
-	.rx_lock = USART_RXLOCK_FN,
+	.rx_lock   = USART_RXLOCK_FN,
 	.rx_unlock = USART_RXUNLOCK_FN,
 	.rxbuf  = TTYSxRXBUF ,
 	.txbuf  = TTYSxTXBUF ,
@@ -362,7 +345,6 @@ void USART_IRQ_HANDLER(void)
 #undef DMARxCHn
 #undef DMATxSTRMn
 #undef DMARxSTRMn
-#undef USART_BAUDRATE
 #undef IRQnPRIORITY
 #undef DMAxPRIORITY
 #undef DMATxEnable

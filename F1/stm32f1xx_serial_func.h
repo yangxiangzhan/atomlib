@@ -15,7 +15,15 @@
 char TTYSxRXBUF[RX_BUF_SIZE] = {0};
 char TTYSxTXBUF[TX_BUF_SIZE] = {0};
 
-
+/**
+  * @author   古么宁
+  * @brief    串口硬件配置
+  * @param    nspeed       : 串口波特率,115200 或者其他
+  * @param    nbits        : 数据位宽
+  * @param    nevent       : 奇偶校验
+  * @param    nstop        : 停止位
+  * @return   
+*/
 static void USART_INIT_FN(uint32_t nspeed, uint32_t nbits, uint32_t nevent, uint32_t nstop)
 {
 	// ---------------- 结构体配置 ----------------
@@ -115,7 +123,12 @@ static void USART_INIT_FN(uint32_t nspeed, uint32_t nbits, uint32_t nevent, uint
 	#endif 
 }
 
-
+/**
+  * @author   古么宁
+  * @brief    串口硬件配置取消。关闭中断
+  * @param    VOID
+  * @return   don't care
+*/
 static void USART_DEINIT_FN(void)
 {
 	NVIC_DisableIRQ(USART_IRQn);
@@ -137,10 +150,15 @@ static void USART_DEINIT_FN(void)
 	#endif 
 }
 
+/**
+  * @author   古么宁
+  * @brief    串口硬件发送进入临界区，防止中断过程修改全局变量。
+  * @param    VOID
+  * @return   don't care
+*/
 void USART_TXLOCK_FN(void)
 {
 	#if (DMATxEnable)
-		//LL_DMA_DisableIT_TC(DMAx,DMA_TX_CHx);
 		NVIC_EnableIRQ(DMA_TX_IRQn);
 	#else 
 		LL_USART_DisableIT_TC(USARTx);
@@ -148,10 +166,15 @@ void USART_TXLOCK_FN(void)
 }
 
 
+/**
+  * @author   古么宁
+  * @brief    串口硬件发送退出临界区，防止中断过程修改全局变量。
+  * @param    VOID
+  * @return   don't care
+*/
 void USART_TXUNLOCK_FN(void)
 {
 	#if (DMATxEnable)
-		//LL_DMA_EnableIT_TC(DMAx,DMA_TX_CHx);
 		NVIC_EnableIRQ(DMA_TX_IRQn);
 	#else 
 		LL_USART_EnableIT_TC(USARTx);
@@ -159,31 +182,39 @@ void USART_TXUNLOCK_FN(void)
 }
 
 
+/**
+  * @author   古么宁
+  * @brief    串口硬件接收设置进入临界区，防止中断过程修改全局变量。
+  * @param    VOID
+  * @return   don't care
+*/
 void USART_RXLOCK_FN(void)
 {
 	#if (DMARxEnable)
 		NVIC_DisableIRQ(DMA_RX_IRQn);
-		//LL_DMA_DisableIT_TC(DMAx,DMA_RX_CHx);
 	#else 
 		LL_USART_DisableIT_TC(USARTx);
 	#endif 
 	NVIC_DisableIRQ(USART_IRQn);
-	//LL_USART_DisableIT_IDLE(USARTx);
 }
 
 
+/**
+  * @author   古么宁
+  * @brief    串口硬件接收设置退出临界区，防止中断过程修改全局变量。
+  * @param    VOID
+  * @return   don't care
+*/
 void USART_RXUNLOCK_FN(void)
 {
 	#if (DMARxEnable)
 		NVIC_EnableIRQ(DMA_RX_IRQn);
-		//LL_DMA_EnableIT_TC(DMAx,DMA_RX_CHx);
-	#else 
-		//LL_USART_EnableIT_RXNE(USARTx);
 	#endif 
 	NVIC_EnableIRQ(USART_IRQn);
-	//LL_USART_EnableIT_IDLE(USARTx);
 }
 
+
+// 生成一个对应的 ttySx , 并初始化其常量
 serial_t TTYSx = {
 	.init      = USART_INIT_FN ,
 	.deinit    = USART_DEINIT_FN ,
@@ -325,4 +356,6 @@ void USART_IRQ_HANDLER(void)
 #undef USART_BAUDRATE
 #undef IRQnPRIORITY
 #undef DMAxPRIORITY
+#undef DMATxEnable
+#undef DMARxEnable
 #undef USART_DMA_CLOCK_INIT
