@@ -14,13 +14,21 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <ctype.h>  // for isdigit
 
 #include "ustdio.h"
-
 
 /* Private types ------------------------------------------------------------*/
 
 /* Private macro ------------------------------------------------------------*/
+
+#define ZEROPAD 1		/* pad with zero */
+#define SIGN    2		/* unsigned/signed long */
+#define PLUS    4		/* show plus */
+#define SPACE   8		/* space if plus */
+#define LEFT    16		/* left justified */
+#define SMALL   32		/* Must be 32 == 0x20 */
+#define SPECIAL	64		/* 0x */
 
 /* Private variables ------------------------------------------------------------*/
 
@@ -55,13 +63,13 @@ char * default_color = (char *)none;
 
 
 /**
-	* @author   古么宁
-	* @brief    重定义 printf 函数。本身来说 printf 方法是比较慢的，
-	*           因为 printf 要做更多的格式判断，输出的格式更多一些。
-	*           所以为了效率，在后面写了 printk 函数。
-	* @return   NULL
+  * @author   古么宁
+  * @brief    重定义 printf 函数。本身来说 printf 方法是比较慢的，
+  *           因为 printf 要做更多的格式判断，输出的格式更多一些。
+  *           所以为了效率，在后面写了 printk 函数。
+  * @return   NULL
 */
-#ifdef __GNUC__ //for TrueStudio 
+#ifdef __GNUC__ //for TrueStudio ,Makefile
 
 /*
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
@@ -114,14 +122,17 @@ int fputc(int ch, FILE *f)
 
 
 
-#define ZEROPAD 1		/* pad with zero */
-#define SIGN    2		/* unsigned/signed long */
-#define PLUS    4		/* show plus */
-#define SPACE   8		/* space if plus */
-#define LEFT    16		/* left justified */
-#define SMALL   32		/* Must be 32 == 0x20 */
-#define SPECIAL	64		/* 0x */
-
+/**
+	* @author   这个不是我写的，基本是 linus 写的，我删改了部分代码
+	* @brief    整型数据转符串
+	* @param    str       字符串输出内存
+	* @param    num       需要转换的值
+	* @param    base      转换进制，一般为 8 ，10 ， 16
+	* @param    size      输出大小缓冲区
+	* @param    precision 精度
+	* @param    type      格式化，如左右对齐，左边是否填充 0
+	* @return   转换所得字符串长度
+*/	
 static char *number(char *str, long num,int base, int size, int precision,
                     int type)
 {
@@ -131,9 +142,6 @@ static char *number(char *str, long num,int base, int size, int precision,
 	char tmp[66];
 	char sign, locase,padding;
 	int chgsize;
-
-	if (base < 2 || base > 36)
-		return NULL;
 
 	/* locase = 0 or 0x20. ORing digits or letters with 'locase'
 	 * produces same digits or (maybe lowercased) letters */
@@ -217,6 +225,16 @@ static char *number(char *str, long num,int base, int size, int precision,
 
 
 
+/**
+	* @author   古么宁
+	* @brief    float 型数据转符串
+	* @param    str       字符串输出内存
+	* @param    num       需要转换的值
+	* @param    size      输出大小缓冲区
+	* @param    precision 精度
+	* @param    type      格式化，如左右对齐，左边是否填充 0
+	* @return   转换所得字符串长度
+*/	
 static char * float2string(char *str,float num, int size, int precision,int type)
 {
 	char tmp[66];
@@ -244,7 +262,7 @@ static char * float2string(char *str,float num, int size, int precision,int type
 	ipart = (unsigned int)num; // 整数部分
 
 	if (precision) {           // 如果有小数转换，则提取小数部分
-		static const float mulf[7] = {1,10,100,1000,10000,100000,1000000};
+		static const float mulf[7] = {1.0f,10.0f,100.0f,1000.0f,10000.0f,100000.0f,1000000.0f};
 		static const unsigned int muli[7] = {1,10,100,1000,10000,100000,1000000};
 		unsigned int fpart = (unsigned int)(num * mulf[precision]) - ipart * muli[precision];
 		for(int i = 0 ; i < precision ; ++i) {		
@@ -266,7 +284,7 @@ static char * float2string(char *str,float num, int size, int precision,int type
 			*str++ = sign;
 			sign = 0;
 		}
-		for ( ; size > 0 ; --size)   // 填充
+		for ( ; size > 0 ; --size)   // 填充 0 
 			*str++ = padding ;
 	}
 
@@ -282,15 +300,26 @@ static char * float2string(char *str,float num, int size, int precision,int type
 }
 
 
-#include <ctype.h>
-
-void printk(const char* fmt, ...)
-//void newprintk(const char* fmt, ...)
-//int vsprintf(char *buf, const char *fmt, va_list args)
+/**
+  * @author   古么宁
+  * @brief    printk
+  *           格式化输出，类似于 sprintf 和 printf
+  *           用标准库的 sprintf 和 printf 的方法太慢了，所以自己写了一个，重点要快。
+  *           此函数没有输出缓冲区，所以在设计的时候遇到字符 % 会向硬件输出一次，交由
+  *           硬件的输出缓存。
+  * @param    fmt     要格式化的信息字符串指针
+  * @param    ...     不定参
+  * @return   void
+*/
+void printk(const char* fmt, ...) 
 {
-	int len , base;
+	if (!current_puts) // 无硬件输出，返回
+		return ;
+
+	char tmp[88] ;      // 此段内存仅用于缓存数字转换成的字符串
+	char * substr;
 	unsigned long num;
-	const char * substr;
+	int len , base;
 	int flags;          /* flags to number() */
 	int field_width;    /* width of output field */
 	int precision;      /* min. # of digits for integers; max
@@ -305,7 +334,6 @@ void printk(const char* fmt, ...)
 
 	for ( ; *fmtout; ++fmtout) {
 		if (*fmtout == '%') {
-			char tmp[128] ;
 			char * str = tmp ;
 
 			if (fmthead != fmtout)   { //先把 % 前面的部分输出
@@ -329,24 +357,36 @@ void printk(const char* fmt, ...)
 			}while(!base);
 
 			/* get field width */
-			for (field_width = 0 ; isdigit(*fmtout) ; ++fmtout) 
-				field_width = field_width * 10 + *fmtout - '0';
+			if (isdigit(*fmtout)) {
+				field_width = 0 ;
+				do {
+					field_width = field_width * 10 + *fmtout - '0';
+					++fmtout;
+				}while(isdigit(*fmtout));
+				if (field_width > sizeof(tmp))
+					field_width = sizeof(tmp);
+			}
+			else 
+				field_width = -1;
 
 			/* get the precision */
 			if (*fmtout == '.') {
 				precision = 0;
-				for (++fmt ; isdigit(*fmtout) ; ++fmtout) 
+				for (++fmtout ; isdigit(*fmtout) ; ++fmtout) 
 					precision = precision * 10 + *fmtout - '0';
+				if (precision > sizeof(tmp))
+					precision = sizeof(tmp);
 			}
 			else
 				precision = -1;
 
 			/* get the conversion qualifier *fmt == 'h' ||  || *fmt == 'L'*/
-			qualifier = -1;
 			if (*fmtout == 'l') {
 				qualifier = *fmtout;
 				++fmtout;
 			}
+			else 
+				qualifier = -1;
 
 			/* default base */
 			base = 10;
@@ -354,9 +394,9 @@ void printk(const char* fmt, ...)
 			switch (*fmtout) {
 				case 'c':
 					if (!(flags & LEFT))
-						for ( ; --field_width > 0 ; *str++ = ' ') ;
-					*str++ = (unsigned char)va_arg(args, int);
-					for ( ; --field_width > 0 ; *str++ = ' ') ;
+						for ( ; --field_width > 0 ; *str++ = ' '); // 右对齐，补全左边的空格
+					*str++ = (char)va_arg(args, int);
+					for ( ; --field_width > 0 ; *str++ = ' ') ;    // 左对齐，补全右边的空格
 					current_puts(tmp,str-tmp);
 					fmthead = fmtout + 1;
 					continue;
@@ -365,16 +405,20 @@ void printk(const char* fmt, ...)
 					substr = va_arg(args, char *); 
 					if (!substr)
 						substr = "(NULL)";
-					len = strnlen(substr, precision);
-					if ((!(flags & LEFT)) && (len < field_width)){
-						for ( ; len < field_width ; --field_width)
-							*str++ = ' ';
+					str = substr ;
+					if (precision > 0)
+						while(*str++ && --precision);
+					else 
+						while(*str++);
+					len = str - substr;          // 其实就是为了实现 strnlen ，此处不希望再进行函数压栈
+					str = tmp;
+					if ((!(flags & LEFT)) && (len < field_width)){  // 右对齐且需要补全空格
+						do{*str++ = ' ';}while(len < --field_width);// 填充空格串
 						current_puts(tmp,str-tmp);
 					} 
-					current_puts(substr,len);
-					if (len < field_width) {
-						for ( ; len < field_width ; --field_width)
-							*str++ = ' ';
+					current_puts(substr,len);                       // 输出子字符串
+					if (len < field_width) {                        // 左对齐且需要补全右边空格
+						do{*str++ = ' ';}while(len < --field_width);
 						current_puts(tmp,str-tmp);
 					}
 					fmthead = fmtout + 1;
@@ -419,14 +463,9 @@ void printk(const char* fmt, ...)
 				case 'u':
 					break;
 
-				default:
-					*str++ = '%';
-					if (*fmt)
-						*str++ = *fmt;
-					else
-						--fmt;
+				default: 
 					continue;
-			}
+			}// switch()
 
 			if (qualifier == 'l')
 				num = va_arg(args, unsigned long);
@@ -436,12 +475,10 @@ void printk(const char* fmt, ...)
 			str = number(tmp, num, base, field_width, precision, flags);
 			current_puts(tmp,str-tmp);
 			fmthead = fmtout + 1;
-		}
+		}//if (*fmtout == '%')
 	}
 			
-	if (fmthead != fmtout)   {
+	if (fmthead != fmtout)
 		current_puts(fmthead,fmtout - fmthead);
-		fmthead = fmtout;
-	}
 }
 
